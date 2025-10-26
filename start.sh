@@ -24,30 +24,32 @@ NC='\033[0m' # No Color
 echo "Starting services..."
 echo ""
 
-# Service mapping
-declare -A services=(
-    ["postgres"]="$ENABLE_POSTGRES"
-    ["n8n"]="$ENABLE_N8N"
-    ["gitea"]="$ENABLE_GITEA"
-    ["ollama"]="$ENABLE_OLLAMA"
-    ["freshrss"]="$ENABLE_FRESHRSS"
-    ["jellyfin"]="$ENABLE_JELLYFIN"
-    ["registry"]="$ENABLE_REGISTRY"
-    ["omnivore"]="$ENABLE_OMNIVORE"
-    ["wireguard"]="$ENABLE_WIREGUARD"
-    ["pihole"]="$ENABLE_PIHOLE"
-    ["nextcloud"]="$ENABLE_NEXTCLOUD"
-    ["minecraft"]="$ENABLE_MINECRAFT"
-    ["nginx"]="$ENABLE_NGINX"
-    ["watchtower"]="$ENABLE_WATCHTOWER"
-    ["openspeedtest"]="$ENABLE_OPENSPEEDTEST"
-    ["searxng"]="$ENABLE_SEARXNG"
-    ["plex"]="$ENABLE_PLEX"
+# Service list in dependency order (edit as needed)
+services_order=(
+    postgres
+    gitea
+    n8n
+    ollama
+    freshrss
+    jellyfin
+    registry
+    omnivore
+    wireguard
+    pihole
+    nextcloud
+    minecraft
+    nginx
+    watchtower
+    openspeedtest
+    searxng
+    plex
 )
 
-# Start enabled services
-for service in "${!services[@]}"; do
-    if [ "${services[$service]}" = "true" ]; then
+# Start enabled services in dependency order
+for service in "${services_order[@]}"; do
+    # Compose the enable variable name (e.g., ENABLE_POSTGRES)
+    enable_var="ENABLE_$(echo "$service" | tr '[:lower:]' '[:upper:]')"
+    if [ "${!enable_var}" = "true" ]; then
         if [ -f "services/$service/start.sh" ]; then
             echo -e "${GREEN}[+] $service${NC}"
             bash "services/$service/start.sh" >/dev/null 2>&1
