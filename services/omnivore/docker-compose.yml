@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - omnivore-network
+
+  omnivore-web:
+    image: omnivore/omnivore-web:latest
+    restart: unless-stopped
+    ports:
+      - "3002:8080"
+    environment:
+      - NEXT_PUBLIC_APP_ENV=prod
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3002
+      - NEXT_PUBLIC_SERVER_BASE_URL=http://localhost:4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - omnivore-network
+
+  omnivore-api:
+    image: omnivore/omnivore-api:latest
+    restart: unless-stopped
+    ports:
+      - "4000:8080"
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=${POSTGRES_USER}
+      - PG_PASSWORD=${POSTGRES_PASSWORD}
+      - PG_DB=${POSTGRES_DB}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - omnivore-network
+
+volumes:
+  postgres_data:
+
+networks:
+  omnivore-network:
+    driver: bridge

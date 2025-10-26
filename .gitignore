@@ -1,0 +1,35 @@
+# Environment files (but keep .env.example)
+.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Docker volumes
+**/postgres_data/
+**/mysql_data/
+**/redis_data/
+
+# Service-specific ignores
+services/registry/auth/htpasswd
+services/nginx/ssl/*.key
+services/nginx/ssl/*.pem
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Linting temporary files
+.yamllint
+
+CLAUDE.md
+

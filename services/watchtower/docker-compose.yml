@@ -1,0 +1,14 @@
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - WATCHTOWER_SCHEDULE=${SCHEDULE}
+      - WATCHTOWER_NOTIFICATIONS=${NOTIFICATIONS}
+      - WATCHTOWER_NOTIFICATION_URL=${NOTIFICATION_URL}
+      - TZ=${TIMEZONE}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

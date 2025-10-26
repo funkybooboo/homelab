@@ -1,0 +1,24 @@
+services:
+  pihole:
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"  # DHCP (optional)
+      - "8053:80/tcp"  # Web interface
+    environment:
+      - TZ=${TIMEZONE}
+      - WEBPASSWORD=${WEBPASSWORD}
+      - FTLCONF_LOCAL_IPV4=${SERVER_IP}
+      - PIHOLE_DNS_=${UPSTREAM_DNS}
+      - DNSMASQ_LISTENING=all
+      - WEBTHEME=${WEBTHEME}
+    volumes:
+      - pihole_config:/etc/pihole
+      - pihole_dnsmasq:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
