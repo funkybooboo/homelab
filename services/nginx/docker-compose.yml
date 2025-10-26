@@ -10,18 +10,12 @@ services:
       - ./sites:/etc/nginx/sites:ro
       - ./html:/usr/share/nginx/html
       - ./ssl:/etc/nginx/ssl:ro
-      - certbot_certs:/etc/letsencrypt:ro
-      - certbot_www:/var/www/certbot:ro
       - nginx_cache:/var/cache/nginx
     networks:
       - web-network
 
 volumes:
   nginx_cache:
-  certbot_certs:
-    external: true
-  certbot_www:
-    external: true
 
 networks:
   web-network:

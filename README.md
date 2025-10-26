@@ -1,6 +1,6 @@
 # Homelab
 
-20 self-hosted services. Pick what you need.
+19 self-hosted services. Pick what you need.
 
 ## Quick Start
 
@@ -38,7 +38,6 @@ sudo ./setup-firewall.sh # Configure firewall
 
 **Infrastructure**
 - **Nginx** (80/443) - Web server and reverse proxy. Serves sites and forwards traffic
-- **Certbot** - Auto-renews SSL certificates from Let's Encrypt. Works with Nginx
 - **WireGuard** (51820) - VPN server. Secure access to your network from anywhere
 - **Pi-hole** (53) - Network-wide ad blocker. Blocks ads for all devices on network
 - **Watchtower** - Automatically updates Docker containers to latest versions
@@ -90,8 +89,6 @@ DATA_PATH=/path/to/data
 ```bash
 SERVERURL=your-domain.com
 ```
-
-**HTTPS** - See `services/nginx/HTTPS_SETUP.md`
 
 ## Documentation
 

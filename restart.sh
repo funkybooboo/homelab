@@ -18,7 +18,6 @@ source .env
 
 # Color output
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "Restarting services..."
@@ -43,7 +42,6 @@ declare -A services=(
     ["openspeedtest"]="$ENABLE_OPENSPEEDTEST"
     ["searxng"]="$ENABLE_SEARXNG"
     ["plex"]="$ENABLE_PLEX"
-    ["certbot"]="$ENABLE_CERTBOT"
 )
 
 # Restart enabled services
@@ -51,7 +49,7 @@ for service in "${!services[@]}"; do
     if [ "${services[$service]}" = "true" ]; then
         if [ -f "services/$service/restart.sh" ]; then
             echo -e "${YELLOW}[*] $service${NC}"
-            bash "services/$service/restart.sh" > /dev/null 2>&1
+            bash "services/$service/restart.sh" >/dev/null 2>&1
         fi
     fi
 done

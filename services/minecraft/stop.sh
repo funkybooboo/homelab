@@ -1,4 +1,4 @@
 #!/bin/bash
-cd "$(dirname "$0")"
-echo "Stopping $(basename $(pwd))..."
+cd "$(dirname "$0")" || exit
+echo "Stopping $(basename "$(pwd)")..."
 docker compose down

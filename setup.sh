@@ -8,18 +8,12 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Colors
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
 echo "Homelab Setup"
 echo "============="
 echo ""
 
 # Check for Docker
-if ! command -v docker &> /dev/null; then
+if ! command -v docker &>/dev/null; then
     echo "Docker not found"
     echo ""
     read -p "Install Docker? (y/n): " install_docker
@@ -40,9 +34,9 @@ if ! command -v docker &> /dev/null; then
 
         # Add Docker repository
         echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+            | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
         # Install Docker
         sudo apt-get update
@@ -67,7 +61,7 @@ else
 fi
 
 # Check for Docker Compose
-if ! docker compose version &> /dev/null; then
+if ! docker compose version &>/dev/null; then
     echo "[-] Docker Compose not found"
     echo "Install Docker Compose plugin:"
     echo "  sudo apt-get install docker-compose-plugin"

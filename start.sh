@@ -19,7 +19,6 @@ source .env
 
 # Color output
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "Starting services..."
@@ -44,7 +43,6 @@ declare -A services=(
     ["openspeedtest"]="$ENABLE_OPENSPEEDTEST"
     ["searxng"]="$ENABLE_SEARXNG"
     ["plex"]="$ENABLE_PLEX"
-    ["certbot"]="$ENABLE_CERTBOT"
 )
 
 # Start enabled services
@@ -52,7 +50,7 @@ for service in "${!services[@]}"; do
     if [ "${services[$service]}" = "true" ]; then
         if [ -f "services/$service/start.sh" ]; then
             echo -e "${GREEN}[+] $service${NC}"
-            bash "services/$service/start.sh" > /dev/null 2>&1
+            bash "services/$service/start.sh" >/dev/null 2>&1
         fi
     fi
 done

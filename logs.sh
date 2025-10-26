@@ -24,5 +24,5 @@ echo "Viewing logs for $SERVICE..."
 echo "Press Ctrl+C to exit"
 echo ""
 
-cd "services/$SERVICE"
+cd "services/$SERVICE" || exit
 docker compose logs -f

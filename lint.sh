@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Check if shellcheck is installed
-if ! command -v shellcheck &> /dev/null; then
+if ! command -v shellcheck &>/dev/null; then
     echo "shellcheck not found. Installing..."
     sudo apt-get update
     sudo apt-get install -y shellcheck
@@ -16,14 +16,14 @@ if ! command -v shellcheck &> /dev/null; then
 fi
 
 # Check if yamllint is installed
-if ! command -v yamllint &> /dev/null; then
+if ! command -v yamllint &>/dev/null; then
     echo "yamllint not found. Installing..."
     pip install --user yamllint
     echo "yamllint installed"
 fi
 
 # Check if hadolint is installed
-if ! command -v hadolint &> /dev/null; then
+if ! command -v hadolint &>/dev/null; then
     echo "hadolint not found. Installing..."
     wget -qO /tmp/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64
     chmod +x /tmp/hadolint
@@ -41,7 +41,7 @@ done
 echo ""
 echo "=== Linting YAML Files ==="
 echo ""
-cat > .yamllint <<EOF
+cat >.yamllint <<EOF
 extends: default
 rules:
   line-length:

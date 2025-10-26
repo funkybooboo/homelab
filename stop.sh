@@ -18,7 +18,6 @@ source .env
 
 # Color output
 RED='\033[0;31m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo "Stopping services..."
@@ -43,7 +42,6 @@ declare -A services=(
     ["openspeedtest"]="$ENABLE_OPENSPEEDTEST"
     ["searxng"]="$ENABLE_SEARXNG"
     ["plex"]="$ENABLE_PLEX"
-    ["certbot"]="$ENABLE_CERTBOT"
 )
 
 # Stop enabled services (in reverse order)
@@ -51,7 +49,7 @@ for service in watchtower nginx plex minecraft nextcloud pihole wireguard omnivo
     if [ "${services[$service]}" = "true" ]; then
         if [ -f "services/$service/stop.sh" ]; then
             echo -e "${RED}[-] $service${NC}"
-            bash "services/$service/stop.sh" > /dev/null 2>&1
+            bash "services/$service/stop.sh" >/dev/null 2>&1
         fi
     fi
 done

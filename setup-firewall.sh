@@ -11,18 +11,12 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Colors
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
 echo "Firewall Setup"
 echo "=============="
 echo ""
 
 # Install UFW if not present
-if ! command -v ufw &> /dev/null; then
+if ! command -v ufw &>/dev/null; then
     echo "Installing UFW..."
     apt-get update
     apt-get install -y ufw
@@ -48,7 +42,7 @@ ufw default allow outgoing
 
 # Allow SSH (important!)
 echo "[+] SSH (22)"
-ufw allow 22/tcp comment 'SSH' > /dev/null 2>&1
+ufw allow 22/tcp comment 'SSH' >/dev/null 2>&1
 
 # Service ports based on enabled services
 declare -A ports=(
@@ -77,11 +71,11 @@ declare -A ports=(
 for service in "${!ports[@]}"; do
     var_name="ENABLE_${service^^}"
     if [ "${!var_name}" = "true" ]; then
-        IFS=',' read -ra port_list <<< "${ports[$service]}"
+        IFS=',' read -ra port_list <<<"${ports[$service]}"
         for port_rule in "${port_list[@]}"; do
-            IFS=':' read -r port desc <<< "$port_rule"
+            IFS=':' read -r port desc <<<"$port_rule"
             echo "[+] $desc ($port)"
-            ufw allow $port comment "$desc" > /dev/null 2>&1
+            ufw allow $port comment "$desc" >/dev/null 2>&1
         done
     fi
 done
@@ -89,7 +83,7 @@ done
 # Enable UFW
 echo ""
 echo "Enabling firewall..."
-ufw --force enable > /dev/null 2>&1
+ufw --force enable >/dev/null 2>&1
 
 echo ""
 echo "Done"
