@@ -1,0 +1,33 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    restart: unless-stopped
+    ports:
+      - "25565:25565"  # Minecraft server
+      - "25575:25575"  # RCON (optional)
+    environment:
+      - EULA=TRUE
+      - TYPE=${SERVER_TYPE}
+      - VERSION=${VERSION}
+      - MEMORY=${MEMORY}
+      - SERVER_NAME=${SERVER_NAME}
+      - MOTD=${MOTD}
+      - DIFFICULTY=${DIFFICULTY}
+      - MODE=${MODE}
+      - MAX_PLAYERS=${MAX_PLAYERS}
+      - ALLOW_NETHER=true
+      - ANNOUNCE_PLAYER_ACHIEVEMENTS=true
+      - ENABLE_COMMAND_BLOCK=true
+      - FORCE_GAMEMODE=false
+      - GENERATE_STRUCTURES=true
+      - ONLINE_MODE=${ONLINE_MODE}
+      - PVP=${PVP}
+      - VIEW_DISTANCE=${VIEW_DISTANCE}
+      - RCON_PASSWORD=${RCON_PASSWORD}
+    volumes:
+      - minecraft_data:/data
+    tty: true
+    stdin_open: true
+
+volumes:
+  minecraft_data:
