@@ -34,7 +34,7 @@ sudo ./setup-firewall.sh # Configure firewall
 - **Minecraft** (25565) - Minecraft server for you and friends
 - **FreshRSS** (8080) - RSS feed reader. Stay updated on websites/blogs
 - **Omnivore** (3002) - Save articles and read later. Open source Pocket
-- **SearXNG** (8888) - Private search engine. Aggregates results without tracking
+- **SearXNG** (8889) - Private search engine. Aggregates results without tracking
 
 **Infrastructure**
 - **Nginx** (80/443) - Web server and reverse proxy. Serves sites and forwards traffic
