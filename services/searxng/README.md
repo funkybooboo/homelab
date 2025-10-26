@@ -15,7 +15,7 @@ nano .env
 ./start.sh
 ```
 
-Access: http://localhost:8888
+Access: http://localhost:8889
 
 ## Features
 
@@ -27,7 +27,7 @@ Access: http://localhost:8888
 
 ## Configuration
 
-After first start, configure at: http://localhost:8888/preferences
+After first start, configure at: http://localhost:8889/preferences
 
 - Choose search engines
 - Set appearance theme
@@ -49,14 +49,14 @@ After first start, configure at: http://localhost:8888/preferences
 ## Set as Default Search Engine
 
 **Firefox:**
-1. Visit http://localhost:8888
+1. Visit http://localhost:8889
 2. Right-click search bar
 3. "Add SearXNG"
 
 **Chrome:**
 1. Settings → Search engine
 2. Manage search engines
-3. Add: http://localhost:8888/search?q=%s
+3. Add: http://localhost:8889/search?q=%s
 
 ## More Info
 
