@@ -38,11 +38,6 @@ logs/
 # Job mirror repositories (synced from GitHub)
 jobs/repos/_mirror/
 
-# Nested git repositories
-omnivore/.git/
-**/.git/
-!.git/
-
 # Backup files
 *.backup
 *.bak
