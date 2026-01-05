@@ -1,0 +1,11 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    restart: always
+    ports:
+      - "3000:3000"  # Web interface
+      - "222:22"     # SSH for git
+    volumes:
+      - ./gitea/data:/data
+

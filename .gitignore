@@ -1,21 +1,54 @@
-# Environment files (but keep .env.example)
-.env
-**/.env
-!.env.example
-!**/.env.example
-
-# Docker volumes
-**/postgres_data/
-**/mysql_data/
-**/redis_data/
-
-# Service-specific ignores
-services/registry/auth/htpasswd
-services/nginx/ssl/*.key
-services/nginx/ssl/*.pem
+# Data directories
+data/
+config/
+*/data/
+*/config/
 
 # Logs
 *.log
+logs/
+*/logs/
+
+# Environment files (may contain secrets)
+.env
+.env.*
+*.env
+!.env.example
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
+**/certs/
+**/certificates/
+
+# Docker volumes and runtime data
+**/vw-data/
+**/vw-certs/
+*/forgejo/
+*/gitea/data/
+*/gitea/config/
+
+# Job mirror repositories (synced from GitHub)
+jobs/repos/_mirror/
+
+# Nested git repositories
+omnivore/.git/
+**/.git/
+!.git/
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.swp
+*~
 
 # OS files
 .DS_Store
@@ -24,12 +57,17 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
+*.sublime-*
 
-# Linting temporary files
-.yamllint
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
 
-CLAUDE.md
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
+# Caddy data
+caddy/Caddyfile.autosave

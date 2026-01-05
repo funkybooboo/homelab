@@ -1,0 +1,18 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=nate
+      - N8N_BASIC_AUTH_PASSWORD=yourpassword
+      - DB_TYPE=sqlite
+      - DB_SQLITE_VACUUM_ON_STARTUP=true
+      - GENERIC_TIMEZONE=America/New_York
+      - N8N_DATA_DIR=/home/n8n/data
+      - N8N_SECURE_COOKIE=false
+    volumes:
+      - ./data:/home/n8n/data
+
