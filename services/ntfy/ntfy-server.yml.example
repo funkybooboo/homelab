@@ -1,0 +1,25 @@
+# ntfy server config -- tailnet-only, auth required.
+# Deployed to CT `ntfy` as /etc/ntfy/server.yml.
+# Replace base-url + topic conventions with your own; secrets (user.db contents)
+# are NOT stored here -- they live in /var/lib/ntfy/user.db created via `ntfy user add`.
+
+base-url: "https://ntfy.tail54538d.ts.net"
+listen-http: "127.0.0.1:2586"
+listen-https: ""
+
+# Auth: username+password DB. Add an admin user with:
+#   NTFY_PASSWORD=<pass> ntfy user add --role admin <user>
+# auth-default-access=deny-all means nothing is readable/writable without auth.
+auth-file: "/var/lib/ntfy/user.db"
+auth-default-access: "deny-all"
+
+# Store messages briefly so phone can catch up after reconnect
+cache-file: "/var/lib/ntfy/cache.db"
+behind-proxy: true
+
+# Attachment limits (homelab scale; alerts are tiny text)
+attachment-cache-dir: "/var/lib/ntfy/attachments"
+attachment-total-size-limit: "1G"
+attachment-file-size-limit: "50M"
+
+log-level: "info"

@@ -1,0 +1,29 @@
+# Deployed to CT `ntfy` as /etc/systemd/system/ntfy-slack-bridge.service.
+# Fill the Environment= lines with YOUR values (keep this filled copy OUT of git;
+# this example file is committed only as a template).
+[Unit]
+Description=ntfy Slack-format bridge + reverse proxy
+After=ntfy.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The topic alerts are published to (unguessable random suffix recommended).
+Environment=NTFY_TOPIC=homelab-REPLACE_ME
+# A long-lived ntfy auth token created with `ntfy token add --label bridge <admin-user>`.
+Environment=NTFY_TOKEN=tk_REPLACE_ME
+# The secret URL path TrueNAS POSTs to (the URL itself is the publisher secret,
+# since TrueNAS's Slack alert type has no auth-header field).
+Environment=BRIDGE_PATH=/truenas-REPLACE_ME
+ExecStart=/usr/local/sbin/ntfy-slack-bridge.py
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/ntfy
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

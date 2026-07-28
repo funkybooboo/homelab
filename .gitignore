@@ -1,0 +1,25 @@
+# Secrets -- never commit
+.env
+.env.*
+*.env
+!.env.example
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# Filled-in unit files (the .example templates are tracked; the real ones
+# contain NTFY_TOKEN / BRIDGE_PATH / NTFY_TOPIC secrets)
+ntfy-slack-bridge.service
+
+# Runtime / data
+*.db
+*.sqlite*
+__pycache__/
+*.py[cod]
+*.log
+*.bak
+*.tmp
+*.swp
+.DS_Store
