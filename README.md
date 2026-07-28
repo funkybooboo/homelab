@@ -13,6 +13,8 @@ public internet.
 Docs (`docs/`):
 
 * [`overview.md`](docs/overview.md) -- nodes, tailnet, services, doc map.
+* [`services.md`](docs/services.md) -- every running CT + VM template, with vmid / node / tailnet IP / port / URL / HA / notes.
+* [`nodes.md`](docs/nodes.md) -- per-node detail (hardware role, what runs where, per-node admin commands).
 * [`https.md`](docs/https.md) -- the three TLS cert mechanisms + the MagicDNS
   renewal time bomb + the `accept-dns=false` fix.
 * [`cluster.md`](docs/cluster.md) -- 5-node PVE cluster, HA, the
