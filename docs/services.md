@@ -16,7 +16,7 @@ re-verify with `tailscale status` if you need current values.
 | 101 | alpine-it-tools | pve-thermaltake | 100.99.169.73 | 80 | https://alpine-it-tools.tail54538d.ts.net | yes | 1 | 1 / 256M | pve-shared 1G | Alpine + nginx serving static IT-tools; tiny |
 | 102 | jellyfin | pve-thermaltake | 100.116.144.120 | 8096 | https://jellyfin.tail54538d.ts.net | no | 0 | 2 / 2G | pve-shared 16G | media server; **NVIDIA GPU passthrough** for hw transcode; 5 NFS media mounts (mp0-mp4); onboot:0 + start-jellyfin.service boot-race fix (see [`storage.md`](./storage.md)) |
 | 103 | speedtest-tracker | pve-aspires | 100.94.66.77 | 80 | https://speedtest-tracker.tail54538d.ts.net | yes | 1 | 2 / 2G | pve-shared 4G | Laravel; `APP_URL=https://speedtest-tracker.tail54538d.ts.net` in `/opt/speedtest-tracker/.env` |
-| 104 | freshrss | pve-thermaltake | 100.64.32.24 | 80 | https://freshrss.tail54538d.ts.net | yes | 1 | 2 / 1G | pve-shared 4G | apache2 + postgresql |
+| 104 | freshrss | pve-thermaltake | 100.64.32.24 | 80 | https://freshrss.tail54538d.ts.net | yes | 1 | 2 / 1G | pve-shared 4G | apache2 + postgresql; OPML subscription list in [`services/freshrss/`](../services/freshrss/) |
 | 105 | forgejo-mirror | pve-aspiree15 | 100.92.84.39 | 4321 | https://forgejo-mirror.tail54538d.ts.net | yes | 1 | 2 / 2G | pve-shared 6G | Forgejo instance #2 (mirror); ROOT_URL set to https |
 | 106 | n8n | pve-aspiree15 | 100.66.194.38 | 5678 | https://n8n.tail54538d.ts.net | yes | 1 | 2 / 2G | pve-shared 10G | workflow automation |
 | 107 | forgejo | pve-thermaltake | 100.123.168.15 | 3000 | https://forgejo.tail54538d.ts.net | yes | 1 | 2 / 2G | pve-shared 50G | self-hosted git; `ROOT_URL=https://forgejo.tail54538d.ts.net/`, `SSH_DOMAIN=forgejo.tail54538d.ts.net` in `/etc/forgejo/app.ini` (SSH clone on :22 over tailnet); big disk for repos |
@@ -87,6 +87,9 @@ SMTP relay to a Proton Mail account. No web UI, no tailscale serve. Other CTs (b
 
 ### cronmaster (127)
 Next.js 16.2.6 standalone cron scheduler. **Canonical example of the `INTERNAL_API_URL` bug** -- see [`nextjs-behind-tls-proxy.md`](./nextjs-behind-tls-proxy.md). `/opt/cronmaster/.env` must contain `INTERNAL_API_URL=http://localhost:3000` or login succeeds but every page bounces back to `/login`.
+
+### freshrss (104)
+RSS aggregator. apache2 + postgresql. The feed list (OPML, 214 feeds across 13 categories) lives in [`services/freshrss/`](../services/freshrss/) -- import it into the web UI; FreshRSS has no live-subscribe-from-file mode so it is a manual re-import on change.
 
 ### ntfy (128)
 See [`notifications.md`](./notifications.md) + [`services/ntfy/`](../services/ntfy/) + [`ntfy-flow.md`](./ntfy-flow.md). Only CT with `rootfs` on `local-lvm` (not pve-shared) -> not migration-eligible, not HA-managed. Lives on pve-framework permanently.

@@ -44,6 +44,9 @@ Service configs (`services/`):
 * [`services/truenas-tls/`](services/truenas-tls/) -- `renew-truenas-tls.py`
   weekly TrueNAS cron that re-imports a fresh LE cert into the TrueNAS UI
   cert store.
+* [`services/freshrss/`](services/freshrss/) -- `feeds.opml`, the canonical
+  214-feed developer firehose (languages, devops, security, AI, databases,
+  GitHub releases + trending) imported into the FreshRSS instance on CT 104.
 
 ## Conventions
 
