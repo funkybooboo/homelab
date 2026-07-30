@@ -32,6 +32,10 @@ Docs (`docs/`):
 * [`nextjs-behind-tls-proxy.md`](docs/nextjs-behind-tls-proxy.md) -- the
   cronmaster `INTERNAL_API_URL` bug; reusable gotcha for Next.js behind
   tailscale serve (audit linkwarden + excalidraw).
+* [`ha-recovery.md`](docs/ha-recovery.md) -- clearing an `error` state on
+  a stopped CT after an NFS / host-blip: the `ha-manager set ct:N
+  --state disabled -> pct start -> ha-manager set ct:N --state started`
+  dance, plus the `emergency_ro` rootfs case.
 
 Service configs (`services/`):
 
@@ -47,6 +51,14 @@ Service configs (`services/`):
 * [`services/freshrss/`](services/freshrss/) -- `feeds.opml`, the canonical
   214-feed developer firehose (languages, devops, security, AI, databases,
   GitHub releases + trending) imported into the FreshRSS instance on CT 104.
+* [`services/network/`](services/network/) -- TrueNAS static `.100` + the
+  6 DHCP reservations on the GL-MT2500 (TrueNAS + 5 PVE nodes pinned to
+  their current LAN IPs). Includes `set-reservations.sh` idempotent
+  reproducible script (router has no sftp-server; pipe via ssh stdin).
+* [`services/pve-shared-nfs-remount/`](services/pve-shared-nfs-remount/) --
+  cron + script that auto-remount `pve-shared` + `pve-backups` NFS storages
+  on every PVE node if `pvesm status` shows them inactive. Prevents the
+  CT-stop-then-HA-error cascade at source.
 
 ## Conventions
 

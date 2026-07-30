@@ -1,0 +1,11 @@
+# pve-shared-remount.cron -- /etc/cron.d fragment to run remount every 2 min
+# Install as /etc/cron.d/pve-shared-remount (mode 644, owner root).
+# The script itself must be /usr/local/sbin/pve-shared-remount.sh (mode 755).
+#
+# Every 2 minutes: check pvesm status -> remount stale pve-shared/pve-backups.
+# Silent under normal conditions (no-op when storages active); only logs on
+# remount attempts / errors.
+
+SHELL=/bin/bash
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+*/2 * * * * root /usr/local/sbin/pve-shared-remount.sh >/dev/null 2>&1
