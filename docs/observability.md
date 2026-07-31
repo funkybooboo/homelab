@@ -55,6 +55,90 @@ new per-CT agent is a hand-built, hand-recorded thing.
 
 ---
 
+## What we have vs what I want
+
+Each of your five asks, mapped to the live state (probed 2026-08-30) and the
+gap this proposal closes. "Now" = deployed today; "Want" = target after the
+phases land. Dashboards/alerts/logs columns below all map 1:1 to phases in
+this doc.
+
+### 1. More Grafana dashboards
+
+| | now | want |
+| --- | --- | --- |
+| grafana | 13.1.0 running, CT 123 on pve-framework | (no move) |
+| datasource | 1 Prometheus (uid afrtfru117lz4c, DB-created) | (keep -- already wired) |
+| dashboards | **0** | PVE-cluster-overview, node-host-overview, service-health/uptime, cert-expiry, incident-timeline, HA/corosync-narrative, tailnet-overview, router/WAN, + speedtest (free) = ~9 |
+| alert rules / contact points | 0 / 0 | alertmanager on CT 122 + alertmanager-ntfy bridge -> phone push on every rule |
+| node_exporter (per-host CPU/mem/disk/net) | **none anywhere** | on all 5 PVE hosts + router + truenas |
+
+Gap = the whole dashboards layer is unrendered. The data partly exists (PVE
+metrics already in prometheus); node-level data does not exist at all until
+node_exporter lands (Phase 1a).
+
+### 2. More ntfy notifications
+
+| failure path | now (silent except TrueNAS) | want (phone push) |
+| --- | --- | --- |
+| TrueNAS alerts | **wired** (Slack-type service id 3) | (keep) |
+| a web CT / PVE console / truenas UI goes down | nothing | blackbox 3-probe `up==0` -> ntfy (Phase 1c) |
+| a tailnet device drops > 5m | nothing | tailscale-exporter `last_seen` rule -> ntfy (Phase 3a) |
+| vzdump backup result | mail-to-root (often unset) | PVE notification-target webhook -> ntfy (Phase 3d) |
+| HA state change / CT goes `error` | nothing | PVE notification-target + a ha-manager event tailer -> ntfy (Phase 3d + 1e) |
+| cert renewal fails (`renew-pve-tls.sh` / `renew-truenas-tls.py`) | logs to mail/nowhere | one-line curl to ntfy on non-zero exit (Phase 1e) |
+| pve-shared NFS remount script actually fires | silent log only | curl to ntfy (this IS the event you want to know) (Phase 1e) |
+| disk filling / cert nearing expiry | nothing | prometheus rules (node_exporter fs + blackbox cert-expiry) -> ntfy (Phases 1a/1c) |
+
+Confirmed by cross-host grep: only TrueNAS publishes today -- **zero** other
+publishers on any cron or systemd unit across the 5 PVE nodes.
+
+### 3. Centralized logging
+
+| | now | want |
+| --- | --- | --- |
+| log store | **none** -- each box keeps its own journald | one Loki (CT 130, new, pve-shared disk) |
+| search | `pct exec N -- journalctl` per-CT, host-by-host | grafana Logs panel / LogQL across everything |
+| PVE host journals | accumulating unbounded (framework 1.2G) + NO remote upload | native journald remote-upload to CT 130 |
+| curated CT logs (forgejo/postgres/freshrss/jellyfin/protonmail/bichon/prometheus/ntfy) | local only | promtail inside each -> push to CT 130 |
+| the other ~15 CTs | local only | left local (add when an incident proves it) |
+| TrueNAS logs | local | remote-syslog to CT 130 (no agent on RO base) |
+| router (BusyBox logd ring buffer) | local ring only | busybox syslog -R forward to CT 130 |
+| retention | unlimited (grows forever) | 30-day Loki compactor, self-trimming |
+| incident board | none (grep during outage) | incident-timeline + HA/corosync-narrative + audit boards |
+
+### 4. Tailnet stats
+
+| | now | want |
+| --- | --- | --- |
+| per-device up/down, last_seen, DERP, subnet routes, exit-node flags | tailscale CLI / web only | tailscale-exporter on CT 122 -> prometheus -> tailnet-overview board |
+| tailnet rx/tx (coarse aggregate) | nothing exported | per-device counters from the exporter |
+| alert when an always-up node drops | nothing | `last_seen > 5m` rule -> ntfy (Phase 3a) |
+| new secret needed | n/a | one read-only tailnet-scoped OAuth key (stored like the other ntfy secrets, not in repo) |
+
+### 5. Router involved?
+
+**Yes**, worth it -- it's the WAN gateway + LAN DHCP/cert-pin + a tailnet
+subnet-router/exit + a WireGuard client, unobservably central.
+
+| | now | want |
+| --- | --- | --- |
+| router metrics | none | node_exporter (static arm64, June-2025 OpenWrt build can run it) OR snmpd fallback |
+| WAN throughput / uplink saturation | nothing | the only honest view of uplink saturation (router/WAN board) |
+| wifi client count, LAN per-host bytes | nothing | textfile collector + board |
+| WireGuard (`wgclient`) tunnel up / last handshake | nothing | surfaced on the router board |
+| router logs | BusyBox `logd` ring buffer only | busybox syslog -R forward to CT 130 (no agent) |
+| WAN-down alert | nothing | rule -> ntfy (Phase 3b) |
+
+### TL;DR of the gap
+
+What exists: prometheus scrapes + a grafana datasource + the ntfy phone
+pipeline (one publisher). What's missing: **everything that renders it
+human-visible and everything that turns failures into phone pushes** --
+zero dashboards, zero alert rules, no host-level metrics, no logs aggregate,
+one notification path out of the ~8 you'd want.
+
+---
+
 ## Design principles (so the stack stays small)
 
 1. **Co-locate, do not sprawl.** Reuse the existing prometheus CT 122 as the

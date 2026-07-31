@@ -37,9 +37,9 @@ Docs (`docs/`):
   --state disabled -> pct start -> ha-manager set ct:N --state started`
   dance, plus the `emergency_ro` rootfs case.
 * [`observability.md`](docs/observability.md) -- PROPOSAL (not yet built):
-  metrics + alerts + centralized logging + tailnet stats plan, grounded in a
-  live-probed snapshot of the current (half-built) monitoring stack. 3 phases;
-  includes open questions before any build.
+  metrics + alerts + centralized logging + tailnet stats plan. Opens with a
+  "what we have vs what I want" gap matrix (verified live), then 3 phases;
+  ends with open questions to settle before any build.
 
 Service configs (`services/`):
 
