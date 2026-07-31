@@ -1,0 +1,895 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: pve-cluster
+  namespace: default
+  annotations:
+    grafana.app/folder: nodes
+spec:
+  title: PVE Cluster
+  description: PVE cluster + per-node overview from pve-exporter (quorum, subscription, guests running, per-node CPU/memory history, storage-pool usage). The node-level companion to the node_exporter-backed
+    Nodes Overview board. Split from the legacy "Proxmox via Prometheus" board.
+  tags:
+  - pve
+  - cluster
+  - nodes
+  timezone: browser
+  schemaVersion: 42
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
+  editable: true
+  graphTooltip: 1
+  templating:
+    list:
+    - allowCustomValue: true
+      current:
+        text: ''
+        value: ''
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      definition: label_values(pve_node_info, instance)
+      hide: 0
+      includeAll: false
+      multi: false
+      name: instance
+      options: []
+      query:
+        query: label_values(pve_node_info, instance)
+        refId: Prometheus-instance-Variable-Query
+      refresh: 2
+      regex: ''
+      skipUrlSync: false
+      sort: 1
+      type: query
+  panels:
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Proxmox VE version running on the selected exporter.
+    fieldConfig:
+      defaults:
+        color:
+          fixedColor: text
+          mode: fixed
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+    gridPos:
+      x: 0
+      y: 0
+      w: 4
+      h: 4
+      i: '30'
+    id: 30
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      textMode: name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_version_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: PVE {{version}}
+      range: false
+      refId: A
+    title: PVE version
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Whether the Proxmox cluster has quorum (pve_cluster_info).
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        mappings:
+        - options:
+            '0':
+              color: red
+              index: 1
+              text: No quorum
+            '1':
+              color: green
+              index: 0
+              text: Quorum OK
+          type: value
+        thresholds:
+          mode: absolute
+          steps:
+          - color: red
+            value: null
+          - color: green
+            value: 1
+    gridPos:
+      x: 4
+      y: 0
+      w: 4
+      h: 4
+      i: '31'
+    id: 31
+    options:
+      colorMode: background_solid
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_cluster_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: '{{version}}'
+      range: false
+      refId: A
+    title: Cluster quorum
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Number of nodes in the Proxmox cluster.
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+    gridPos:
+      x: 8
+      y: 0
+      w: 4
+      h: 4
+      i: '32'
+    id: 32
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value_and_name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: count(pve_node_info{instance="$instance"})
+      format: table
+      instant: true
+      legendFormat: nodes
+      range: false
+      refId: A
+    title: Cluster nodes
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Running VMs and LXC containers across the cluster.
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+    gridPos:
+      x: 12
+      y: 0
+      w: 4
+      h: 4
+      i: '33'
+    id: 33
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value_and_name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: count((pve_up{instance="$instance"} == 1) * on(id, instance) group_left() pve_guest_info{instance="$instance",template="0"})
+      format: table
+      instant: true
+      legendFormat: running
+      range: false
+      refId: A
+    title: Guests running
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Guests that are not covered by any backup job.
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+          - color: orange
+            value: 1
+    gridPos:
+      x: 16
+      y: 0
+      w: 4
+      h: 4
+      i: '34'
+    id: 34
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value_and_name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_not_backed_up_total{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: not backed up
+      range: false
+      refId: A
+    title: Guests not backed up
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Proxmox VE subscription status from the exporter's perspective.
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        mappings:
+        - options:
+            '0':
+              color: orange
+              index: 1
+              text: Community
+            '1':
+              color: green
+              index: 0
+              text: Active
+          type: value
+        thresholds:
+          mode: absolute
+          steps:
+          - color: orange
+            value: null
+          - color: green
+            value: 1
+    gridPos:
+      x: 20
+      y: 0
+      w: 4
+      h: 4
+      i: '35'
+    id: 35
+    options:
+      colorMode: background_solid
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_subscription_status{instance="$instance",status="active"}
+      format: table
+      instant: true
+      legendFormat: subscription
+      range: false
+      refId: A
+    title: Subscription
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        decimals: 2
+        mappings:
+        - options:
+            match: 'null'
+            result:
+              text: N/A
+          type: special
+        max: 1
+        min: 0
+        thresholds:
+          mode: absolute
+          steps:
+          - color: '#299c46'
+            value: null
+          - color: rgba(237, 129, 40, 0.89)
+            value: 0.7
+          - color: '#d44a3a'
+            value: 0.9
+        unit: percentunit
+    gridPos:
+      x: 0
+      y: 12
+      w: 6
+      h: 6
+      i: '7'
+    id: 7
+    maxDataPoints: 100
+    options:
+      orientation: horizontal
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      showThresholdLabels: false
+      showThresholdMarkers: true
+      text: {}
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      expr: pve_cpu_usage_ratio{instance="$instance"} / pve_cpu_usage_limit{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: time_series
+      intervalFactor: 1
+      legendFormat: '{{name}}'
+      refId: A
+    title: Current CPU
+    type: gauge
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        decimals: 0
+        mappings:
+        - options:
+            match: 'null'
+            result:
+              text: N/A
+          type: special
+        max: 1
+        min: 0
+        thresholds:
+          mode: absolute
+          steps:
+          - color: '#299c46'
+            value: null
+          - color: rgba(237, 129, 40, 0.89)
+            value: 0.6
+          - color: '#d44a3a'
+            value: 0.8
+        unit: percentunit
+    gridPos:
+      x: 12
+      y: 12
+      w: 6
+      h: 6
+      i: '8'
+    id: 8
+    maxDataPoints: 100
+    options:
+      orientation: horizontal
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      showThresholdLabels: false
+      showThresholdMarkers: true
+      text: {}
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      expr: pve_memory_usage_bytes{instance="$instance"} / pve_memory_size_bytes{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: time_series
+      intervalFactor: 1
+      legendFormat: '{{name}}'
+      refId: A
+    title: Current memory
+    type: gauge
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        custom:
+          axisCenteredZero: false
+          axisColorMode: text
+          axisLabel: ''
+          axisPlacement: auto
+          barAlignment: 0
+          drawStyle: line
+          fillOpacity: 0
+          gradientMode: scheme
+          hideFrom:
+            legend: false
+            tooltip: false
+            viz: false
+          lineInterpolation: linear
+          lineWidth: 2
+          pointSize: 5
+          scaleDistribution:
+            type: linear
+          showPoints: auto
+          spanNulls: false
+          stacking:
+            group: A
+            mode: none
+          thresholdsStyle:
+            mode: area
+        min: 0
+        thresholds:
+          mode: percentage
+          steps:
+          - color: green
+            value: null
+          - color: orange
+            value: 70
+          - color: red
+            value: 90
+    gridPos:
+      x: 0
+      y: 4
+      w: 12
+      h: 8
+      i: '23'
+    id: 23
+    options:
+      legend:
+        calcs: []
+        displayMode: list
+        placement: bottom
+        showLegend: true
+      tooltip:
+        mode: single
+        sort: none
+    pluginVersion: ''
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_cpu_usage_ratio{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      legendFormat: '{{name}}'
+      range: true
+      refId: usage
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_cpu_usage_limit{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: '{{name}} limit'
+      range: false
+      refId: total
+    title: CPU history
+    transformations:
+    - id: configFromData
+      options:
+        configRefId: total
+        mappings:
+        - fieldName: Value
+          handlerKey: max
+    type: timeseries
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        custom:
+          axisCenteredZero: false
+          axisColorMode: text
+          axisLabel: ''
+          axisPlacement: auto
+          barAlignment: 0
+          drawStyle: line
+          fillOpacity: 0
+          gradientMode: scheme
+          hideFrom:
+            legend: false
+            tooltip: false
+            viz: false
+          lineInterpolation: linear
+          lineWidth: 2
+          pointSize: 5
+          scaleDistribution:
+            type: linear
+          showPoints: auto
+          spanNulls: false
+          stacking:
+            group: A
+            mode: none
+          thresholdsStyle:
+            mode: area
+        min: 0
+        thresholds:
+          mode: percentage
+          steps:
+          - color: green
+            value: null
+          - color: orange
+            value: 60
+          - color: red
+            value: 90
+        unit: bytes
+    gridPos:
+      x: 12
+      y: 4
+      w: 12
+      h: 8
+      i: '24'
+    id: 24
+    options:
+      legend:
+        calcs: []
+        displayMode: list
+        placement: bottom
+        showLegend: true
+      tooltip:
+        mode: single
+        sort: none
+    pluginVersion: ''
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      expr: pve_memory_usage_bytes{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      legendFormat: '{{name}} used'
+      range: true
+      refId: usage
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_memory_size_bytes{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: '{{name}} total'
+      range: false
+      refId: total
+    title: Memory history
+    transformations:
+    - id: configFromData
+      options:
+        configRefId: total
+        mappings:
+        - fieldName: Value
+          handlerKey: max
+    type: timeseries
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Allocated CPU cores limit per Proxmox node.
+    fieldConfig:
+      defaults:
+        color:
+          fixedColor: text
+          mode: fixed
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+          - color: red
+            value: 80
+      overrides:
+      - matcher:
+          id: byName
+          options: Value
+        properties:
+        - id: displayName
+          value: CPUs
+    gridPos:
+      x: 6
+      y: 12
+      w: 6
+      h: 6
+      i: '22'
+    id: 22
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      textMode: value_and_name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_cpu_usage_limit{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: '{{name}}'
+      range: false
+      refId: A
+    title: Node CPUs
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    description: Memory used / total per Proxmox node, in bytes.
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        min: 0
+        thresholds:
+          mode: percentage
+          steps:
+          - color: green
+            value: null
+          - color: orange
+            value: 60
+          - color: red
+            value: 80
+        unit: bytes
+      overrides:
+      - matcher:
+          id: byName
+          options: 'Value #used'
+        properties:
+        - id: displayName
+          value: used
+      - matcher:
+          id: byName
+          options: 'Value #total'
+        properties:
+        - id: displayName
+          value: total
+        - id: color
+          value:
+            fixedColor: text
+            mode: fixed
+    gridPos:
+      x: 18
+      y: 12
+      w: 6
+      h: 6
+      i: '20'
+    id: 20
+    options:
+      colorMode: value
+      graphMode: none
+      justifyMode: auto
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      text:
+        titleSize: 20
+      textMode: value_and_name
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_memory_usage_bytes{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: Used {{name}}
+      range: false
+      refId: used
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_memory_size_bytes{instance="$instance"} * on(id) group_left(name) pve_node_info{instance="$instance"}
+      format: table
+      instant: true
+      legendFormat: Total {{name}}
+      range: false
+      refId: total
+    title: Node memory
+    transformations:
+    - id: configFromData
+      options:
+        configRefId: total_for_max
+        mappings:
+        - fieldName: 'Value #total_for_max'
+          handlerKey: max
+    type: stat
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: thresholds
+        decimals: 1
+        max: 1
+        min: 0
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+          - color: yellow
+            value: 0.75
+          - color: red
+            value: 0.9
+        unit: percentunit
+    gridPos:
+      x: 0
+      y: 18
+      w: 12
+      h: 6
+      i: '11'
+    id: 11
+    options:
+      orientation: auto
+      reduceOptions:
+        calcs:
+        - last
+        fields: ''
+        values: false
+      showThresholdLabels: false
+      showThresholdMarkers: true
+      text: {}
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      exemplar: true
+      expr: pve_disk_usage_bytes{instance="$instance", id=~"storage/.+"} / pve_disk_size_bytes{instance="$instance", id=~"storage/.+"} * on (id, instance) group_left(storage) pve_storage_info{instance="$instance"}
+      format: time_series
+      instant: true
+      interval: ''
+      intervalFactor: 1
+      legendFormat: '{{storage}}'
+      refId: A
+    title: Storage usage
+    type: gauge
+  - datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        color:
+          mode: palette-classic
+        min: 0
+        thresholds:
+          mode: absolute
+          steps:
+          - color: green
+            value: null
+          - color: red
+            value: 80
+        unit: bytes
+    gridPos:
+      x: 12
+      y: 18
+      w: 12
+      h: 6
+      i: '15'
+    id: 15
+    options:
+      displayMode: gradient
+      minVizHeight: 10
+      minVizWidth: 0
+      orientation: vertical
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: true
+      showUnfilled: false
+      text:
+        titleSize: 20
+    pluginVersion: 9.3.2
+    targets:
+    - datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      editorMode: code
+      exemplar: false
+      expr: pve_disk_size_bytes{instance="$instance", id=~"storage/.+"} * on (id, instance) group_left(storage) pve_storage_info{instance="$instance"}
+      format: table
+      instant: true
+      interval: ''
+      intervalFactor: 1
+      legendFormat: '{{storage}}'
+      range: false
+      refId: storage size
+    title: Space allocation
+    transformations:
+    - id: organize
+      options:
+        excludeByName:
+          Time: false
+          id: true
+          instance: true
+          job: true
+        indexByName: {}
+        renameByName: {}
+    type: bargauge
