@@ -1,0 +1,177 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: service-health
+  namespace: default
+  annotations:
+    # The pre-existing 'Network' folder (created by speedtest board import)
+    # has metadata.name = ffsg5e6s35iioc (auto-UID), not a slug.
+    grafana.app/folder: ffsg5e6s35iioc
+spec:
+  title: Service Health
+  description: External health of every tailnet HTTPS endpoint + PVE console via blackbox_exporter. Green/red status grid, probe latency history, TLS cert-days-remaining countdown. 25 web CTs + 5 PVE consoles + TrueNAS + prometheus = 27 endpoints. BlackboxEndpointDown alert fires on 3 consecutive probe failures (90s) once Phase 1d wires alertmanager.
+  tags: [blackbox, uptime, network]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
+  editable: true
+  graphTooltip: 1
+  templating:
+    list:
+    - name: app
+      type: query
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      query:
+        query: 'label_values(probe_success{job="blackbox_http"}, app)'
+        refId: Prometheus-app-Variable-Query
+      definition: 'label_values(probe_success{job="blackbox_http"}, app)'
+      multi: true
+      includeAll: true
+      allValue: '.*'
+      current: {selected: true, text: All, value: "$__all"}
+      refresh: 2
+      sort: 1
+      hide: 0
+      allowCustomValue: false
+  panels:
+  - id: 1
+    title: Endpoints up / total
+    type: stat
+    gridPos: {h: 4, w: 5, x: 0, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red,    value: null}
+          - {color: orange, value: 1}
+          - {color: green,  value: 27}
+        mappings:
+        - options:
+            "27": {text: "27 / 27 up", color: green, index: 0}
+          type: value
+    options:
+      colorMode: background_solid
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - {refId: A, expr: 'count(probe_success{job="blackbox_http",app=~"$app"} == 1)', instant: true, range: false, datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 2
+    title: Endpoints down
+    type: stat
+    gridPos: {h: 4, w: 5, x: 5, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: green,  value: null}
+          - {color: yellow, value: 1}
+          - {color: red,    value: 1}
+        noValue: "0"
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - {refId: A, expr: 'count(probe_success{job="blackbox_http",app=~"$app"} == 0)', instant: true, range: false, datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 3
+    title: Minimum cert days remaining
+    type: stat
+    gridPos: {h: 4, w: 7, x: 10, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: d
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red,     value: null}
+          - {color: yellow,  value: 14}
+          - {color: green,   value: 30}
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+      description: "Lowest number of days until any probed TLS cert expires. Yellow < 14d (renew window), red < 7d."
+    targets:
+    - {refId: A, expr: 'min(blackbox:cert_days_remaining{app=~"$app"})', instant: true, range: false, datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 4
+    title: Endpoint status grid (green=up, red=down)
+    type: stat
+    gridPos: {h: 10, w: 24, x: 0, y: 4}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        mappings:
+        - options:
+            "0": {text: DOWN, color: red,   index: 1}
+            "1": {text: UP,   color: green, index: 0}
+          type: value
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red,   value: null}
+          - {color: green, value: 1}
+    options:
+      colorMode: background_solid
+      graphMode: none
+      orientation: horizontal
+      justifyMode: center
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+      statStyle: lg
+      showUnfilled: false
+    targets:
+    - {refId: A, expr: 'probe_success{job="blackbox_http",app=~"$app"}', instant: true, range: false, legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 5
+    title: Probe latency per endpoint (seconds)
+    type: timeseries
+    gridPos: {h: 9, w: 24, x: 0, y: 14}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: s
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: right, showLegend: true, calcs: [lastNotNull, max], width: 320}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: 'probe_duration_seconds{job="blackbox_http",app=~"$app"}', legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 6
+    title: TLS cert days remaining per endpoint
+    type: bargauge
+    gridPos: {h: 10, w: 24, x: 0, y: 23}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: d
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red,     value: null}
+          - {color: orange,  value: 7}
+          - {color: yellow,  value: 14}
+          - {color: green,   value: 30}
+        max: 90
+    options:
+      orientation: horizontal
+      displayMode: gradient
+      showUnfilled: true
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+    targets:
+    - {refId: A, expr: 'blackbox:cert_days_remaining{app=~"$app"}', instant: true, range: false, legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
