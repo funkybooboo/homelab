@@ -12,8 +12,9 @@ alerting:
           # - alertmanager:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+# See services/observability/prometheus-rules.yml in the homelab repo.
 rule_files:
-  # - "first_rules.yml"
+  - "rules.yml"
   # - "second_rules.yml"
 
 scrape_configs:
@@ -59,3 +60,59 @@ scrape_configs:
         - raspberrypi.tail54538d.ts.net:9100
         labels:
           app: node-exporter
+
+  # Phase 1c -- external HTTPS/HTTP health via blackbox_exporter on localhost:9115.
+  # Targets over the tailnet (the same ~26 endpoints you would curl by hand).
+  # 25 use the tailscale serve https front; prometheus itself is probed on its
+  # native http :9090 health endpoint (serve :443 would double-count).
+  # Module http_2xx follows redirects, forces IPv4, and emits
+  # probe_ssl_earliest_cert_expiry for the https targets (absent for http).
+  - job_name: blackbox_http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        # web CTs (tailscale serve https)
+        - https://alpine-it-tools.tail54538d.ts.net
+        - https://jellyfin.tail54538d.ts.net
+        - https://speedtest-tracker.tail54538d.ts.net
+        - https://freshrss.tail54538d.ts.net
+        - https://forgejo-mirror.tail54538d.ts.net
+        - https://n8n.tail54538d.ts.net
+        - https://forgejo.tail54538d.ts.net
+        - https://vaultwarden.tail54538d.ts.net
+        - https://adminer.tail54538d.ts.net
+        - https://linkwarden.tail54538d.ts.net
+        - https://opengist.tail54538d.ts.net
+        - https://jupyternotebook.tail54538d.ts.net
+        - https://searxng.tail54538d.ts.net
+        - https://excalidraw.tail54538d.ts.net
+        - https://drawio.tail54538d.ts.net
+        - https://grafana.tail54538d.ts.net
+        - https://prometheus-pve-exporter.tail54538d.ts.net
+        - https://bichon.tail54538d.ts.net
+        - https://cronmaster.tail54538d.ts.net
+        - https://ntfy.tail54538d.ts.net
+        # TrueNAS UI + 5 PVE consoles
+        - https://truenas.tail54538d.ts.net
+        - https://pve-thermaltake.tail54538d.ts.net:8006
+        - https://pve-aspiree15.tail54538d.ts.net:8006
+        - https://pve-aspires.tail54538d.ts.net:8006
+        - https://pve-framework.tail54538d.ts.net:8006
+        - https://raspberrypi.tail54538d.ts.net:8006
+        labels:
+          app: web
+      - targets:
+        # prometheus has no :443 serve in practice; its operator-standard
+        # healthcheck is the native http :9090 /-/healthy endpoint.
+        - http://prometheus.tail54538d.ts.net:9090/-/healthy
+        labels:
+          app: prometheus
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115

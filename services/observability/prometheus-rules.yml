@@ -1,0 +1,46 @@
+# Prometheus recording + alerting rules for the homelab observability stack.
+# Reloaded by prometheus when this file changes (rule_files entry in
+# prometheus.yml). Currently NO alertmanager is wired (Phase 1d), so firing
+# alerts surface only in the prometheus /api/v1/rules + /api/v1/alerts API.
+# Once Phase 1d lands alertmanager on CT 122, these alerts reach ntfy.
+
+groups:
+  - name: blackbox_http.rules
+    interval: 15s
+    rules:
+      # Recording rule: per-target human-facing probe status (1 = up).
+      # Lets dashboards + future alerts use a single clean metric.
+      - record: blackbox:probe_up
+        expr: probe_success{job="blackbox_http"}
+
+      # Recording rule: SSL cert days-to-expiry for every https target.
+      # Absent for http targets (probe_ssl_earliest_cert_expiry is only
+      # emitted when the prober negotiates TLS).
+      - record: blackbox:cert_days_remaining
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox_http"} - time()) / 86400
+
+      # First alert (Phase 1c): endpoint down for 3 consecutive probes (~90s).
+      # The 3-probe gate kills the tailnet IP-rotation flakiness that has
+      # burnt every ad-hoc probe check so far -- one blip is not an alert.
+      # Severity info until alertmanager is wired (1d); then it pushes to
+      # ntfy via the alertmanager-ntfy bridge.
+      - alert: BlackboxEndpointDown
+        expr: probe_success{job="blackbox_http"} == 0
+        for: 90s
+        labels:
+          severity: critical
+          category: uptime
+        annotations:
+          summary: "Endpoint down: {{ $labels.instance }}"
+          description: "blackbox_exporter has failed to probe {{ $labels.instance }} for 90s (3 consecutive 15s probes). Check the service or its tailscale serve front."
+
+      # Alert: cert expiring within 14 days -- the manual renew window.
+      - alert: BlackboxCertExpiringSoon
+        expr: blackbox:cert_days_remaining < 14
+        for: 1h
+        labels:
+          severity: warning
+          category: certs
+        annotations:
+          summary: "Cert expiring soon: {{ $labels.instance }}"
+          description: "TLS cert for {{ $labels.instance }} expires in {{ $value | humanize }} days (< 14 day renew window)."
