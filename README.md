@@ -36,6 +36,10 @@ Docs (`docs/`):
   a stopped CT after an NFS / host-blip: the `ha-manager set ct:N
   --state disabled -> pct start -> ha-manager set ct:N --state started`
   dance, plus the `emergency_ro` rootfs case.
+* [`observability.md`](docs/observability.md) -- PROPOSAL (not yet built):
+  metrics + alerts + centralized logging + tailnet stats plan, grounded in a
+  live-probed snapshot of the current (half-built) monitoring stack. 3 phases;
+  includes open questions before any build.
 
 Service configs (`services/`):
 
