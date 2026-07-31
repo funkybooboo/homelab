@@ -1,0 +1,7 @@
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: router
+  namespace: default
+spec:
+  title: Router

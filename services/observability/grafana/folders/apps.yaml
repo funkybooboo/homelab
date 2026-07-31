@@ -1,0 +1,7 @@
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: apps
+  namespace: default
+spec:
+  title: Apps
