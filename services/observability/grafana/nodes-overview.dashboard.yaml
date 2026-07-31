@@ -1,0 +1,191 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: nodes-overview
+  namespace: default
+  annotations:
+    grafana.app/folder: nodes
+spec:
+  title: Nodes Overview
+  description: Per-host OS-level health for the 5 PVE nodes (node_exporter :9100). CPU/mem/disk/net/load + failed systemd units. Filterable by $instance.
+  tags: [nodes, node-exporter]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
+  editable: true
+  graphTooltip: 1
+  templating:
+    list:
+    - name: instance
+      type: query
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+      query:
+        query: label_values(node_uname_info, instance)
+        refId: Prometheus-instance-Variable-Query
+      definition: label_values(node_uname_info, instance)
+      multi: true
+      includeAll: true
+      allValue: ".*"
+      current:
+        selected: true
+        text: All hosts
+        value: "$__all"
+      refresh: 2
+      sort: 1
+      hide: 0
+      allowCustomValue: false
+  panels:
+  - id: 1
+    title: Nodes up / total
+    type: stat
+    gridPos: {h: 4, w: 4, x: 0, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red,    value: null}
+          - {color: green,  value: 5}
+        mappings:
+        - options:
+            "5": {text: "5 / 5 up", color: green, index: 0}
+          type: value
+        unit: none
+    options:
+      colorMode: background_solid
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - {refId: A, expr: 'count(up{job="node",instance=~"$instance"} == 1)', instant: true, range: false, legendFormat: "", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 2
+    title: Failed systemd units (selected hosts)
+    type: stat
+    gridPos: {h: 4, w: 5, x: 4, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: green, value: null}
+          - {color: yellow, value: 1}
+          - {color: red,   value: 5}
+        unit: none
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - {refId: A, expr: 'sum(count by(instance) (node_systemd_unit_state{state="failed",instance=~"$instance"} == 1))', instant: true, range: false, datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 3
+    title: CPU usage % per host (non-idle)
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 4}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+          pointSize: 5
+        color: {mode: palette-classic-by-name}
+      overrides: []
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: '100 * (1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle",instance=~"$instance"}[5m])))', legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 4
+    title: Memory used % per host
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 12}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: '100 * (1 - node_memory_MemAvailable_bytes{instance=~"$instance"} / node_memory_MemTotal_bytes{instance=~"$instance"})', legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 5
+    title: Root filesystem used % per host
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 20}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: '100 * (1 - node_filesystem_avail_bytes{mountpoint="/",instance=~"$instance",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",instance=~"$instance",fstype!~"tmpfs|overlay"})', legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 6
+    title: Network receive bytes/s per host (real NICs)
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 28}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: 'sum by(instance) (rate(node_network_receive_bytes_total{device!~"lo|veth.*|docker.*|br-.*|tailscale.*|wg.*",instance=~"$instance"}[5m]))', legendFormat: "{{instance}} rx", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 7
+    title: Load1 per host
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 0, y: 36}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: short
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - {refId: A, expr: 'node_load1{instance=~"$instance"}', legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
+  - id: 8
+    title: Failed systemd units per host
+    type: bargauge
+    gridPos: {h: 8, w: 12, x: 12, y: 36}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: none
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: green,  value: null}
+          - {color: yellow, value: 1}
+          - {color: orange, value: 5}
+          - {color: red,    value: 10}
+    options:
+      orientation: horizontal
+      displayMode: gradient
+      showUnfilled: true
+    targets:
+    - {refId: A, expr: 'count by(instance) (node_systemd_unit_state{state="failed",instance=~"$instance"} == 1)', instant: true, range: false, legendFormat: "{{instance}}", datasource: {type: prometheus, uid: afrtfru117lz4c}}
