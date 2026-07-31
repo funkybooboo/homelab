@@ -20,14 +20,19 @@ The monitoring stack exists but is half-built:
   no Alertmanager** (still the commented-out defaults).
 * **Grafana (CT 123, pve-framework)** is Grafana **13.1.0** with a working
   Prometheus datasource (`prometheus`, uid `afrtfru117lz4c`, created in the
-  grafana DB not a provisioning file). **3 dashboards** across 6 folders
-  (NAS, Nodes, Services, Router, Network, Apps; see Phase 1b below), **0
-  alert rules, 0 contact points.** `unified_alerting` is structurally
-  configured but unused.
+  grafana DB not a provisioning file). **4 dashboards** across 6 folders
+  (NAS, Nodes, Services, Router, Network, Apps): Speedtest Tracker
+  (Network, pre-existing), Nodes Overview (Nodes, node_exporter host OS),
+  Services Overview (Services, per-CT from pve-exporter), PVE Cluster
+  (Nodes, per-node/cluster from pve-exporter). The legacy 'Proxmox via
+  Prometheus' board was fully split into the latter two and deleted.
+  **0 alert rules, 0 contact points.** `unified_alerting` is configured
+  but unused.
 * **node_exporter deployed** to all 5 PVE hosts (`:9100`) with the extra
   `systemd`/`mountstats`/`processes` collectors; scraped by prometheus as
   `job=node` (TSDB series 7,144 -> 31,020, all 13 targets UP). Host-level
-  CPU/mem/disk/net now captured alongside the PVE-aggregate view.
+  CPU/mem/disk/net now captured alongside the PVE-aggregate view, and one
+  Grafana board renders it (Nodes Overview).
 * **ntfy (CT 128, pve-framework)** is wired to **exactly one source: TrueNAS
   alerts** (one Slack-type `alertservice`, id 3). Every other failure path
   (vzdump, cert-renewal crons, the NFS-remount script, HA state changes, a
