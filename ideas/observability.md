@@ -35,7 +35,7 @@ land. Dashboards/alerts/logs columns below all map 1:1 to phases below.
 | --- | --- | --- |
 | grafana | 13.1.0 running, CT 123 on pve-framework | (no move) |
 | datasource | 1 Prometheus (uid afrtfru117lz4c, DB-created) | (keep -- already wired) |
-| dashboards | **0** | PVE-cluster-overview, node-host-overview, service-health/uptime, cert-expiry, incident-timeline, HA/corosync-narrative, tailnet-overview, router/WAN, + speedtest (free) = ~9 |
+| dashboards | **3** (Nodes Overview built in Phase 1b; Speedtest Tracker; legacy 'Proxmox via Prometheus') | PVE-cluster-overview (Services/CTs split), service-health/uptime, cert-expiry, incident-timeline, HA/corosync-narrative, tailnet-overview, router/WAN, + speedtest (already) = ~9 |
 | alert rules / contact points | 0 / 0 | alertmanager on CT 122 + alertmanager-ntfy bridge -> phone push on every rule |
 | node_exporter (per-host CPU/mem/disk/net) | **none anywhere** | on all 5 PVE hosts + router + truenas |
 

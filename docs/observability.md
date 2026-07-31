@@ -20,10 +20,14 @@ The monitoring stack exists but is half-built:
   no Alertmanager** (still the commented-out defaults).
 * **Grafana (CT 123, pve-framework)** is Grafana **13.1.0** with a working
   Prometheus datasource (`prometheus`, uid `afrtfru117lz4c`, created in the
-  grafana DB not a provisioning file). **0 dashboards, 0 alert rules, 0
-  contact points.** `unified_alerting` is structurally configured but unused.
-* **No node_exporter anywhere** -- no host-level (per-box CPU/RAM/disk/net)
-  metrics; only the PVE-aggregate view.
+  grafana DB not a provisioning file). **3 dashboards** across 6 folders
+  (NAS, Nodes, Services, Router, Network, Apps; see Phase 1b below), **0
+  alert rules, 0 contact points.** `unified_alerting` is structurally
+  configured but unused.
+* **node_exporter deployed** to all 5 PVE hosts (`:9100`) with the extra
+  `systemd`/`mountstats`/`processes` collectors; scraped by prometheus as
+  `job=node` (TSDB series 7,144 -> 31,020, all 13 targets UP). Host-level
+  CPU/mem/disk/net now captured alongside the PVE-aggregate view.
 * **ntfy (CT 128, pve-framework)** is wired to **exactly one source: TrueNAS
   alerts** (one Slack-type `alertservice`, id 3). Every other failure path
   (vzdump, cert-renewal crons, the NFS-remount script, HA state changes, a
