@@ -36,10 +36,11 @@ Docs (`docs/`):
   a stopped CT after an NFS / host-blip: the `ha-manager set ct:N
   --state disabled -> pct start -> ha-manager set ct:N --state started`
   dance, plus the `emergency_ro` rootfs case.
-* [`observability.md`](docs/observability.md) -- PROPOSAL (not yet built):
-  metrics + alerts + centralized logging + tailnet stats plan. Opens with a
-  "what we have vs what I want" gap matrix (verified live), then 3 phases;
-  ends with open questions to settle before any build.
+* [`observability.md`](docs/observability.md) -- the monitoring/alerting/
+  logging stack as deployed today (probed live 2026-08-30): prometheus scrape
+  config, grafana datasource state, ntfy publishers, journald-remote status,
+  per-CT agent audit, router/truenas/dotfiles state. The build plan for what
+  to add on top of this is in `ideas/observability.md`.
 
 Service configs (`services/`):
 
@@ -63,6 +64,19 @@ Service configs (`services/`):
   cron + script that auto-remount `pve-shared` + `pve-backups` NFS storages
   on every PVE node if `pvesm status` shows them inactive. Prevents the
   CT-stop-then-HA-error cascade at source.
+
+Ideas (`ideas/`) -- PROPOSALS, not deployed:
+
+* [`ideas/observability.md`](ideas/observability.md) -- observability build
+  plan: a "what we have vs what I want" gap matrix, then 3 phases
+  (node_exporter + grafana dashboards + alertmanager->ntfy; Loki centralized
+  logging; tailscale-exporter + router + app exporters). Ends with open
+  questions before any build. Grounded in the current-state doc above.
+* [`ideas/proxmox-iac.md`](ideas/proxmox-iac.md) -- Proxmox
+  Infrastructure-as-Code for this specific cluster (the deploy gap the
+  observability plan + every PVE-side config rubs against).
+* [`ideas/llama-rpc-inference.md`](ideas/llama-rpc-inference.md) --
+  distributed LLM inference with llama.cpp RPC on the cluster.
 
 ## Conventions
 
