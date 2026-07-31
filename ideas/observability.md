@@ -35,13 +35,15 @@ land. Dashboards/alerts/logs columns below all map 1:1 to phases below.
 | --- | --- | --- |
 | grafana | 13.1.0 running, CT 123 on pve-framework | (no move) |
 | datasource | 1 Prometheus (uid afrtfru117lz4c, DB-created) | (keep -- already wired) |
-| dashboards | **4** (Nodes Overview + Services Overview + PVE Cluster built in Phase 1b; Speedtest Tracker pre-existing. Legacy 'Proxmox via Prometheus' split into the latter two and deleted.) | service-health/uptime, cert-expiry, incident-timeline, HA/corosync-narrative, tailnet-overview, router/WAN = ~6 more |
-| alert rules / contact points | 0 / 0 | alertmanager on CT 122 + alertmanager-ntfy bridge -> phone push on every rule |
-| node_exporter (per-host CPU/mem/disk/net) | **none anywhere** | on all 5 PVE hosts + router + truenas |
+| dashboards | **5** (Nodes Overview + Services Overview + PVE Cluster + Service Health built in Phase 1b/1c; Speedtest Tracker pre-existing. Legacy 'Proxmox via Prometheus' split into the Services + PVE Cluster boards and deleted.) | incident-timeline, HA/corosync-narrative, tailnet-overview, router/WAN = ~4 more |
+| alert rules | **4** loaded in prometheus (2 recording, 2 alerting -- BlackboxEndpointDown 90s gate + BlackboxCertExpiringSoon<14d); 0 firing | More rules per Phase 3 (WAN-down, tailscale last_seen, disk fill) |
+| contact points | 0 / 0 | alertmanager on CT 122 + alertmanager-ntfy bridge -> phone push on every rule |
+| node_exporter (per-host CPU/mem/disk/net) | **on all 5 PVE hosts** (v1.12.1 with systemd/mountstats/processes collectors) | + router + truenas (Phase 3) |
+| blackbox_exporter (uptime + cert expiry) | **on CT 122** probing 27 tailnet HTTPS/http endpoints | + WAN probe (Phase 3b) |
 
-Gap = the whole dashboards layer is unrendered. The data partly exists (PVE
-metrics already in prometheus); node-level data does not exist at all until
-node_exporter lands (Phase 1a).
+Gap heading into Phase 1c+ : data partly exists (PVE metrics + node-level
+metrics now in prometheus); what's missing is the alerting transport
+(alertmanager -> ntfy, Phase 1d) + the silent-cron phone pushes (Phase 1e).
 
 ### 2. More ntfy notifications
 

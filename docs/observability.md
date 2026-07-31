@@ -16,23 +16,37 @@ The monitoring stack exists but is half-built:
 
 * **Prometheus (CT 122, pve-thermaltake)** scrapes 3 jobs / 7 targets, all
   UP. ~7,144 series, all from the PVE aggregate view (`pve_ha_state`,
-  `pve_lock_state`, `pve_disk_*`, `pve_memory_*`, `pve_cpu_*`). **No rules,
-  no Alertmanager** (still the commented-out defaults).
+  `pve_lock_state`, `pve_disk_*`, `pve_memory_*`, `pve_cpu_*`). **4 alert
+  rules** loaded (2 recording + 2 alerting) from
+  `/etc/prometheus/rules.yml` (Phase 1c) -- `blackbox:probe_up`,
+  `blackbox:cert_days_remaining`, `BlackboxEndpointDown` (probe 3x90s gate),
+  `BlackboxCertExpiringSoon` (<14d). **No Alertmanager yet** (the
+  `alerting.alertmanagers.targets` line stays commented until Phase 1d),
+  so firing alerts surface in `/api/v1/alerts` only; nothing pushes yet.
 * **Grafana (CT 123, pve-framework)** is Grafana **13.1.0** with a working
   Prometheus datasource (`prometheus`, uid `afrtfru117lz4c`, created in the
-  grafana DB not a provisioning file). **4 dashboards** across 6 folders
+  grafana DB not a provisioning file). **5 dashboards** across 6 folders
   (NAS, Nodes, Services, Router, Network, Apps): Speedtest Tracker
   (Network, pre-existing), Nodes Overview (Nodes, node_exporter host OS),
   Services Overview (Services, per-CT from pve-exporter), PVE Cluster
-  (Nodes, per-node/cluster from pve-exporter). The legacy 'Proxmox via
-  Prometheus' board was fully split into the latter two and deleted.
-  **0 alert rules, 0 contact points.** `unified_alerting` is configured
-  but unused.
+  (Nodes, per-node/cluster from pve-exporter), Service Health (Network,
+  blackbox uptime grid + cert-expiry). The legacy 'Proxmox via Prometheus'
+  board was fully split into the latter two and deleted.
+  `unified_alerting` is configured; Grafana-managed alerting still unused
+  (alerts come from prometheus, routed via the upcoming alertmanager,
+  Phase 1d).
 * **node_exporter deployed** to all 5 PVE hosts (`:9100`) with the extra
   `systemd`/`mountstats`/`processes` collectors; scraped by prometheus as
-  `job=node` (TSDB series 7,144 -> 31,020, all 13 targets UP). Host-level
+  `job=node` (TSDB series 7,144 -> 31,971, all 39 targets UP). Host-level
   CPU/mem/disk/net now captured alongside the PVE-aggregate view, and one
   Grafana board renders it (Nodes Overview).
+* **blackbox_exporter 0.26.0** on CT 122 (`:9115`) probes every tailnet
+  HTTPS endpoint + 5 PVE `:8006` consoles + TrueNAS UI + prometheus HTTP
+  `:9090` (27 targets total). `job=blackbox_http` in prometheus; the
+  Service Health board renders the green/red grid + latency + TLS
+  cert-expiry countdown. Two alert rules fire on 3-probe (90s) failure
+  or cert <14d -- but see above, alertmanager not yet wired so they push
+  nowhere.
 * **ntfy (CT 128, pve-framework)** is wired to **exactly one source: TrueNAS
   alerts** (one Slack-type `alertservice`, id 3). Every other failure path
   (vzdump, cert-renewal crons, the NFS-remount script, HA state changes, a
