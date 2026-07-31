@@ -15,6 +15,10 @@ Environment=NTFY_TOKEN=tk_REPLACE_ME
 # The secret URL path TrueNAS POSTs to (the URL itself is the publisher secret,
 # since TrueNAS's Slack alert type has no auth-header field).
 Environment=BRIDGE_PATH=/truenas-REPLACE_ME
+# The secret URL path Prometheus Alertmanager webhook_configs POSTs to.
+# Optional -- if unset, the alertmanager route is disabled. Choose an
+# unguessable suffix (the URL is the only auth, same model as BRIDGE_PATH).
+Environment=AM_PATH=/alertmanager-REPLACE_ME
 ExecStart=/usr/local/sbin/ntfy-slack-bridge.py
 Restart=on-failure
 RestartSec=5

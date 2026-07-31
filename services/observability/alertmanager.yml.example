@@ -1,0 +1,34 @@
+# Prometheus Alertmanager config for the homelab observability stack.
+# Deployed to CT 122 as /etc/prometheus/alertmanager.yml.
+#
+# All alerts route to the single ntfy phone-pipeline: the Alertmanager
+# webhook receiver POSTs to the AM route on the ntfy-slack-bridge
+# (services/ntfy/ntfy-slack-bridge.py), which turns each alert into an
+# ntfy push on the homelab-<topic> topic the phone subscribes to.
+#
+# The AM_PATH URL suffix is the publisher secret (unguessable random hex;
+# same model as the TrueNAS BRIDGE_PATH). Replace AM_PATH_SECRET below
+# before deploying -- this repo copy is a TEMPLATE, the live file on
+# CT 122 has the real secret.
+#
+# alertmanager-ntfy is co-located with prometheus on CT 122 (port 9093);
+# prometheus points at it via alerting.alertmanagers in prometheus.yml.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: ntfy
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: ntfy
+    webhook_configs:
+      # ntfy-slack-bridge AM webhook route over the tailnet (tailscale serve
+      # https front on CT 128). send_resolved so the phone sees a green
+      # "RESOLVED" follow-up when an alert clears.
+      - url: 'https://ntfy.tail54538d.ts.net/alertmanager-AM_PATH_SECRET'
+        send_resolved: true
