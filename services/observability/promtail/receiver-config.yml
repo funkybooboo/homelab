@@ -1,0 +1,61 @@
+# Promtail config for the receive side on CT 130 (loki tailnet host).
+# Deployed to /etc/promtail/config.yml on loki.tail54538d.ts.net.
+#
+# CT 130's promtail only ingests syslog pushed FROM TrueNAS + the GL-MT2500
+# router (the only two hosts without an on-box promtail). The PVE hosts +
+# curated CTs each run their own promtail that reads journald + files and
+# pushes to http://loki.tail54538d.ts.net:3100 directly -- this config
+# forwards only what arrives via syslog to the local Loki.
+#
+# Syslog listener binds :1514 (high port -- the unprivileged CT cannot
+# bind the privileged <1024 range without the CAP_NET_BIND_SERVICE cap;
+# TrueNAS + router forward to loki.tail54538d.ts.net:1514).
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://127.0.0.1:3100/loki/api/v1/push
+
+scrape_configs:
+  # TrueNAS remote-syslog (System > Advanced > Syslog server).
+  # TrueNAS sends RFC5424-ish; the listener parses both 5424 and 3164.
+  - job_name: truenas_syslog
+    syslog:
+      listen_address: 0.0.0.0:1514
+      listen_protocol: tcp
+      use_incoming_timestamp: true
+      labels:
+        source: truenas
+        job: truenas-syslog
+    relabel_configs:
+      - source_labels: ["__syslog_message_severity"]
+        target_label: severity
+      - source_labels: ["__syslog_message_facility"]
+        target_label: facility
+      - source_labels: ["__syslog_message_app_name"]
+        target_label: app
+
+  # Router (GL-MT2500) busybox syslogd -R loki.tail54538d.ts.net:1514.
+  # Same listener can't take two bind lines; use a second listener on :1515
+  # so router + truenas stay distinguishable on the receive side.
+  - job_name: router_syslog
+    syslog:
+      listen_address: 0.0.0.0:1515
+      listen_protocol: tcp
+      use_incoming_timestamp: true
+      labels:
+        source: router
+        job: router-syslog
+    relabel_configs:
+      - source_labels: ["__syslog_message_severity"]
+        target_label: severity
+      - source_labels: ["__syslog_message_facility"]
+        target_label: facility
+      - source_labels: ["__syslog_message_app_name"]
+        target_label: app
