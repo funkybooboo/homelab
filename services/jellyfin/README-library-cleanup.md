@@ -181,3 +181,43 @@ TV:     `/mnt/volume1/media/tvshows/`
 Music:  `/mnt/volume1/media/music/`
 Audiobooks: `/mnt/volume1/media/audiobooks/`
 Books:  `/mnt/volume1/media/books/`
+## Permission fix: grant jellyfin write access via NFS mapall=root (2026-08-01)
+
+Per user request, instead of disabling SaveLocalMetadata, I granted write
+access. NFS root-squash default on movies/tvshows shares blocked jellyfin
+from writing sidecar .nfo / -poster.jpg / .trickplay/ next to movie files
+on the NAS.
+
+TrueNAS cli (idempotent; reversible by setting mapall_user/mapall_group to ""):
+
+    midclt call sharing.nfs.update 6 '{"mapall_user":"root","mapall_group":"root"}'
+    midclt call sharing.nfs.update 7 '{"mapall_user":"root","mapall_group":"root"}'
+
+Effect: all NFS access from any client maps to root on the server (all_squash
++ anonuid=0 + anongid=0). jellyfin (UID 107) and root-inside-CT-102 can now
+read+write the media dirs and create/refresh sidecars on the NFS. Matches
+the pattern already used by /volume1/pve/backups share.
+
+Security note: any NFS client with access to the media shares can now write
+as root. Fine on a tailnet-only single-tenant homelab; if you ever widen NFS
+access, replace with a dedicated media user (mapall_user=a real non-root
+user with chown -R to that user) first.
+
+Diagnosis detail (the path to the fix):
+- /proc/fs/nfsd/exports showed movies/tvshows as `*(sec=sys,rw,no_subtree_check)`
+  with implicit root_squash (DEFAULT when not explicit).
+- chgrp -R 110 + chmod g+w on /volume1/media/movies did NOT fix it: NFSv4 idmapper
+  on the client shows every file as nobody:nogroup (uid 65534/gid 65534),
+  so the GROUP-write check failed (process credential GID 110 didn't match
+  the idmapper-translated GID that the access-check saw).
+- chown -R 107:110 didn't fix it either (same idmapper issue).
+- chmod 1777 confirmed jellyfin could write as "other" -> the GROUP/owner
+  match is what's broken.
+- The robust solution: mapall_user=root on those shares = no per-credential
+  matching needed; everything maps to root on server.
+
+Verified after fix:
+- jellyfin can `touch /mnt/media/media/movies/.test` and `mkdir .../.trickplay`.
+- root inside CT 102 can write (no more "Permission denied" over NFS).
+- Fresh scan logs show successful "Creating trickplay files for .../Looney
+  Tunes Golden Collection/..." -- no unauthorized-access errors on new files.
