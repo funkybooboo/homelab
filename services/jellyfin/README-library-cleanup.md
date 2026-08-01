@@ -125,7 +125,17 @@ recreation, the Movies library option `AutomaticallyAddToCollection: true` and
    restructure as a TV show). The 2 still-uncertain rows (JUSTICE_LEAGUE
    and WORK_AND_THE_GLORY_3 subtitles) were renamed with best-guess names
    + flagged -- user can correct via Jellyfin "Identify" UI.
-   Jellyfin library scan not yet re-triggered post-rename -- pending.
+   Jellyfin library scan POST-RENAME: triggered and running, ~51% at last check.
+   Re-scraping all 156 renamed movies (fetching TMDB posters + chapter images).
+   SLOW because SaveLocalMetadata=true tries to write .nfo + -poster.jpg next
+   to each renamed file on the NFS, which fails (NFS root-squash blocks the
+   jellyfin user from writing to root:root movie files); JF falls back to
+   /var/lib/jellyfin/metadata/library/... so metadata IS saved, but each file
+   emits error stack traces and adds latency. ~30min total estimated. Library
+   populates progressively in the Jellyfin UI as the scan proceeds.
+   FOLLOWUP: once scan completes, revoke the temp ApiKeys row (pi-scan token)
+   and disable Movies-library SaveLocalMetadata to silence the NFS-write
+   errors on future scans. Both deferred to avoid aborting the in-progress scan.
 
 ## NFS media dir info (TrueNAS)
 
