@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785553203940996'
+  resourceVersion: '1785553757107016'
 spec:
   title: Logs -- Proxmox HA Narrative
   description: PVE HA / corosync / HA-manager / LRM + storage (pve-shared NFS, pvesm) journal lines -- the narrative of a failover.
@@ -62,7 +62,7 @@ spec:
       uid: loki
     targets:
     - refId: A
-      expr: '{job="systemd-journal",host=~"pve-.*"} |=~ "(?i)(nfs|pvesm|pve-shared|storage|mount).*"'
+      expr: '{job="systemd-journal",host=~"pve-.*"} |~ "nfs|pvesm|pve-shared|storage|mount"'
       queryType: instant
       datasource:
         type: loki
