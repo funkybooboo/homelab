@@ -1,0 +1,18 @@
+[Unit]
+Description=promtail syslog receiver + Loki pusher (CT 130)
+After=loki.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/promtail -config.file=/etc/promtail/config.yml
+Restart=on-failure
+RestartSec=5
+# promtail binds :1514 (truenas) + :1515 (router) + :9080 (its own metrics)
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

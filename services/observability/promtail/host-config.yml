@@ -1,0 +1,50 @@
+# Promtail config for homelab hosts/CTs reading local journald, pushing to
+# the central Loki at http://loki.tail54538d.ts.net:3100.
+#
+# Deployed to /etc/promtail/config.yml on each host/CT running promtail.
+# The `hostname` label is set per-host (template keeps it generic; the
+# install script substitutes $(hostname)).
+#
+# journald is the single source on systemd hosts/CTs -- no file tailing,
+# which avoids needing to know each app's log path.
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://loki.tail54538d.ts.net:3100/loki/api/v1/push
+
+scrape_configs:
+  # Read the local journald. Every journal entry becomes a Loki log line
+  # with labels: job, host (the hostname), unit (the systemd unit), and
+  # priority (journald PRIORITY field, where 0=emerg..7=debug).
+  - job_name: journal
+    journal:
+      path: /var/log/journal
+      max_age: 24h
+      labels:
+        job: systemd-journal
+    relabel_configs:
+      - source_labels: ["__journal___hostname"]
+        target_label: host
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: unit
+      - source_labels: ["__journal_priority_keyword"]
+        target_label: severity
+      # Drop debug-level lines (journald PRIORITY=7) -- they balloon Loki
+      # storage on busy services (forgejo, jellyfin, nginx).
+      - source_labels: ["__journal_priority"]
+        regex: "7"
+        action: drop
+    pipeline_stages:
+      # Mark journald PRIORITY 0-2 as "error", 3-4 as "warning", 5-6 as "info".
+      - template:
+          source: level
+          template: '{{ if le .Value "2" }}error{{ else if le .Value "4" }}warning{{ else }}info{{ end }}'
+      - labels:
+          level:
