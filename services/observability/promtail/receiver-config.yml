@@ -41,21 +41,28 @@ scrape_configs:
       - source_labels: ["__syslog_message_app_name"]
         target_label: app
 
-  # Router (GL-MT2500) busybox syslogd -R loki.tail54538d.ts.net:1514.
-  # Same listener can't take two bind lines; use a second listener on :1515
-  # so router + truenas stay distinguishable on the receive side.
+  # Router (GL-MT2500) busybox logread -r loki.tail54538d.ts.net:1515.
+  # Uses UDP (fire-and-for-get) -- the tailscale mesh between the router
+  # and CT 130 is flaky; TCP syslog fails under packet loss.
+  # BusyBox logread sends RFC3164 (BSD syslog -- <pri>Mmm DD HH:MM:SS host prog[pid]: msg)
+  # NOT RFC5424. promtail's syslog scraper only supports RFC5424 on UDP;
+  # so we use the generic UDP scraper + a regex pipeline to parse manually.
   - job_name: router_syslog
-    syslog:
+    udp:
       listen_address: 0.0.0.0:1515
-      listen_protocol: tcp
-      use_incoming_timestamp: true
-      labels:
-        source: router
-        job: router-syslog
-    relabel_configs:
-      - source_labels: ["__syslog_message_severity"]
-        target_label: severity
-      - source_labels: ["__syslog_message_facility"]
-        target_label: facility
-      - source_labels: ["__syslog_message_app_name"]
-        target_label: app
+      use_incoming_timestamp: false
+    labels:
+      source: router
+      job: router-syslog
+    pipeline_stages:
+      # RFC3164: <PRI>Mmm DD HH:MM:SS HOSTNAME TAG[PID]: MSG
+      # PRI = facility*8 + severity
+      - regex:
+          expression: '^<(?P<pri>\d+)>(?P<timestamp>\w{3}\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>\S+)\s+(?P<app>\S+?)(?:\[(?P<pid>\d+)\])?:\s*(?P<msg>.*)$'
+      - timestamp:
+          source: timestamp
+          format: 'Jan 02 15:04:05'
+          location: UTC
+      - labels:
+          host:
+          app:
