@@ -166,6 +166,13 @@ each 2-3GB file takes minutes) AND competes with the in-flight Movies
 scan for disk (load avg ~10). Running in background; ~25min to finish.
 Move log on TrueNAS: /mnt/volume1/media/.jellyfin-looneytunes-move-log-20260731.txt
 Script: services/jellyfin/looneytunes-move.sh
+Committed log: services/jellyfin/looneytunes-move-log-20260731.txt
+
+STATUS 2026-07-31: COMPLETED. All 23 .m4v discs + 23 .nfo + 14 poster.jpg
+sidecars moved into the 6-season tree under
+/tvshows/Looney Tunes Golden Collection/. Verified: 0 Looney files remain
+in /movies/. A full library scan was triggered to pick up the new Shows
+tree and drop the now-orphaned Movies rows for the moved discs.
 
 ## NFS media dir info (TrueNAS)
 

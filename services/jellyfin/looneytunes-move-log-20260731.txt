@@ -1,0 +1,93 @@
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D1.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D1.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D1.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D1.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D1-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D1-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D1.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D1.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D2.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D2.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D2.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D2.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D2-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D2-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D2.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D2.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D3.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D3.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D3.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D3.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D3-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D3-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D3.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D3.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D4.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D4.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D4.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D4.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D4-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 02 - Looney Tunes Golden V4/LOONEY_TUNES_GOLDEN_V4_D4-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D4.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V4_D4.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D1.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D1.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D1.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D1.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D1-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D1-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D1.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D1.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D2.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D2.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D2.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D2.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D2-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D2-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D2.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D2.m4v': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D3.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D3.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D3.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D3-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3-poster.jpg : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D3-poster.jpg': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D4.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D4.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D4-poster.jpg
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_V5_D4.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 03 - Looney Tunes Golden V5/LOONEY_TUNES_GOLDEN_V5_D4.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_1.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_1.nfo
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1.nfo': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_1-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_1-poster.jpg : 
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_2.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_2.nfo
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_2.nfo': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_3.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_3.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_3.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_3.m4v': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_3.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_3.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_3.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_3.nfo
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_4.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_4.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_4.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_4.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_4.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_4.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_4.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_4.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_6.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_6.nfo
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_6.nfo': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_7.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.nfo': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_7.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_7.nfo
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_8.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_8.m4v
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_8.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISC_8.nfo
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_8.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISC_8.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISK_5.m4v
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5.m4v': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISK_5.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISK_5-poster.jpg
+OK /mnt/volume1/media/movies/LOONEY_TUNES_GOLDEN_DISK_5.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 04 - Looney Tunes Golden/LOONEY_TUNES_GOLDEN_DISK_5.nfo
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC1.m4v
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.m4v': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.nfo': No such file or directory
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC1.nfo
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC1-poster.jpg
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1-poster.jpg : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC1-poster.jpg': No such file or directory
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC2.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC2.m4v
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC2.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC2.m4v': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC2.nfo : mv: cannot create regular file '/mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC2.nfo': File exists
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC2.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC2.nfo
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC3.m4v
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC3.nfo
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC3.nfo': No such file or directory
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.m4v : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.m4v': No such file or directory
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC4.m4v
+OK /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 05 - Looney Tunes Gold Vol 6/LOONEYTUNES_GOLD_VOLUME6_DISC4.nfo
+FAIL /mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.nfo : mv: cannot remove '/mnt/volume1/media/movies/LOONEYTUNES_GOLD_VOLUME6_DISC4.nfo': No such file or directory
+FAIL /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.m4v : mv: cannot remove '/mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.m4v': No such file or directory
+OK /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.m4v -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 06 - Porky and the Pigs/Porky_and_the_Pigs_NA_D3.m4v
+OK /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.nfo -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 06 - Porky and the Pigs/Porky_and_the_Pigs_NA_D3.nfo
+FAIL /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.nfo : mv: cannot remove '/mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3.nfo': No such file or directory
+OK /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3-poster.jpg -> /mnt/volume1/media/tvshows/Looney Tunes Golden Collection/Season 06 - Porky and the Pigs/Porky_and_the_Pigs_NA_D3-poster.jpg
+FAIL /mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3-poster.jpg : mv: cannot remove '/mnt/volume1/media/movies/Porky_and_the_Pigs_NA_D3-poster.jpg': No such file or directory
