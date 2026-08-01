@@ -221,3 +221,27 @@ Verified after fix:
 - root inside CT 102 can write (no more "Permission denied" over NFS).
 - Fresh scan logs show successful "Creating trickplay files for .../Looney
   Tunes Golden Collection/..." -- no unauthorized-access errors on new files.
+
+## Final polish 2026-08-01: Looney Tunes series title + episode numbering + CT 102 onboot
+
+1. Series title (in Jellyfin DB -- API /Items/{Id} POST didn't work on JF
+   10.11.11, so edited BaseItems.Name directly while jellyfin stopped):
+   "Looney Tunes Golden Collection Volume 1" -> "Looney Tunes Golden Collection".
+   Script: services/jellyfin/looney-series-rename.py.
+
+2. Episode numbering -- each .m4v was renamed to
+   "Looney Tunes Golden Collection S0X E0Y - <original>.m4v" inside the
+   existing season dirs. Jellyfin picked up the S0X E0Y pattern and
+   auto-numbered episodes: 23 episodes total across 6 seasons (S01 has 2,
+   S02 has 4, S03 has 4, S04 has 8, S05 has 4, S06 has 1).
+   Script: services/jellyfin/looneytunes-rename-episodes.sh.
+
+3. CT 102 onboot: 0 -> onboot: 1 in /etc/pve/lxc/102.conf. Now Jellyfin
+   auto-starts on pve-thermaltake boot; binding /dev/nvidia-uvm via the
+   boot-time nvidia-uvm-devnodes.service systemd unit (already enabled)
+   ensures the GPU nodes exist before jellyfin reads them.
+
+Final verified state (API):
+  series: 3 (Friends, bigbangtheory, Looney Tunes Golden Collection)
+  Looney Tunes Golden Collection: 6 seasons, 23 episodes (auto-numbered S01E01..S06E01).
+  ApiKeys empty (temp pi-final revoked).
