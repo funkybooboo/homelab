@@ -1,0 +1,50 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: logs-pve-ha-narrative
+  namespace: default
+  annotations:
+    grafana.app/folder: ""
+spec:
+  title: "Logs -- PVE HA Narrative"
+  description: "PVE HA / corosync / HA-manager / pve-ha-lrm + storage (pve-shared NFS, pvesm) journal lines across the 5 PVE hosts -- the narrative of a failover that pure metrics can't give you. (This is the 2026-07-30 pve-framework watchdog story, which would have shown the corosync/storage-thrash in one place instead of grepping 5 nodes.) Backed by Loki."
+  tags: [logs, loki, pve, ha, corosync]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 1m
+  time: {from: now-6h, to: now}
+  editable: true
+  templating: {list: []}
+  panels:
+  - id: 1
+    title: "corosync + pve-ha-crm + pve-ha-lrm lines (all 5 PVE nodes)"
+    type: logs
+    gridPos: {h: 12, w: 24, x: 0, y: 0}
+    datasource: {type: loki, uid: loki}
+    targets:
+    - refId: A
+      expr: '{job="systemd-journal",host=~"pve-.*|raspberrypi",unit=~"corosync.service|pve-ha-crm.service|pve-ha-lrm.service|pvestatd.service"}'
+      queryType: instant
+      datasource: {type: loki, uid: loki}
+    options:
+      showTime: true
+      showLabels: true
+      wrapLogMessage: true
+      dedupStrategy: none
+      sortOrder: "Descending"
+  - id: 2
+    title: "pve-shared nfs / pvesm storage thrash lines"
+    type: logs
+    gridPos: {h: 12, w: 24, x: 0, y: 12}
+    datasource: {type: loki, uid: loki}
+    targets:
+    - refId: A
+      expr: '{job="systemd-journal",host=~"pve-.*"} |=~ "(?i)(nfs|pvesm|pve-shared|storage|mount).*"'
+      queryType: instant
+      datasource: {type: loki, uid: loki}
+    options:
+      showTime: true
+      showLabels: true
+      wrapLogMessage: true
+      dedupStrategy: none
+      sortOrder: "Descending"

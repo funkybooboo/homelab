@@ -1,0 +1,63 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: logs-ssh-sudo-audit
+  namespace: default
+  annotations:
+    grafana.app/folder: ""
+spec:
+  title: "Logs -- SSH and sudo Audit"
+  description: "Successful SSH logins + sudo invocations + failed authentications across every host -- the security audit tail. Backed by Loki."
+  tags: [logs, loki, audit, ssh, sudo]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 1m
+  time: {from: now-24h, to: now}
+  editable: true
+  templating: {list: []}
+  panels:
+  - id: 1
+    title: "Successful SSH logins (Accepted)"
+    type: logs
+    gridPos: {h: 8, w: 24, x: 0, y: 0}
+    datasource: {type: loki, uid: loki}
+    targets:
+    - refId: A
+      expr: '{job="systemd-journal"} |= "Accepted" |=~ "(publickey|password|keyboard-interactive)"'
+      queryType: instant
+      datasource: {type: loki, uid: loki}
+    options:
+      showTime: true
+      showLabels: true
+      dedupStrategy: none
+      sortOrder: "Descending"
+  - id: 2
+    title: "Failed SSH authentications (Failed + Invalid)"
+    type: logs
+    gridPos: {h: 8, w: 24, x: 0, y: 8}
+    datasource: {type: loki, uid: loki}
+    targets:
+    - refId: A
+      expr: '{job="systemd-journal"} |=~ "(?i)(Failed |Invalid user|authentication failure for)"'
+      queryType: instant
+      datasource: {type: loki, uid: loki}
+    options:
+      showTime: true
+      showLabels: true
+      dedupStrategy: none
+      sortOrder: "Descending"
+  - id: 3
+    title: "sudo invocations (sudo: + pam_unix(sudo for)"
+    type: logs
+    gridPos: {h: 8, w: 24, x: 0, y: 16}
+    datasource: {type: loki, uid: loki}
+    targets:
+    - refId: A
+      expr: '{job="systemd-journal"} |=~ "(?i)(sudo:|pam_unix.sudo|COMMAND=)"'
+      queryType: instant
+      datasource: {type: loki, uid: loki}
+    options:
+      showTime: true
+      showLabels: true
+      dedupStrategy: none
+      sortOrder: "Descending"

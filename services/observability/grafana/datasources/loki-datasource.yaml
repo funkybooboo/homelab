@@ -1,0 +1,13 @@
+apiVersion: loki.datasource.grafana.app/v0alpha1
+kind: DataSource
+metadata:
+  name: loki
+spec:
+  type: loki
+  title: loki
+  access: proxy
+  url: https://loki.tail54538d.ts.net
+  jsonData:
+    maxLines: 1000
+    tlsAuthWithCACert: false
+    tlsSkipVerify: false
