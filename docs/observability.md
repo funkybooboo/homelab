@@ -25,8 +25,9 @@ The monitoring stack exists but is half-built:
   so firing alerts surface in `/api/v1/alerts` only; nothing pushes yet.
 * **Grafana (CT 123, pve-framework)** is Grafana **13.1.0** with a working
   Prometheus datasource (`prometheus`, uid `afrtfru117lz4c`, created in the
-  grafana DB not a provisioning file). **5 dashboards** across 6 folders
-  (NAS, Nodes, Services, Router, Network, Apps): Speedtest Tracker
+  grafana DB not a provisioning file). **5 dashboards** across 3 folders
+  (Nodes, Services, Network -- only folders that actually contain boards;
+  empty folder names are not kept): Speedtest Tracker
   (Network, pre-existing), Nodes Overview (Nodes, node_exporter host OS),
   Services Overview (Services, per-CT from pve-exporter), PVE Cluster
   (Nodes, per-node/cluster from pve-exporter), Service Health (Network,
