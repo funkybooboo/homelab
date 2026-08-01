@@ -1,0 +1,191 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: app-forgejo
+  namespace: default
+  annotations:
+    grafana.app/folder: ""
+spec:
+  title: "App -- Forgejo"
+  description: "Forgejo (gitea) self-hosted git: repository/user/issue counts, organizations, stars, HTTP activity. Scraped from forgejo.tail54538d.ts.net/metrics (job=app_metrics, app=forgejo)."
+  tags: [app, forgejo, git]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 30s
+  time: {from: now-6h, to: now}
+  editable: true
+  graphTooltip: 1
+  templating: {list: []}
+  panels:
+  - id: 1
+    title: "Repositories"
+    type: stat
+    gridPos: {h: 5, w: 6, x: 0, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: fixed, fixedColor: blue}
+        unit: short
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - refId: A
+      expr: 'gitea_repositories'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 2
+    title: "Users"
+    type: stat
+    gridPos: {h: 5, w: 6, x: 6, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults: {color: {mode: fixed, fixedColor: blue}, unit: short}
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - refId: A
+      expr: 'gitea_users'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 3
+    title: "Issues open"
+    type: stat
+    gridPos: {h: 5, w: 6, x: 12, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: fixed, fixedColor: green}
+        unit: short
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - refId: A
+      expr: 'gitea_issues_open'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 4
+    title: "Issues closed"
+    type: stat
+    gridPos: {h: 5, w: 6, x: 18, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults: {color: {mode: fixed, fixedColor: purple}, unit: short}
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - refId: A
+      expr: 'gitea_issues_closed'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 5
+    title: "Organizations + stars + watches + forks"
+    type: bargauge
+    gridPos: {h: 8, w: 24, x: 0, y: 5}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults: {unit: short, color: {mode: palette-classic-by-name}}
+    options:
+      orientation: horizontal
+      displayMode: gradient
+      showUnfilled: true
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+    targets:
+    - refId: A
+      expr: 'gitea_organizations'
+      instant: true
+      range: false
+      legendFormat: "orgs"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: B
+      expr: 'gitea_stars'
+      instant: true
+      range: false
+      legendFormat: "stars"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: C
+      expr: 'gitea_watches'
+      instant: true
+      range: false
+      legendFormat: "watches"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: D
+      expr: 'gitea_mirrors'
+      instant: true
+      range: false
+      legendFormat: "mirrors"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 6
+    title: "Accesses + milestones + public keys"
+    type: bargauge
+    gridPos: {h: 8, w: 24, x: 0, y: 13}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults: {unit: short, color: {mode: palette-classic-by-name}}
+    options:
+      orientation: horizontal
+      displayMode: gradient
+      showUnfilled: true
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+    targets:
+    - refId: A
+      expr: 'gitea_accesses'
+      instant: true
+      range: false
+      legendFormat: "accesses"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: B
+      expr: 'gitea_milestones'
+      instant: true
+      range: false
+      legendFormat: "milestones"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: C
+      expr: 'gitea_publickeys'
+      instant: true
+      range: false
+      legendFormat: "publickeys"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: D
+      expr: 'gitea_teams'
+      instant: true
+      range: false
+      legendFormat: "teams"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 7
+    title: "Build info"
+    type: stat
+    gridPos: {h: 4, w: 24, x: 0, y: 21}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: fixed, fixedColor: text}
+        mappings: []
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "version", values: true}
+      textMode: name
+    targets:
+    - refId: A
+      expr: 'gitea_build_info'
+      instant: true
+      range: false
+      legendFormat: "{{version}}"
+      format: table
+      datasource: {type: prometheus, uid: afrtfru117lz4c}

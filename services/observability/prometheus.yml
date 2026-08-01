@@ -121,3 +121,20 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: localhost:9115
+
+  # App-native /metrics endpoints (Grafana, Forgejo) scraped over the
+  # tailscale serve https front. Each target's instance label = the URL.
+  - job_name: app_metrics
+    metrics_path: /metrics
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    static_configs:
+      - targets:
+        - grafana.tail54538d.ts.net:443
+        labels:
+          app: grafana
+      - targets:
+        - forgejo.tail54538d.ts.net:443
+        labels:
+          app: forgejo
