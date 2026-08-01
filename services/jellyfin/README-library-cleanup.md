@@ -120,22 +120,52 @@ recreation, the Movies library option `AutomaticallyAddToCollection: true` and
    Execution log: [rename-execution-log-20260731.txt](rename-execution-log-20260731.txt).
    Recovery: TrueNAS ZFS snapshot `volume1/media/movies@auto-2026-07-31_00-00`
    (pre-rename) + the rename log itself (each line: `old -> new`).
-   The 23 Looney Tunes / Golden Collection multi-episode discs were left
-   as-is (SKIP) pending a separate decision (leave / `(Disc N)` suffix /
-   restructure as a TV show). The 2 still-uncertain rows (JUSTICE_LEAGUE
+   The 23 Looney Tunes / Golden Collection multi-episode discs -- moved
+   out of /movies/ into a TV-show tree on 2026-07-31 (see "Looney Tunes
+   restructure" section below). The 2 still-uncertain rows (JUSTICE_LEAGUE
    and WORK_AND_THE_GLORY_3 subtitles) were renamed with best-guess names
    + flagged -- user can correct via Jellyfin "Identify" UI.
-   Jellyfin library scan POST-RENAME: triggered and running, ~51% at last check.
-   Re-scraping all 156 renamed movies (fetching TMDB posters + chapter images).
-   SLOW because SaveLocalMetadata=true tries to write .nfo + -poster.jpg next
-   to each renamed file on the NFS, which fails (NFS root-squash blocks the
-   jellyfin user from writing to root:root movie files); JF falls back to
-   /var/lib/jellyfin/metadata/library/... so metadata IS saved, but each file
-   emits error stack traces and adds latency. ~30min total estimated. Library
-   populates progressively in the Jellyfin UI as the scan proceeds.
-   FOLLOWUP: once scan completes, revoke the temp ApiKeys row (pi-scan token)
-   and disable Movies-library SaveLocalMetadata to silence the NFS-write
-   errors on future scans. Both deferred to avoid aborting the in-progress scan.
+
+   Jellyfin library scan POST-RENAME: triggered, running. Re-scraping all
+   156 renamed movies (TMDB posters + chapter images). SLOW for two real
+   reasons: (a) the on-disk Movies options.xml now has SaveLocalMetadata=false
+   + SaveTrickplayWithMedia=false but the LIVE Jellyfin LibraryOptions still
+   report MetadataSavers=['Nfo'] + SaveSubtitlesWithMedia=true -- the DB is
+   the source of truth and my POST to /Library/VirtualFolders/LibraryOptions
+   returns HTTP 400 on JF 10.11.11. User will flip the toggles via web UI:
+   Dashboard -> Libraries -> Movies (and Shows) -> Library settings ->
+   uncheck 'Save artwork into media folders', 'Save metadata into media
+   folders', 'Save trickplay images next to media files', and uncheck NFO
+   under Metadata savers -> Save. (UI path sticks reliably.) Metadata
+   still saved correctly meanwhile -- JF falls back to
+   /var/lib/jellyfin/metadata/library/. (b) /volume1/media/movies dir is
+   root:root 0755 so jellyfin (auth as nobody over sec=sys NFS) cannot
+   create ANY new file in it -- not a root-squash thing; an ownership+
+   mode thing. Sidecars next to the 23 Looney Tunes discs were written
+   2026-07-12 by an OLD jellyfin run as GID=netdata; current JF can't
+   refresh them. The UI-toggle fix is the durable answer.
+
+## Looney Tunes restructure -> TV show (2026-07-31, IN PROGRESS)
+
+Moving the 23 cartoon compilation discs from /movies/ to
+/tvshows/Looney Tunes Golden Collection/ in 6 seasons (one per physical
+collection):
+
+  Season 01 - Golden Collection Vol 3   (2 discs: D2, D4)
+  Season 02 - Looney Tunes Golden V4   (4 discs: D1-D4)
+  Season 03 - Looney Tunes Golden V5   (4 discs: D1-D4)
+  Season 04 - Looney Tunes Golden (V1) (8 discs: DISC 1-4, 6-8 + DISK 5)
+  Season 05 - Looney Tunes Gold Vol 6   (4 discs: DISC1-4)
+  Season 06 - Porky and the Pigs        (1 disc: NA_D3)
+
+Each disc stays as one "episode" file (cartoons stitched as ripped; no
+re-encode). Sidecar .nfo + -poster.jpg moved along with each .m4v.
+Reversible via the move log + ZFS snapshot. Shows library auto-picks up
+the new tree on next scan. mv is slow (cross-dataset ZFS = copy+unlink,
+each 2-3GB file takes minutes) AND competes with the in-flight Movies
+scan for disk (load avg ~10). Running in background; ~25min to finish.
+Move log on TrueNAS: /mnt/volume1/media/.jellyfin-looneytunes-move-log-20260731.txt
+Script: services/jellyfin/looneytunes-move.sh
 
 ## NFS media dir info (TrueNAS)
 
