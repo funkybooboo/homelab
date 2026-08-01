@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785553584237988'
+  resourceVersion: '1785553958959995'
 spec:
   title: Proxmox -- Cluster Status
   description: 'PVE cluster + per-node status from pve-exporter: quorum, guests, subscription, per-node CPU/memory gauges, storage pools.'
@@ -25,11 +25,11 @@ spec:
     list: []
   panels:
   - id: 1
-    title: PVE version
-    type: stat
+    title: PVE version per node
+    type: table
     gridPos:
-      h: 4
-      w: 4
+      h: 6
+      w: 24
       x: 0
       y: 0
     datasource:
@@ -37,29 +37,20 @@ spec:
       uid: afrtfru117lz4c
     fieldConfig:
       defaults:
-        unit: short
-        color:
-          mode: fixed
-          fixedColor: green
-        mappings: []
+        custom:
+          align: auto
     options:
-      colorMode: value
-      graphMode: none
-      reduceOptions:
-        calcs:
-        - lastNotNull
-        fields: ''
-        values: true
-      textMode: name
+      showHeader: true
     targets:
     - refId: A
-      expr: pve_version_info{instance="raspberrypi.tail54538d.ts.net"}
-      legendFormat: '{{version}}'
+      expr: pve_version_info
+      legendFormat: ''
       instant: true
       range: false
       datasource:
         type: prometheus
         uid: afrtfru117lz4c
+      format: table
   - id: 2
     title: Cluster quorum
     type: stat
@@ -67,7 +58,7 @@ spec:
       h: 4
       w: 4
       x: 4
-      y: 0
+      y: 2
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -118,7 +109,7 @@ spec:
       h: 4
       w: 4
       x: 8
-      y: 0
+      y: 2
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -153,7 +144,7 @@ spec:
       h: 4
       w: 4
       x: 12
-      y: 0
+      y: 2
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -188,7 +179,7 @@ spec:
       h: 4
       w: 4
       x: 16
-      y: 0
+      y: 2
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -230,7 +221,7 @@ spec:
       h: 4
       w: 4
       x: 20
-      y: 0
+      y: 2
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -281,7 +272,7 @@ spec:
       h: 8
       w: 12
       x: 0
-      y: 4
+      y: 6
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -319,7 +310,7 @@ spec:
       h: 8
       w: 12
       x: 12
-      y: 4
+      y: 6
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -357,7 +348,7 @@ spec:
       h: 8
       w: 6
       x: 0
-      y: 12
+      y: 14
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -400,7 +391,7 @@ spec:
       h: 8
       w: 6
       x: 6
-      y: 12
+      y: 14
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
@@ -443,7 +434,7 @@ spec:
       h: 8
       w: 12
       x: 12
-      y: 12
+      y: 14
     datasource:
       type: prometheus
       uid: afrtfru117lz4c
