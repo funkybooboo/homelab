@@ -113,13 +113,19 @@ recreation, the Movies library option `AutomaticallyAddToCollection: true` and
    from `movies/`, all 21 KEEP counterparts still present. Recovery also via
    `volume1/media/movies@auto-2026-07-31_00-00` ZFS snapshot.
 
-3. **Wrong-title metadata** on the REAL movies (~50). Filenames are too cryptic
-   for TMDB matching (e.g. `WALL_E.m4v` scraped as "The Wolf of Wall Street",
-   `IRON_MAN.m4v` as "The Man with the Iron Fists 2", `HOLES.m4v` as "Stretch
-   My Holes"). Durable fix: rename on TrueNAS to `Title (Year).ext`, rescan, and
-   for stragglers use the per-item "Identify" menu in the Jellyfin web UI.
-   Next step: build a full rename map from the identity table + TMDB for
-   user line-by-line review; NO renames applied until user approves each row.
+3. **Wrong-title metadata -- DONE 2026-07-31.** Renamed 156 of 180 real
+   movie files on TrueNAS to `Title (Year).ext` per the review-approved map
+   ([rename-map-20260731.tsv](rename-map-20260731.tsv)). No TMDB/external API
+   -- built from filename + ffprobe runtime + user-supplied corrections.
+   Execution log: [rename-execution-log-20260731.txt](rename-execution-log-20260731.txt).
+   Recovery: TrueNAS ZFS snapshot `volume1/media/movies@auto-2026-07-31_00-00`
+   (pre-rename) + the rename log itself (each line: `old -> new`).
+   The 23 Looney Tunes / Golden Collection multi-episode discs were left
+   as-is (SKIP) pending a separate decision (leave / `(Disc N)` suffix /
+   restructure as a TV show). The 2 still-uncertain rows (JUSTICE_LEAGUE
+   and WORK_AND_THE_GLORY_3 subtitles) were renamed with best-guess names
+   + flagged -- user can correct via Jellyfin "Identify" UI.
+   Jellyfin library scan not yet re-triggered post-rename -- pending.
 
 ## NFS media dir info (TrueNAS)
 
