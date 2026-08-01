@@ -4,60 +4,96 @@ metadata:
   name: logs-ssh-sudo-audit
   namespace: default
   annotations:
-    grafana.app/folder: ""
+    grafana.app/folder: ''
+  resourceVersion: '1785550342713989'
 spec:
-  title: "Logs -- SSH and sudo Audit"
-  description: "Successful SSH logins + sudo invocations + failed authentications across every host -- the security audit tail. Backed by Loki."
-  tags: [logs, loki, audit, ssh, sudo]
+  title: Logs -- SSH and sudo Audit
+  description: Successful SSH logins, failed authentications, and sudo invocations across every host in the homelab.
+  tags:
+  - logs
+  - audit
+  - ssh
+  - sudo
   timezone: browser
   schemaVersion: 39
-  refresh: 1m
-  time: {from: now-24h, to: now}
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
   editable: true
-  templating: {list: []}
+  graphTooltip: 1
+  templating:
+    list: []
   panels:
   - id: 1
-    title: "Successful SSH logins (Accepted)"
+    title: Successful SSH logins (Accepted)
     type: logs
-    gridPos: {h: 8, w: 24, x: 0, y: 0}
-    datasource: {type: loki, uid: loki}
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 0
+    datasource:
+      type: loki
+      uid: loki
     targets:
     - refId: A
       expr: '{job="systemd-journal"} |= "Accepted" |=~ "(publickey|password|keyboard-interactive)"'
       queryType: instant
-      datasource: {type: loki, uid: loki}
+      datasource:
+        type: loki
+        uid: loki
     options:
       showTime: true
       showLabels: true
+      wrapLogMessage: true
       dedupStrategy: none
-      sortOrder: "Descending"
+      sortOrder: Descending
   - id: 2
-    title: "Failed SSH authentications (Failed + Invalid)"
+    title: Failed SSH authentications
     type: logs
-    gridPos: {h: 8, w: 24, x: 0, y: 8}
-    datasource: {type: loki, uid: loki}
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 8
+    datasource:
+      type: loki
+      uid: loki
     targets:
     - refId: A
       expr: '{job="systemd-journal"} |=~ "(?i)(Failed |Invalid user|authentication failure for)"'
       queryType: instant
-      datasource: {type: loki, uid: loki}
+      datasource:
+        type: loki
+        uid: loki
     options:
       showTime: true
       showLabels: true
+      wrapLogMessage: true
       dedupStrategy: none
-      sortOrder: "Descending"
+      sortOrder: Descending
   - id: 3
-    title: "sudo invocations (sudo: + pam_unix(sudo for)"
+    title: sudo invocations
     type: logs
-    gridPos: {h: 8, w: 24, x: 0, y: 16}
-    datasource: {type: loki, uid: loki}
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 16
+    datasource:
+      type: loki
+      uid: loki
     targets:
     - refId: A
       expr: '{job="systemd-journal"} |=~ "(?i)(sudo:|pam_unix.sudo|COMMAND=)"'
       queryType: instant
-      datasource: {type: loki, uid: loki}
+      datasource:
+        type: loki
+        uid: loki
     options:
       showTime: true
       showLabels: true
+      wrapLogMessage: true
       dedupStrategy: none
-      sortOrder: "Descending"
+      sortOrder: Descending

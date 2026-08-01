@@ -4,17 +4,17 @@ metadata:
   name: services-overview
   namespace: default
   annotations:
-    grafana.app/folder: ""
+    grafana.app/folder: ''
+  resourceVersion: '1785543952365991'
 spec:
-  title: "Proxmox -- CTs"
-  description: Per-CT/VM resource use for the whole PVE cluster (pve-exporter). Guests CPU/mem/disk-IO/net over time + a per-guest allocation summary table. Split from the legacy "Proxmox via Prometheus"
-    board.
+  title: Proxmox -- CT Resources
+  description: 'Per-CT/VM resource use from pve-exporter: CPU, memory, disk, network, IO. Includes allocation summary table.'
   tags:
-  - services
+  - proxmox
+  - containers
   - pve-exporter
-  - lxc
   timezone: browser
-  schemaVersion: 42
+  schemaVersion: 39
   refresh: 30s
   time:
     from: now-6h
@@ -23,519 +23,279 @@ spec:
   graphTooltip: 1
   templating:
     list:
-    - allowCustomValue: true
-      current:
-        text: ''
-        value: ''
-      datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      definition: label_values(pve_node_info, instance)
-      hide: 0
-      includeAll: false
-      multi: false
-      name: instance
-      options: []
-      query:
-        query: label_values(pve_node_info, instance)
-        refId: Prometheus-instance-Variable-Query
-      refresh: 2
-      regex: ''
-      skipUrlSync: false
-      sort: 1
-      type: query
     - name: node
       type: query
       datasource:
         type: prometheus
         uid: afrtfru117lz4c
       query:
-        query: label_values(pve_guest_info{instance="$instance"}, node)
+        query: label_values(pve_guest_info{template="0"}, node)
         refId: Prometheus-node-Variable-Query
-      definition: label_values(pve_guest_info{instance="$instance"}, node)
+      definition: label_values(pve_guest_info{template="0"}, node)
       multi: true
       includeAll: true
       allValue: .*
       current:
         selected: true
-        text: All nodes
+        text: All
         value: $__all
       refresh: 2
       sort: 1
       hide: 0
       allowCustomValue: false
   panels:
-  - datasource:
-      type: prometheus
-      uid: afrtfru117lz4c
-    fieldConfig:
-      overrides:
-      - matcher:
-          id: byName
-          options: Status
-        properties:
-        - id: mappings
-          value:
-          - options:
-              '0':
-                color: red
-                index: 1
-                text: stopped
-              '1':
-                color: green
-                index: 0
-                text: running
-            type: value
-        - id: custom.cellOptions
-          value:
-            type: color-text
-        - id: custom.width
-          value: 73
-      - matcher:
-          id: byName
-          options: Memory
-        properties:
-        - id: unit
-          value: bytes
-        - id: custom.width
-          value: 100
-      - matcher:
-          id: byName
-          options: Disk
-        properties:
-        - id: unit
-          value: bytes
-        - id: custom.width
-          value: 82
-      - matcher:
-          id: byName
-          options: Memory usage (%)
-        properties:
-        - id: unit
-          value: percentunit
-        - id: custom.cellOptions
-          value:
-            type: color-text
-        - id: mappings
-          value:
-          - options:
-              from: 0
-              result:
-                color: green
-                index: 0
-              to: 0.75
-            type: range
-          - options:
-              from: 0.75
-              result:
-                color: orange
-                index: 1
-              to: 0.9
-            type: range
-          - options:
-              from: 0.9
-              result:
-                color: dark-red
-                index: 2
-              to: 2
-            type: range
-          - options:
-              match: 'null'
-              result:
-                color: '#808080'
-                index: 3
-                text: n/a
-            type: special
-        - id: custom.width
-          value: 143
-      - matcher:
-          id: byName
-          options: Disk usage (%)
-        properties:
-        - id: mappings
-          value:
-          - options:
-              from: 0
-              result:
-                color: green
-                index: 0
-              to: 0.7
-            type: range
-          - options:
-              from: 0.7
-              result:
-                color: orange
-                index: 1
-              to: 0.9
-            type: range
-          - options:
-              from: 0.9
-              result:
-                color: red
-                index: 2
-              to: 2
-            type: range
-          - options:
-              match: 'null'
-              result:
-                color: '#808080'
-                index: 3
-                text: n/a
-            type: special
-        - id: custom.cellOptions
-          value:
-            type: color-text
-        - id: custom.width
-          value: 120
-        - id: unit
-          value: percentunit
-      - matcher:
-          id: byName
-          options: vCPUs
-        properties:
-        - id: custom.width
-          value: 66
-      - matcher:
-          id: byName
-          options: Type
-        properties:
-        - id: custom.width
-          value: 67
-      - matcher:
-          id: byName
-          options: ID
-        properties:
-        - id: custom.width
-          value: 106
+  - id: 1
+    title: Resource allocation summary
+    type: table
     gridPos:
+      h: 8
+      w: 24
       x: 0
       y: 0
-      w: 24
-      h: 8
-      i: '19'
-    id: 19
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     options:
-      footer:
-        fields: ''
-        reducer:
-        - sum
-        show: false
-      frameIndex: 0
       showHeader: true
-      sortBy:
-      - desc: false
-        displayName: ID
-    pluginVersion: 9.3.2
     targets:
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id, name, type) (pve_guest_info{instance="$instance",node=~"$node",template="0"})
+    - refId: A
+      expr: sum by (id, name, type) (pve_guest_info{template="0"})
       format: table
       instant: true
-      interval: ''
-      legendFormat: ''
       range: false
-      refId: id, name and type
-    - datasource:
+      datasource:
         type: prometheus
         uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_up{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: status
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_cpu_usage_limit{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: vcpus
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_memory_size_bytes{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: memsize
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_memory_usage_bytes{instance="$instance"} / pve_memory_size_bytes{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",node=~"$node",template="0"}
-        and on (id) pve_up{instance="$instance"}==1)
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: memusg_percent
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_disk_size_bytes{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: disksize
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      exemplar: false
-      expr: sum by (id) (pve_disk_usage_bytes{instance="$instance"} / pve_disk_size_bytes{instance="$instance"} and on (id, instance) pve_guest_info{instance="$instance",type="lxc",template="0",node=~"$node"})
-      format: table
-      instant: true
-      legendFormat: ''
-      range: false
-      refId: diskusg_percent
-    title: Resource allocation summary
-    transformations:
-    - id: joinByField
-      options:
-        byField: id
-        mode: outer
-    - id: organize
-      options:
-        excludeByName:
-          Time 1: true
-          Time 2: true
-          Time 3: true
-          Time 4: true
-          Time 5: true
-          Time 6: true
-          Time 7: true
-          'Value #id, name and type': true
-        indexByName: {}
-        renameByName:
-          Time 5: ''
-          'Value #disksize': Disk
-          'Value #diskusg_percent': Disk usage (%)
-          'Value #id, name and type': ''
-          'Value #memsize': Memory
-          'Value #memusg_percent': Memory usage (%)
-          'Value #status': Status
-          'Value #vcpus': vCPUs
-          id: ID
-          name: Name
-          type: Type
-    type: table
-  - datasource:
-      type: prometheus
-      uid: afrtfru117lz4c
-    fieldConfig: {}
+  - id: 10
+    title: Guests CPU usage %
+    type: timeseries
     gridPos:
+      h: 8
+      w: 24
       x: 0
       y: 8
-      w: 12
-      h: 8
-      i: '2'
-    id: 2
-    options:
-      legend:
-        calcs:
-        - max
-        - mean
-        - lastNotNull
-        displayMode: table
-        placement: right
-        showLegend: true
-      tooltip:
-        mode: multi
-        sort: asc
-    pluginVersion: 9.3.2
-    targets:
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      expr: ((pve_cpu_usage_ratio{instance="$instance"} / pve_cpu_usage_limit{instance="$instance"}) * on(id, instance) group_left(name, type) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-        and on(id, instance) pve_up{instance="$instance"} == 1
-      format: time_series
-      interval: ''
-      intervalFactor: 4
-      legendFormat: '{{name}} ({{type}}'
-      refId: A
-    title: Guests CPU usage
-    type: timeseries
-  - datasource:
-      type: prometheus
-      uid: afrtfru117lz4c
-    fieldConfig: {}
-    gridPos:
-      x: 12
-      y: 8
-      w: 12
-      h: 8
-      i: '5'
-    id: 5
-    options:
-      legend:
-        calcs:
-        - max
-        - mean
-        - lastNotNull
-        displayMode: table
-        placement: right
-        showLegend: true
-      tooltip:
-        mode: multi
-        sort: desc
-    pluginVersion: 9.3.2
-    targets:
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      expr: (pve_memory_usage_bytes{instance="$instance"} / pve_memory_size_bytes{instance="$instance"} * on(id, instance) group_left(name, type) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-        and on(id, instance) pve_up{instance="$instance"} == 1
-      format: time_series
-      interval: ''
-      intervalFactor: 4
-      legendFormat: '{{name}} ({{type}}'
-      refId: A
-    title: Guests memory usage
-    type: timeseries
-  - datasource:
-      type: prometheus
-      uid: afrtfru117lz4c
-    fieldConfig: {}
-    gridPos:
-      x: 0
-      y: 16
-      w: 24
-      h: 8
-      i: '9'
-    id: 9
-    options:
-      legend:
-        calcs:
-        - lastNotNull
-        displayMode: table
-        placement: right
-        showLegend: true
-      tooltip:
-        mode: single
-        sort: none
-    pluginVersion: 9.3.2
-    targets:
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      editorMode: code
-      expr: pve_disk_usage_bytes{instance="$instance"} / pve_disk_size_bytes{instance="$instance"} * on (id, instance) group_left(name, type) pve_guest_info{instance="$instance",type="lxc",template="0",node=~"$node"}
-      format: time_series
-      interval: ''
-      intervalFactor: 1
-      legendFormat: '{{name}}'
-      range: true
-      refId: A
-    title: LXC guests Disk usage
-    type: timeseries
-  - datasource:
-      type: prometheus
-      uid: afrtfru117lz4c
-    fieldConfig: {}
-    gridPos:
-      x: 0
-      y: 32
-      w: 24
-      h: 8
-      i: '12'
-    id: 12
-    options:
-      legend:
-        calcs:
-        - max
-        - mean
-        - lastNotNull
-        displayMode: table
-        placement: right
-        showLegend: true
-      tooltip:
-        mode: multi
-        sort: desc
-    pluginVersion: 9.3.2
-    targets:
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      expr: ((rate(pve_disk_write_bytes{instance="$instance"}[5m]) + rate(pve_disk_read_bytes{instance="$instance"}[5m])) * on(id, instance) group_left(name, type) pve_guest_info{instance="$instance",node=~"$node",template="0"})
-        and on(id, instance) pve_up{instance="$instance"} == 1
-      format: time_series
-      interval: ''
-      intervalFactor: 2
-      legendFormat: '{{name}} ({{type}}'
-      refId: A
-    title: Disk IO/s
-    type: timeseries
-  - datasource:
+    datasource:
       type: prometheus
       uid: afrtfru117lz4c
     fieldConfig:
-      overrides:
-      - matcher:
-          id: byRegexp
-          options: /RECV/
-        properties:
-        - id: custom.transform
-          value: negative-Y
-    gridPos:
-      x: 0
-      y: 24
-      w: 24
-      h: 8
-      i: '13'
-    id: 13
+      defaults:
+        unit: percent
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
       legend:
-        calcs:
-        - max
-        - mean
-        - lastNotNull
-        - sum
         displayMode: table
-        placement: right
+        placement: bottom
         showLegend: true
+        calcs:
+        - lastNotNull
+        - max
       tooltip:
-        mode: single
-        sort: none
-    pluginVersion: 9.3.2
+        mode: multi
+        sort: desc
     targets:
-    - datasource:
+    - refId: A
+      expr: ((pve_cpu_usage_ratio{instance="raspberrypi.tail54538d.ts.net"} / pve_cpu_usage_limit{instance="raspberrypi.tail54538d.ts.net"}) * on(id, instance) group_left(name, type) pve_guest_info{instance="raspberrypi.tail54538d.ts.net",template="0"})
+        and on(id, instance) pve_up{instance="raspberrypi.tail54538d.ts.net"} == 1
+      legendFormat: '{{name}}'
+      datasource:
         type: prometheus
         uid: afrtfru117lz4c
-      expr: (rate(pve_network_receive_bytes{instance="$instance"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance="$instance",node=~"$node",template="0"}) and on(id, instance) pve_up{instance="$instance"}
-        == 1
-      format: time_series
-      interval: ''
-      intervalFactor: 3
-      legendFormat: '{{name}} RECV'
-      refId: A
-    - datasource:
-        type: prometheus
-        uid: afrtfru117lz4c
-      expr: (rate(pve_network_transmit_bytes{instance="$instance"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance="$instance",node=~"$node",template="0"}) and on(id, instance) pve_up{instance="$instance"}
-        == 1
-      format: time_series
-      interval: ''
-      intervalFactor: 3
-      legendFormat: '{{name}} SEND'
-      refId: B
-    title: Network IO/s
+  - id: 20
+    title: Guests memory %
     type: timeseries
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 16
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: (pve_memory_usage_bytes{instance="raspberrypi.tail54538d.ts.net"} / pve_memory_size_bytes{instance="raspberrypi.tail54538d.ts.net"} * on(id, instance) group_left(name, type) pve_guest_info{instance="raspberrypi.tail54538d.ts.net",template="0"})
+        and on(id, instance) pve_up{instance="raspberrypi.tail54538d.ts.net"} == 1
+      legendFormat: '{{name}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 30
+    title: LXC guests disk usage %
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 24
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: pve_disk_usage_bytes{instance="raspberrypi.tail54538d.ts.net"} / pve_disk_size_bytes{instance="raspberrypi.tail54538d.ts.net"} * on(id, instance) group_left(name, type) pve_guest_info{instance="raspberrypi.tail54538d.ts.net",type="lxc",template="0"}
+      legendFormat: '{{name}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 40
+    title: Disk IO/s per guest
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 24
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: ((rate(pve_disk_write_bytes{instance="raspberrypi.tail54538d.ts.net"}[5m]) + rate(pve_disk_read_bytes{instance="raspberrypi.tail54538d.ts.net"}[5m])) * on(id, instance) group_left(name, type)
+        pve_guest_info{instance="raspberrypi.tail54538d.ts.net",template="0"}) and on(id, instance) pve_up{instance="raspberrypi.tail54538d.ts.net"} == 1
+      legendFormat: '{{name}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 50
+    title: Network rx bytes/s per guest
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 32
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: (rate(pve_network_receive_bytes{instance="raspberrypi.tail54538d.ts.net"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance="raspberrypi.tail54538d.ts.net",template="0"})
+        and on(id, instance) pve_up{instance="raspberrypi.tail54538d.ts.net"} == 1
+      legendFormat: '{{name}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 60
+    title: Network tx bytes/s per guest
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 32
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: (rate(pve_network_transmit_bytes{instance="raspberrypi.tail54538d.ts.net"}[5m]) * on(id, instance) group_left(name, type) pve_guest_info{instance="raspberrypi.tail54538d.ts.net",template="0"})
+        and on(id, instance) pve_up{instance="raspberrypi.tail54538d.ts.net"} == 1
+      legendFormat: '{{name}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c

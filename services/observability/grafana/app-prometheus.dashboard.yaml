@@ -4,135 +4,330 @@ metadata:
   name: app-prometheus
   namespace: default
   annotations:
-    grafana.app/folder: ""
+    grafana.app/folder: ''
+  resourceVersion: '1785544338159996'
 spec:
-  title: "App -- Prometheus"
-  description: "Prometheus self-observability: scrape duration + targets per pool, rule evaluation failures + duration, ingestion rate, config reload success, TSDB series/head. Scraped from prometheus itself (job=prometheus, localhost:9090)."
-  tags: [app, prometheus]
+  title: App -- Prometheus
+  description: 'Prometheus self-observability: scrape duration, rule eval, ingestion rate, TSDB series, config reload, targets.'
+  tags:
+  - app
+  - prometheus
   timezone: browser
   schemaVersion: 39
   refresh: 30s
-  time: {from: now-6h, to: now}
+  time:
+    from: now-6h
+    to: now
   editable: true
   graphTooltip: 1
-  templating: {list: []}
+  templating:
+    list: []
   panels:
   - id: 1
-    title: "Scrape duration (p95) by job"
-    type: timeseries
-    gridPos: {h: 8, w: 24, x: 0, y: 0}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: s
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: palette-classic-by-name}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'histogram_quantile(0.95, sum by (le, job) (rate(prometheus_target_scrape_duration_seconds_bucket{job!=""}[5m])))'
-      legendFormat: "{{job}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 2
-    title: "Targets per scrape pool"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 8}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: short
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
-        color: {mode: palette-classic-by-name}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'prometheus_target_scrape_pool_targets'
-      legendFormat: "{{scrape_pool}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 3
-    title: "Rule evaluation failures/s"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 8}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: ops
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: fixed, fixedColor: red}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'rate(prometheus_rule_evaluation_failures_total[5m])'
-      legendFormat: "{{rule_group}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 4
-    title: "Ingested samples/s"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 16}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: cps
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: fixed, fixedColor: blue}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'rate(prometheus_tsdb_head_samples_appended_total[5m])'
-      legendFormat: "samples/s"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 5
-    title: "TSDB head series"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 16}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: short
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
-        color: {mode: fixed, fixedColor: purple}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'prometheus_tsdb_head_series'
-      legendFormat: "head series"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 6
-    title: "Config reload success"
+    title: Config reload
     type: stat
-    gridPos: {h: 4, w: 6, x: 0, y: 24}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 4
+      w: 6
+      x: 0
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
-        color: {mode: thresholds}
-        mappings:
-        - options:
-            "0": {text: FAILED, color: red, index: 1}
-            "1": {text: OK, color: green, index: 0}
-          type: value
+        unit: short
+        color:
+          mode: thresholds
+          fixedColor: blue
         thresholds:
           mode: absolute
           steps:
-          - {color: red, value: null}
-          - {color: green, value: 1}
+          - color: red
+            value: null
+          - color: green
+            value: 1
+        mappings:
+        - options:
+            '0':
+              text: FAILED
+              color: red
+            '1':
+              text: OK
+              color: green
+          type: value
     options:
-      colorMode: background_solid
+      colorMode: value
       graphMode: none
-      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
       textMode: value
     targets:
     - refId: A
-      expr: 'prometheus_config_last_reload_successful'
+      expr: prometheus_config_last_reload_successful
+      legendFormat: status
       instant: true
       range: false
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 2
+    title: Rule eval failures/s
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 6
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    targets:
+    - refId: A
+      expr: sum(rate(prometheus_rule_evaluation_failures_total[5m]))
+      legendFormat: fail/s
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 3
+    title: Ingested samples/s
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 12
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    targets:
+    - refId: A
+      expr: rate(prometheus_tsdb_head_samples_appended_total[5m])
+      legendFormat: samples/s
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 4
+    title: TSDB head series
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 18
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    targets:
+    - refId: A
+      expr: prometheus_tsdb_head_series
+      legendFormat: series
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 10
+    title: Scrape duration p95 by job
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 4
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: s
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: histogram_quantile(0.95, sum by (le, job) (rate(prometheus_target_scrape_duration_seconds_bucket[5m])))
+      legendFormat: '{{job}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 20
+    title: Rule eval failures/s
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 12
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: ops
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: rate(prometheus_rule_evaluation_failures_total[5m])
+      legendFormat: '{{rule_group}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 21
+    title: Ingested samples/s
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 12
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: cps
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: rate(prometheus_tsdb_head_samples_appended_total[5m])
+      legendFormat: samples/s
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 30
+    title: Targets per scrape pool
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 20
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: ''
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: prometheus_target_scrape_pool_targets
+      legendFormat: '{{scrape_pool}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c

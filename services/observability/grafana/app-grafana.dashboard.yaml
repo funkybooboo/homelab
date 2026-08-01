@@ -4,106 +4,314 @@ metadata:
   name: app-grafana
   namespace: default
   annotations:
-    grafana.app/folder: ""
+    grafana.app/folder: ''
+  resourceVersion: '1785544205528006'
 spec:
-  title: "App -- Grafana"
-  description: "Grafana self-observability: API response status, inflight requests, alerting, dashboard/dataproxy latency, logins. Scraped from grafana.tail54538d.ts.net/metrics (job=app_metrics, app=grafana)."
-  tags: [app, grafana]
+  title: App -- Grafana
+  description: 'Grafana self-observability: API responses, inflight requests, datasource proxy latency, dashboard search, logins, active alerts.'
+  tags:
+  - app
+  - grafana
   timezone: browser
   schemaVersion: 39
   refresh: 30s
-  time: {from: now-6h, to: now}
+  time:
+    from: now-6h
+    to: now
   editable: true
   graphTooltip: 1
-  templating: {list: []}
+  templating:
+    list: []
   panels:
   - id: 1
-    title: "API responses /s by status"
-    type: timeseries
-    gridPos: {h: 8, w: 24, x: 0, y: 0}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
-    fieldConfig:
-      defaults:
-        unit: reqps
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: palette-classic-by-name}
-    options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
-    targets:
-    - refId: A
-      expr: 'sum by (status) (rate(grafana_api_response_status_total{instance="grafana.tail54538d.ts.net:443"}[5m]))'
-      legendFormat: "{{status}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 2
-    title: "Inflight API requests"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 8}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    title: Active alerts
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 0
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: short
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color:
+          mode: fixed
+          fixedColor: blue
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
     targets:
     - refId: A
-      expr: 'grafana_apiserver_current_inflight_requests{instance="grafana.tail54538d.ts.net:443"}'
-      legendFormat: "{{requestKind}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: grafana_alerting_active_alerts
+      legendFormat: alerts
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 2
+    title: API responses /s
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 6
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
+    options:
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
+    targets:
+    - refId: A
+      expr: sum(rate(grafana_api_response_status_total[5m]))
+      legendFormat: resp/s
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 3
-    title: "Datasource proxy request latency (p95)"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 8}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    title: Inflight requests
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 12
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
-        unit: ms
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
     targets:
     - refId: A
-      expr: 'histogram_quantile(0.95, sum by (le) (rate(grafana_api_dataproxy_request_all_milliseconds_bucket{instance="grafana.tail54538d.ts.net:443"}[5m])))'
-      legendFormat: "p95"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: grafana_apiserver_current_inflight_requests
+      legendFormat: reqs
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 4
-    title: "Dashboard search latency (avg ms)"
-    type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 16}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    title: Dashboard searches /s
+    type: stat
+    gridPos:
+      h: 4
+      w: 6
+      x: 18
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
-        unit: ms
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        unit: short
+        color:
+          mode: fixed
+          fixedColor: blue
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      colorMode: value
+      graphMode: none
+      reduceOptions:
+        calcs:
+        - lastNotNull
+        fields: ''
+        values: false
+      textMode: value
     targets:
     - refId: A
-      expr: 'rate(grafana_api_dashboard_search_milliseconds_sum{instance="grafana.tail54538d.ts.net:443"}[5m]) / rate(grafana_api_dashboard_search_milliseconds_count{instance="grafana.tail54538d.ts.net:443"}[5m])'
-      legendFormat: "avg"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-  - id: 5
-    title: "Login attempts /s"
+      expr: rate(grafana_api_dashboard_search_milliseconds_count[5m])
+      legendFormat: search/s
+      instant: true
+      range: false
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 10
+    title: API responses /s by status
     type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 16}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 4
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: reqps
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'rate(grafana_api_login_post_total{instance="grafana.tail54538d.ts.net:443"}[5m])'
-      legendFormat: "logins"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: B
-      expr: 'rate(grafana_api_login_oauth_total{instance="grafana.tail54538d.ts.net:443"}[5m])'
-      legendFormat: "oauth"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: sum by (status) (rate(grafana_api_response_status_total[5m]))
+      legendFormat: '{{status}}'
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 20
+    title: Datasource proxy p95 latency
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 12
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: ms
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: histogram_quantile(0.95, sum by (le) (rate(grafana_api_dataproxy_request_all_milliseconds_bucket[5m])))
+      legendFormat: p95
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 21
+    title: Dashboard search avg latency
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 12
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: ms
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: rate(grafana_api_dashboard_search_milliseconds_sum[5m]) / rate(grafana_api_dashboard_search_milliseconds_count[5m])
+      legendFormat: avg
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
+  - id: 30
+    title: Login attempts /s
+    type: timeseries
+    gridPos:
+      h: 8
+      w: 24
+      x: 0
+      y: 20
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
+    fieldConfig:
+      defaults:
+        unit: reqps
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
+    options:
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
+    targets:
+    - refId: A
+      expr: rate(grafana_api_login_post_total[5m])
+      legendFormat: logins
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c

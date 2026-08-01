@@ -4,144 +4,251 @@ metadata:
   name: app-speedtest
   namespace: default
   annotations:
-    grafana.app/folder: ""
+    grafana.app/folder: ''
+  resourceVersion: '1785544339729008'
 spec:
-  title: "App -- Speedtest"
-  description: "Speedtest Tracker results: download/upload throughput, latency (low/iqm/high), jitter, elapsed, health. Scraped from speedtest-tracker.tail54538d.ts.net:80/prometheus (job=speedtest-tracker)."
-  tags: [app, speedtest, network]
+  title: App -- Speedtest
+  description: 'Speedtest Tracker results: download/upload throughput (Mbps), latency, jitter, elapsed time.'
+  tags:
+  - app
+  - speedtest
+  - network
   timezone: browser
   schemaVersion: 39
-  refresh: 5m
-  time: {from: now-7d, to: now}
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
   editable: true
   graphTooltip: 1
-  templating: {list: []}
+  templating:
+    list: []
   panels:
   - id: 1
-    title: "Download throughput (Mbps)"
+    title: Download throughput (Mbps)
     type: timeseries
-    gridPos: {h: 9, w: 24, x: 0, y: 0}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 9
+      w: 24
+      x: 0
+      y: 0
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: Mbps
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 15, lineWidth: 2}
-        color: {mode: fixed, fixedColor: blue}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, min, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'speedtest_tracker_download_bits{job="speedtest-tracker"} / 1000000'
-      legendFormat: "download {{server_name}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: speedtest_tracker_download_bits{job="speedtest-tracker"} / 1000000
+      legendFormat: download {{server_name}}
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 2
-    title: "Upload throughput (Mbps)"
+    title: Upload throughput (Mbps)
     type: timeseries
-    gridPos: {h: 9, w: 24, x: 0, y: 9}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 9
+      w: 24
+      x: 0
+      y: 9
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: Mbps
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 15, lineWidth: 2}
-        color: {mode: fixed, fixedColor: green}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, min, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'speedtest_tracker_upload_bits{job="speedtest-tracker"} / 1000000'
-      legendFormat: "upload {{server_name}}"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: speedtest_tracker_upload_bits{job="speedtest-tracker"} / 1000000
+      legendFormat: upload {{server_name}}
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 3
-    title: "Download latency (ms)"
+    title: Download latency (ms)
     type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 18}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 18
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: ms
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: palette-classic-by-name}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'speedtest_tracker_download_latency_low_ms{job="speedtest-tracker"}'
-      legendFormat: "low"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: B
-      expr: 'speedtest_tracker_download_latency_iqm_ms{job="speedtest-tracker"}'
-      legendFormat: "iqm"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: C
-      expr: 'speedtest_tracker_download_latency_high_ms{job="speedtest-tracker"}'
-      legendFormat: "high"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: speedtest_tracker_download_latency_iqm_ms{job="speedtest-tracker"}
+      legendFormat: dl latency
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 4
-    title: "Upload latency (ms)"
+    title: Upload latency (ms)
     type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 18}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 18
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: ms
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: palette-classic-by-name}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'speedtest_tracker_upload_latency_low_ms{job="speedtest-tracker"}'
-      legendFormat: "low"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: B
-      expr: 'speedtest_tracker_upload_latency_iqm_ms{job="speedtest-tracker"}'
-      legendFormat: "iqm"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: C
-      expr: 'speedtest_tracker_upload_latency_high_ms{job="speedtest-tracker"}'
-      legendFormat: "high"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: speedtest_tracker_upload_latency_iqm_ms{job="speedtest-tracker"}
+      legendFormat: ul latency
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 5
-    title: "Jitter (ms)"
+    title: Jitter (ms)
     type: timeseries
-    gridPos: {h: 8, w: 12, x: 0, y: 26}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 8
+      w: 12
+      x: 0
+      y: 26
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: ms
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: palette-classic-by-name}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: 'speedtest_tracker_download_jitter_ms{job="speedtest-tracker"}'
-      legendFormat: "dl jitter"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
-    - refId: B
-      expr: 'speedtest_tracker_upload_jitter_ms{job="speedtest-tracker"}'
-      legendFormat: "ul jitter"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: speedtest_tracker_download_jitter_ms{job="speedtest-tracker"}
+      legendFormat: dl jitter
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
   - id: 6
-    title: "Elapsed test duration (s)"
+    title: Elapsed test duration (s)
     type: timeseries
-    gridPos: {h: 8, w: 12, x: 12, y: 26}
-    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    gridPos:
+      h: 8
+      w: 12
+      x: 12
+      y: 26
+    datasource:
+      type: prometheus
+      uid: afrtfru117lz4c
     fieldConfig:
       defaults:
         unit: s
-        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
-        color: {mode: fixed, fixedColor: orange}
+        custom:
+          drawStyle: line
+          lineInterpolation: linear
+          fillOpacity: 10
+        color:
+          mode: palette-classic-by-name
     options:
-      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
-      tooltip: {mode: multi, sort: desc}
+      legend:
+        displayMode: table
+        placement: bottom
+        showLegend: true
+        calcs:
+        - lastNotNull
+        - max
+      tooltip:
+        mode: multi
+        sort: desc
     targets:
     - refId: A
-      expr: '(speedtest_tracker_download_elapsed_ms{job="speedtest-tracker"} + speedtest_tracker_upload_elapsed_ms{job="speedtest-tracker"}) / 1000'
-      legendFormat: "total elapsed"
-      datasource: {type: prometheus, uid: afrtfru117lz4c}
+      expr: (speedtest_tracker_download_elapsed_ms{job="speedtest-tracker"} + speedtest_tracker_upload_elapsed_ms{job="speedtest-tracker"}) / 1000
+      legendFormat: total elapsed
+      datasource:
+        type: prometheus
+        uid: afrtfru117lz4c
