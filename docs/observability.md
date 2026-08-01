@@ -1,224 +1,175 @@
-# Observability -- current state (what's deployed now)
+# Observability -- current state
 
-What the homelab's monitoring / alerting / logging stack looks like today.
-Everything here was **probed live on 2026-08-30** -- not transcribed from
-older docs (note: `services.md` is stale on CT placement after the
-2026-07-30 HA migrations; this doc is the corrected, live view).
+The homelab's full monitoring, alerting, and centralized logging stack as
+deployed today. Everything here was **built 2026-07-31 through 2026-08-01**
+and verified live.
 
-The **build plan / proposal** for what to add on top of this is in
-[`../ideas/observability.md`](../ideas/observability.md). Related:
-[`services.md`](./services.md) (CT catalog), [`notifications.md`](./notifications.md)
-(the ntfy phone pipeline), [`nodes.md`](./nodes.md), [`cluster.md`](./cluster.md).
+Related: [`services.md`](./services.md) (CT catalog),
+[`notifications.md`](./notifications.md) (ntfy phone pipeline),
+[`nodes.md`](./nodes.md), [`cluster.md`](./cluster.md).
 
 ## TL;DR
 
-The monitoring stack exists but is half-built:
+The observability stack is complete (Phase 1 + Phase 2). Phase 3
+(tailscale-exporter, router node_exporter scrape, app exporters like
+jellyfin/postgres) is deferred.
 
-* **Prometheus (CT 122, pve-thermaltake)** scrapes 3 jobs / 7 targets, all
-  UP. ~7,144 series, all from the PVE aggregate view (`pve_ha_state`,
-  `pve_lock_state`, `pve_disk_*`, `pve_memory_*`, `pve_cpu_*`). **4 alert
-  rules** loaded (2 recording + 2 alerting) from
-  `/etc/prometheus/rules.yml` (Phase 1c) -- `blackbox:probe_up`,
-  `blackbox:cert_days_remaining`, `BlackboxEndpointDown` (probe 3x90s gate),
-  `BlackboxCertExpiringSoon` (<14d). **No Alertmanager yet** (the
-  `alerting.alertmanagers.targets` line stays commented until Phase 1d),
-  so firing alerts surface in `/api/v1/alerts` only; nothing pushes yet.
-* **Grafana (CT 123, pve-framework)** is Grafana **13.1.0** with a working
-  Prometheus datasource (`prometheus`, uid `afrtfru117lz4c`, created in the
-  grafana DB not a provisioning file). **5 dashboards** across 3 folders
-  (Nodes, Services, Network -- only folders that actually contain boards;
-  empty folder names are not kept): Speedtest Tracker
-  (Network, pre-existing), Nodes Overview (Nodes, node_exporter host OS),
-  Services Overview (Services, per-CT from pve-exporter), PVE Cluster
-  (Nodes, per-node/cluster from pve-exporter), Service Health (Network,
-  blackbox uptime grid + cert-expiry). The legacy 'Proxmox via Prometheus'
-  board was fully split into the latter two and deleted.
-  `unified_alerting` is configured; Grafana-managed alerting still unused
-  (alerts come from prometheus, routed via the upcoming alertmanager,
-  Phase 1d).
-* **node_exporter deployed** to all 5 PVE hosts (`:9100`) with the extra
-  `systemd`/`mountstats`/`processes` collectors; scraped by prometheus as
-  `job=node` (TSDB series 7,144 -> 31,971, all 39 targets UP). Host-level
-  CPU/mem/disk/net now captured alongside the PVE-aggregate view, and one
-  Grafana board renders it (Nodes Overview).
-* **blackbox_exporter 0.26.0** on CT 122 (`:9115`) probes every tailnet
-  HTTPS endpoint + 5 PVE `:8006` consoles + TrueNAS UI + prometheus HTTP
-  `:9090` (27 targets total). `job=blackbox_http` in prometheus; the
-  Service Health board renders the green/red grid + latency + TLS
-  cert-expiry countdown. Two alert rules fire on 3-probe (90s) failure
-  or cert <14d -- but see above, alertmanager not yet wired so they push
-  nowhere.
-* **ntfy (CT 128, pve-framework)** phone pipeline now has **seven publisher
-  paths** (was 1 -- TrueNAS only -- before Phase 1d/1e):
-  1. TrueNAS alerts (the original Slack-type alertservice, id 3).
-  2. Alertmanager -> ntfy-slack-bridge AM route -> ntfy (Phase 1d): every
-     prometheus alert rule (BlackboxEndpointDown, BlackboxCertExpiringSoon,
-     + future rules) pushes to the phone.
-  3-7. The five Phase 1e silent-cron wrappers (renew-pve-tls on each PVE
-     host, renew-truenas-tls via a wrapper, pve-shared-remount on actual
-     remount, vzdump via a hookscript on the Sat 21:00 job, HA state
-     transitions via a 1-min state-diff cron). All source
-     `/usr/local/sbin/ntfy-publish.sh` + `/etc/ntfy-publish.env` (mode 0600).
-  The only remaining silent paths are disk-fill (covered by node_exporter
-  metrics but no alert rule yet) + the router/TrueNAS-base OS events
-  (Phase 2/3).
-* **No centralized logging.** `systemd-journal-remote` /
-  `systemd-journal-upload` inactive on all 5 PVE hosts; no promtail / vector /
-  loki in any CT. Journals accumulate **unbounded** (framework 1.2G). The
-  router (BusyBox `logd`) keeps a ring buffer only.
+**Metrics pipeline:** Prometheus scrapes 41 targets across 6 jobs; 5 alert
+rules fire through Alertmanager -- ntfy-slack-bridge -- ntfy -- phone.
 
-So: the plumbing exists (prometheus scrapes + a grafana datasource + the
-ntfy phone pipeline with one publisher). What's missing is everything that
-renders it human-visible and everything that turns failures into phone
-pushes -- see [`../ideas/observability.md`](../ideas/observability.md).
+**Logging pipeline:** Promtail on 14 hosts/CTs + TrueNAS syslog + router
+syslog (via PVE relay) all push to Loki on CT 130 with TLS.
 
-## Live CT placements
-
-Post-2026-07-30 HA migrations (supersedes the stale placement column in
-`services.md`):
-
-| node | running CTs |
-| --- | --- |
-| pve-thermaltake | 101, 102, 104, 107, 111, 122, 127 |
-| pve-aspiree15 | 109, 119, 124 |
-| pve-aspires | 103, 105, 106, 112, 113, 118, 120, 121 |
-| pve-framework | 108, 123, 125, 126, 128 |
-| raspberrypi | (witness only) |
+**Dashboards:** 11 Grafana dashboards across 7 categories.
 
 ## Prometheus (CT 122, pve-thermaltake)
 
-* Config: `/etc/prometheus/prometheus.yml` holds only that file + two
-  Jul-11 `prometheus.yml.bak` files. No `rules/`, no `conf.d/`.
-* 3 jobs, 7 targets, all `health: up`:
-  * `prometheus` -- self (`localhost:9090`).
-  * `pve` -- the 5 PVE nodes, via the standard `__param_target`/instance
-    relabel to `prometheus-pve-exporter.tail54538d.ts.net:9221`,
-    `metrics_path: /pve`, `module: default`.
-  * `speedtest-tracker` -- `speedtest-tracker.tail54538d.ts.net:80`,
-    `metrics_path: /prometheus`.
-* `scrape_interval: 15s`, `evaluation_interval: 15s`.
-* `/api/v1/rules` -> `{"groups":[]}`. `alerting.alertmanagers.targets` is
-  still the commented-out `# - alertmanager:9093` default.
-* TSDB (`/api/v1/status/tsdb`): 7,144 series. Top metrics by series count --
-  `pve_ha_state` (1720), `pve_lock_state` (1305), `pve_up` (270),
-  `pve_disk_usage_bytes` (265), `pve_disk_size_bytes` (265),
-  `pve_memory_usage_bytes` (170), `pve_uptime_seconds` (170),
-  `pve_cpu_usage_limit` (170), `pve_memory_size_bytes` (170),
-  `pve_cpu_usage_ratio` (170).
+Scrapes 6 jobs / 41 targets, all UP:
 
-## Prometheus-pve-exporter (CT 124, pve-aspiree15)
+| Job | Targets | What |
+|---|---|---|
+| prometheus | 1 (self) | self-metrics |
+| pve | 5 | PVE cluster via pve-exporter (relabeled to one exporter host) |
+| speedtest-tracker | 1 | speedtest /prometheus endpoint |
+| node | 6 | node_exporter on 5 PVE hosts + TrueNAS (systemd/mountstats/processes collectors) |
+| blackbox_http | 27 | blackbox_exporter probing all tailnet HTTPS endpoints + PVE consoles |
+| app_metrics | 2 | Grafana + Forgejo native /metrics |
 
-* Service `active`. `?target=pve-thermaltake...` returns `pve_up`,
-  `pve_ha_state`, etc. Scraped on its raw tailnet port `:9221` over HTTP
-  (NOT through its serve TLS front -- the `:443` serve listener is for
-  browser access only; both coexist).
-* NOTE: the `/etc/prometheus-pve-exporter/` dir documented elsewhere does
-  NOT exist on this CT; the config/credentials live elsewhere -- the service
-  runs regardless.
+Config at `services/observability/prometheus.yml`. Rules at
+`services/observability/prometheus-rules.yml`.
+
+**5 alert rules** (1 group):
+- `blackbox:probe_up` (recording)
+- `blackbox:cert_days_remaining` (recording)
+- `BlackboxEndpointDown` -- 3-probe (90s) gate, critical
+- `BlackboxCertExpiringSoon` -- cert < 14 days, warning
+- `DiskSpaceLow` -- root FS > 85% for 5m, warning
+
+## Alertmanager (CT 122, pve-thermaltake)
+
+Prometheus Alertmanager 0.28.1 on `:9093`. Single route to the `ntfy`
+webhook receiver. `send_resolved: true`, `group_wait: 30s`,
+`repeat_interval: 4h`.
+
+Config template at `services/observability/alertmanager.yml.example`
+(live file has the real webhook secret; not in repo).
+
+## ntfy pipeline (CT 128, pve-framework)
+
+**7 notification paths** to the phone:
+1. TrueNAS alerts (original Slack-type alertservice)
+2. Alertmanager -- ntfy-slack-bridge AM route -- ntfy (Phase 1d)
+3. renew-pve-tls.sh on failure (5 PVE hosts)
+4. renew-truenas-tls.py on failure (wrapper script)
+5. pve-shared-remount.sh on actual remount
+6. vzdump-ntfy-hook.sh on backup job error/end
+7. ha-state-watch.sh on HA state transitions (error/stopped only)
+
+Bridge source: `services/ntfy/ntfy-slack-bridge.py` (extended with AM route).
+Shared publisher helper: `services/observability/ntfy-publish.sh`.
 
 ## Grafana (CT 123, pve-framework)
 
-* Version **13.1.0** (`/api/health` -> `version 13.1.0`; `database: ok`).
-* `/etc/grafana/provisioning/` holds the stock sample yamls + one real file:
-  `datasources/prometheus.yml` which is intentionally `datasources: []` with
-  a comment: "already exists in the DB as 'prometheus' (uid afrtfru117lz4c).
-  No file-based provisioning needed". Keep this convention -- the datasource
-  is DB-created, not file-provisioned.
-* `grafana.db` = 1.7M. sqlite counts:
-  `dashboard` 0, `data_source` 1, `alert_rule` 0, `alert_rule_group_v2` 0,
-  `notification_policy` 0, `contact_point` 0.
-* Datasource row: name=`prometheus`, type=`prometheus`,
-  url=`http://prometheus.tail54538d.ts.net:9090`, uid=`afrtfru117lz4c`
-  (raw HTTP over the tailnet, NOT through the serve TLS front).
-* `unified_alerting` is structurally configured (section present in
-  `grafana.ini`) but entirely unused -- zero rules, zero contact points.
-* tailscale serve: `https://grafana.tail54538d.ts.net` -> `localhost:3000`.
+Grafana 13.1.0. Two datasources:
+- `prometheus` (uid `afrtfru117lz4c`) -- Prometheus, HTTP
+- `loki` (uid `loki`) -- Loki, HTTPS (LE cert verified)
 
-Net: a working datasource, no dashboards, no alerts.
+**11 dashboards** (flat, no folders, `<Category> -- <Name>` naming):
 
-## ntfy (CT 128, pve-framework)
+| Dashboard | Source | What |
+|---|---|---|
+| Proxmox -- Host Health | node_exporter | CPU, memory, disk, network, load, failed systemd, temperatures |
+| Proxmox -- Cluster Status | pve-exporter | Quorum, guests, per-node CPU/mem, storage pools, PVE version per node |
+| Proxmox -- CT Resources | pve-exporter | Per-CT/VM CPU, memory, disk, IO, network + allocation table |
+| Network -- Uptime and Certificates | blackbox_exporter | Up/down stats, probe latency, cert days remaining bargauge |
+| Network -- Speedtest | speedtest-tracker | Download/upload Mbps, latency, jitter (pre-existing board) |
+| NAS -- TrueNAS Health | node_exporter | ZFS pools, ARC cache, disk I/O, filesystem, CPU/mem/network |
+| App -- Grafana | grafana metrics | API responses, inflight, datasource proxy latency, logins |
+| App -- Forgejo | gitea metrics | Repos, users, issues, orgs, stars, watches, mirrors |
+| App -- Prometheus | prometheus metrics | Scrape duration, rule eval, ingestion rate, TSDB series |
+| Logs -- Incident Timeline | Loki | All error/warning journal lines across every host (24h) |
+| Logs -- Proxmox HA Narrative | Loki | Corosync + HA-manager + storage thrash filter on PVE hosts |
+| Logs -- SSH and sudo Audit | Loki | Accepted/failed SSH + sudo invocations (24h) |
 
-* ntfy server active on `127.0.0.1:2586`; `ntfy-slack-bridge.py` (the
-  reverse-proxy + Slack->ntfy forwarder) active on `127.0.0.1:2587`.
-* `base-url: https://ntfy.tail54538d.ts.net`, `auth-default-access: deny-all`,
-  admin user `nate`.
-* Exposed over the tailnet by `tailscale serve` -> `localhost:2587` (the
-  bridge is the single serve backend; ntfy itself is localhost-only).
-* **Exactly one publisher today**: TrueNAS `alertservice.query` returns one
-  service:
-  `{"name":"ntfy (homelab)","type":"Slack","url":"https://ntfy.tail54538d.ts.net/truenas-f7e57b5f699d3d35","level":"WARNING","enabled":true,"id":3}`.
-* Cross-host grep of `/etc/cron*` + `/etc/systemd/system/*.service` on all
-  5 PVE nodes for the string "ntfy" -> **no other publishers**. So every
-  non-TrueNAS failure path (vzdump, cert-renewal crons, the pve-shared
-  NFS-remount script, HA state changes, a CT going `error`, disk fill, cert
-  non-renewal) pushes nothing today. See [`notifications.md`](./notifications.md)
-  (which lists these as "wire later").
+Dashboard manifests: `services/observability/grafana/*.dashboard.yaml`.
+Managed via `gcx` CLI (Grafana resource API, `dashboard.grafana.app/v1beta1`).
 
-## Host-level (all 5 PVE nodes)
+## node_exporter (5 PVE hosts + TrueNAS + GL-MT2500 router)
 
-* `systemd-journal-remote` + `systemd-journal-upload` -> `inactive` on all 5.
-* No `promtail` / `vector` / `loki` / `node_exporter` / `journal-remote`
-  binaries present on any host. No `journal-upload.conf` /
-  `journal-remote.conf` configured.
-* No `ntfy` curl in any cron or systemd unit on any host (see ntfy section).
-* Journals **accumulate unbounded** -- `journalctl --disk-usage`:
+- **5 PVE hosts** (pve-thermaltake, pve-aspiree15, pve-aspires,
+  pve-framework, raspberrypi): node_exporter v1.12.1 with extra
+  `systemd`/`mountstats`/`processes` collectors. Static binary at
+  `/usr/local/bin/node_exporter`, systemd unit.
+- **TrueNAS**: node_exporter v1.12.1 at `/mnt/volume1/.admin/node_exporter`
+  (TrueNAS root FS is read-only -- binary lives on the ZFS pool).
+  systemd unit at `/etc/systemd/system/node_exporter.service`.
+- **GL-MT2500 router**: node_exporter v1.12.1 (arm64) deployed, but
+  tailscale routing quirk prevents scraping from prometheus (same issue
+  as the router syslog relay). Deferred to Phase 3b.
 
-  | node | journal disk |
-  | --- | --- |
-  | pve-thermaltake | 641.3M |
-  | pve-aspiree15 | 242.3M |
-  | pve-aspires | 656.4M |
-  | pve-framework | 1.2G |
-  | raspberrypi | 117.7M |
+Install script: `services/observability/install-node-exporter-host.sh`
+(idempotent, arch-detected, sha256-verified).
 
-  No retention cap is enforced on any host.
+## blackbox_exporter (CT 122)
 
-## Per-CT agents
+Prometheus blackbox_exporter 0.26.0 (apt-installed) on `:9115`. Default
+`http_2xx` module (IPv4, follow_redirects). Probes 27 endpoints over the
+tailnet: 20 web CT HTTPS fronts + TrueNAS UI + 5 PVE `:8006` consoles +
+prometheus native HTTP `:9090/-/healthy`.
 
-* Probed all 23 CTs for `promtail` / `node_exporter` / `vector` / `loki`
-  binaries -> **none present in any CT**.
-* Probed app-native metrics endpoints:
-  * forgejo CT 107 `/metrics` -> empty (metrics NOT enabled in `app.ini`).
-  * jellyfin CT 102 has a listener on `:9079` but `/metrics` returns
-    nothing -- not a metrics exporter (jellyfin has no native prom exporter).
-  * postgres CT 108 -> no `postgres_exporter`, no `:9187` listener.
-* tailscale serve (sampled): every web CT proxies `/` ->
-  `http://localhost:<port>` only; NONE expose a separate `/metrics` path.
-  The precedent for any future raw-port scrape is the existing config --
-  pve-exporter `:9221` and speedtest `:80` are scraped on their raw tailnet
-  ports over HTTP, separate from the `:443` serve TLS front used for
-  browser access.
+## Loki (CT 130, loki.tail54538d.ts.net)
 
-## Router (GL-MT2500)
+Loki 3.7.4 (GitHub .deb), single-node monolithic, tsdb/v13 schema, 30-day
+compactor retention. Data on local-lvm (NOT pve-shared NFS). HTTPS via
+tailscale serve + real Let's Encrypt cert (auto-renewed by tailscaled).
 
-`root@gl-mt2500.tail54538d.ts.net`. Kernel
-`5.4.211 #0 SMP Tue Jun 24 10:48:30 2025 aarch64` -- a June-2025 build
-(newer than older docs implied; NOT a frozen old OpenWrt).
-Interfaces: `eth0` (WAN), `eth1` / `br-lan`, `wgclient` (a WireGuard client
-tunnel, separate from tailscale), `tailscale0`, `lo`. No `snmpd` /
-`collectd` / `node_exporter` / `promtail` installed. No syslog/logd
-remote-forward configured. `tailscale serve status` returns nothing (it is
-a subnet-router / exit node, not a serve host).
+Config: `services/observability/loki/loki-config.yaml`.
 
-## TrueNAS (nate@truenas)
+**CT 130 networking**: static IP 192.168.8.130 (the original DHCP IP .120
+was silently blocked by the GL-MT2500 router -- likely a stale lease/MAC
+mismatch). DNS via 192.168.8.1 (router). tailscale serve on :443 proxies
+to localhost:3100.
 
-RESTful API v2.0 reachable. One `alertservice` (the ntfy/Slack one above,
-id 3). `cloudsync` tasks 4-8 (the 5 per-leaf B2 tasks from the 2026-07-30
-rearchitect -- see [`backups.md`](./backups.md)). No grafana/loki app
-currently installed (no `app.available` match).
+## Promtail (5 PVE hosts + 8 curated CTs + CT 130 receiver)
 
-## Repo + dotfiles
+- **5 PVE hosts**: promtail 3.6.11 reads `/var/log/journal`, pushes to
+  `https://loki.tail54538d.ts.net/loki/api/v1/push` (TLS-verified).
+- **8 curated CTs** (107 forgejo, 102 jellyfin, 104 freshrss, 122 prometheus,
+  108 postgresql, 125 bichon, 126 protonmail-bridge, 128 ntfy): same config.
+- **raspberrypi**: reads `/run/log/journal` (volatile, not persistent).
+- **CT 130 receiver**: promtail listens on `:1514` (TCP syslog from TrueNAS)
+  + file-scraper for router logs at `/var/log/promtail-syslog/router.log`.
+  Also runs the request-side promtail pushing to local Loki.
 
-* `~/Projects/homelab` git history (as of 2026-08-30): no
-  observability-related commits beyond the existing `services/ntfy/` +
-  `docs/notifications.md`. No `services/grafana/`, `services/prometheus/`,
-  or `services/observability/` dir exists yet.
-* `~/dotfiles` migrations: none observability-related (`rg` for
-  grafana/prometheus/loki/alertmanager/node_exporter/promtail/tailscale-export
-  across `root/` -> nothing).
+Install script: `services/observability/promtail/install-promtail-host.sh`.
+Receiver config: `services/observability/promtail/receiver-config.yml`.
 
-Confirms the **deploy gap**: nothing in either repo provisions any of the
-monitoring components -- it is all live-only, deployed by hand over SSH.
-The plan to close it (and the build proposal) is in
-[`../ideas/observability.md`](../ideas/observability.md); the underlying
-PVE-provisioner gap is in [`../ideas/proxmox-iac.md`](../ideas/proxmox-iac.md).
+14 distinct host labels confirmed in Loki.
+
+## TrueNAS syslog
+
+TrueNAS web UI: System Settings > Advanced > Syslog Server set to
+`loki.tail54538d.ts.net:1514` (TCP, Warning level, no FQDN, no audit logs).
+Confirmed `source=truenas` in Loki.
+
+## Router syslog (GL-MT2500)
+
+Router's BusyBox logread can't reach CT 130 directly (the GL-MT2500 blocks
+traffic from certain CT IPs on the br-lan interface). Solved with a PVE
+host TCP relay:
+- Router logread sends to `pve-thermaltake:1515` (TCP)
+- PVE host socat relay (`router-syslog-relay.service`) forwards to CT 130:1515
+- CT 130 socat bridge (`router-syslog-bridge.service`) writes to
+  `/var/log/promtail-syslog/router.log`
+- CT 130 promtail file-scraper reads it + pushes to Loki
+
+Confirmed `source=router` in Loki. The 3-service relay chain is a
+workaround for the router's firewall blocking CT 130's old IP.
+
+## Known deferred items (Phase 3)
+
+- **tailscale-exporter** -- needs a read-only Tailscale OAuth key
+- **Router node_exporter scrape** -- blocked by same routing quirk as syslog
+- **Jellyfin exporter** -- needs API key from Jellyfin admin UI
+- **Postgres exporter** -- needs sidecar deploy on CT 108
+- **Forgejo-mirror** -- CT 105 is NOT Forgejo (it's a Bun app); no metrics

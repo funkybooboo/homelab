@@ -64,10 +64,16 @@ Service configs (`services/`):
   cron + script that auto-remount `pve-shared` + `pve-backups` NFS storages
   on every PVE node if `pvesm status` shows them inactive. Prevents the
   CT-stop-then-HA-error cascade at source.
+* [`services/observability/`](services/observability/) -- the full
+  observability stack: prometheus config + alert rules, alertmanager
+  template, blackbox_exporter, node_exporter install script, Loki config,
+  promtail install script + receiver config, ntfy-publish helper, 11
+  Grafana dashboard manifests, and all the silent-cron ntfy wrappers
+  (renew-tls, vzdump, HA-watch, pve-shared-remount).
 
 Ideas (`ideas/`) -- PROPOSALS, not deployed:
 
-* [`ideas/observability.md`](ideas/observability.md) -- observability build
+* [`docs/observability-build-plan.md`](docs/observability-build-plan.md) -- observability build
   plan: a "what we have vs what I want" gap matrix, then 3 phases
   (node_exporter + grafana dashboards + alertmanager->ntfy; Loki centralized
   logging; tailscale-exporter + router + app exporters). Ends with open
