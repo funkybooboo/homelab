@@ -33,16 +33,45 @@ local root (no NFS in the path) could delete them. If you ever need to clean
 media files again from the homelab: do it via `ssh root@truenas.tail54538d.ts.net`
 on the dataset directly, not over the NFS share.
 
+## Libraries removed 2026-07-31 (DB pointers only -- NAS files untouched)
+
+User wanted Jellyfin to keep only `Movies` and `Shows`. Removed the `Music`,
+`Books`, and `Audiobooks` libraries (DB pointers + cascaded item rows). The
+underlying files on TrueNAS (`/mnt/volume1/media/{music,books,audiobooks}`)
+were left in place -- 488 music files + 5 books + 3 audiobooks still on disk.
+
+Done via the Jellyfin API (the only safe way -- it cascades through the ~15
+related tables; hand-deleting `BaseItems` rows orphans rows):
+
+```
+DELETE /Library/VirtualFolders?name=Music&refreshLibrary=true        -> 204
+DELETE /Library/VirtualFolders?name=Books&refreshLibrary=true        -> 204
+DELETE /Library/VirtualFolders?name=Audiobooks&refreshLibrary=true   -> 204
+```
+Since no API key existed, one was minted by inserting a row into `ApiKeys`
+(jellyfin must be STOPPED first to free the SQLite lock, then restarted to
+load the key), used for the deletes, then revoked (`DELETE FROM ApiKeys`).
+Auth-tested afterward: the revoked token gets HTTP 401 on `/Library/VirtualFolders`
+(which requires auth). `/System/Info/Public` is public and always returns 200
+regardless of token -- not a valid auth test.
+
+Verified: `BaseItems` 3249 -> 2737 (-512 rows, all the Audio/MusicAlbum/
+MusicArtist/Book/AudioBook items + their metadata rows). Zero audio/book rows
+remain in `BaseItems`. User views now show only Collections, Movies, Shows.
+`root/default/` on disk now has only Collections/, Movies/, Shows/.
+
+DB backup kept at `/var/lib/jellyfin/data/jellyfin.db.pre-libcleanup-20260731-221435`
+inside CT 102 for rollback.
+
+`Collections` (the auto-generated TMDB boxsets like "James Bond Collection")
+was kept for now -- asked user separately whether to remove it.
+
 ## Still TODO (separate fixes)
 
-1. **Triggers Jellyfin to drop the stale library entries** for the deleted
-   files. The deleted paths still have rows in `jellyfin.db` `BaseItems` with
-   posters, etc. Two web-UI clicks do it (no API key on hand):
-   - Dashboard -> Scheduled Tasks -> **Scan Media Library** -> Run now
-   - Dashboard -> Scheduled Tasks -> **Clean Library / Clean missing media**
-     -> Run now
-   Or generate an API key (Dashboard -> Advanced -> API Keys) and trigger
-   `POST /ScheduledTasks/Running/{id}` via the Jellyfin API.
+1. **Drop stale BaseItems rows for the 103 deleted NAS files** (the stubs +
+   AppleDouble junk removed above). Run Jellyfin Dashboard -> Scheduled Tasks
+   -> **Scan Media Library** + **Clean Library**. Could also drive via API
+   with a freshly-minted key as above.
 
 2. **Duplicate `.m4v` vs `.m4v.mp4` pairs (20)** where BOTH files are real video
    (e.g. `BATMAN_BEGINS.m4v` 3.1 GB + `BATMAN_BEGINS.m4v.mp4` 920 MB). Need a
