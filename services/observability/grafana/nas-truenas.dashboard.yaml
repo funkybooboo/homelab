@@ -1,0 +1,186 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: nas-truenas
+  namespace: default
+  annotations:
+    grafana.app/folder: ""
+spec:
+  title: "NAS -- TrueNAS"
+  description: "TrueNAS host health: ZFS pool state, ARC cache, disk I/O, filesystem usage, CPU/memory/network. Backed by node_exporter :9100 on truenas.tail54538d.ts.net."
+  tags: [nas, truenas, zfs, node-exporter]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 30s
+  time:
+    from: now-6h
+    to: now
+  editable: true
+  graphTooltip: 1
+  templating:
+    list: []
+  panels:
+  - id: 1
+    title: ZFS pool state
+    type: stat
+    gridPos: {h: 5, w: 6, x: 0, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        mappings:
+        - options:
+            "0": {text: "not online", color: red, index: 1}
+            "1": {text: ONLINE, color: green, index: 0}
+          type: value
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red, value: null}
+          - {color: green, value: 1}
+    options:
+      colorMode: background_solid
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: name
+    targets:
+    - refId: A
+      expr: 'node_zfs_zpool_state{instance="truenas.tail54538d.ts.net:9100",state="online"}'
+      instant: true
+      range: false
+      legendFormat: "{{zpool}}"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 2
+    title: "volume1 used %"
+    type: gauge
+    gridPos: {h: 5, w: 4, x: 6, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        min: 0
+        max: 100
+        color: {mode: thresholds}
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: green, value: null}
+          - {color: yellow, value: 80}
+          - {color: red, value: 90}
+    options:
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+    targets:
+    - refId: A
+      expr: '100 * (1 - node_filesystem_avail_bytes{instance="truenas.tail54538d.ts.net:9100",mountpoint="/mnt/volume1",fstype="zfs"} / node_filesystem_size_bytes{instance="truenas.tail54538d.ts.net:9100",mountpoint="/mnt/volume1",fstype="zfs"})'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 3
+    title: CPU %
+    type: timeseries
+    gridPos: {h: 8, w: 14, x: 10, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: '100 * (1 - avg(rate(node_cpu_seconds_total{instance="truenas.tail54538d.ts.net:9100",mode="idle"}[5m])))'
+      legendFormat: "cpu"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 4
+    title: "Memory used %"
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 0, y: 5}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: percent
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: '100 * (1 - node_memory_MemAvailable_bytes{instance="truenas.tail54538d.ts.net:9100"} / node_memory_MemTotal_bytes{instance="truenas.tail54538d.ts.net:9100"})'
+      legendFormat: "mem"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 5
+    title: ZFS ARC size + hit rate
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 12, y: 5}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+      overrides:
+      - matcher: {id: byName, options: "ARC size"}
+        properties:
+        - {id: unit, value: bytes}
+      - matcher: {id: byName, options: "ARC hit rate"}
+        properties:
+        - {id: unit, value: percentunit}
+        - {id: max, value: 1}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'node_zfs_arc_size{instance="truenas.tail54538d.ts.net:9100"}'
+      legendFormat: "ARC size"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: B
+      expr: 'rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) / (rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) + rate(node_zfs_arc_misses_total{instance="truenas.tail54538d.ts.net:9100"}[5m]))'
+      legendFormat: "ARC hit rate"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 6
+    title: Disk I/O bytes/s per disk
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 13}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'rate(node_disk_read_bytes_total{instance="truenas.tail54538d.ts.net:9100",device!~"loop.*|ram.*"}[5m])'
+      legendFormat: "{{device}} read"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: B
+      expr: 'rate(node_disk_written_bytes_total{instance="truenas.tail54538d.ts.net:9100",device!~"loop.*|ram.*"}[5m])'
+      legendFormat: "{{device}} write"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 7
+    title: Network rx/tx bytes/s
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 21}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: Bps
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'rate(node_network_receive_bytes_total{instance="truenas.tail54538d.ts.net:9100",device!~"lo|veth.*|docker.*|br-.*|tailscale.*|wg.*"}[5m])'
+      legendFormat: "{{device}} rx"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+    - refId: B
+      expr: 'rate(node_network_transmit_bytes_total{instance="truenas.tail54538d.ts.net:9100",device!~"lo|veth.*|docker.*|br-.*|tailscale.*|wg.*"}[5m])'
+      legendFormat: "{{device}} tx"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}

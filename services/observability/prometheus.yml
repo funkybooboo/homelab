@@ -60,6 +60,11 @@ scrape_configs:
         - raspberrypi.tail54538d.ts.net:9100
         labels:
           app: node-exporter
+      # TrueNAS (Linux-based, not a PVE host) -- node_exporter on :9100
+      - targets: ["truenas.tail54538d.ts.net:9100"]
+        labels:
+          app: node-exporter
+          host: truenas
 
   # Phase 1c -- external HTTPS/HTTP health via blackbox_exporter on localhost:9115.
   # Targets over the tailnet (the same ~26 endpoints you would curl by hand).
