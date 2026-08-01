@@ -1,0 +1,4 @@
+# ha-state-watch cron -- deployed to /etc/cron.d/ha-state-watch on every
+# PVE node. Fires every 1 min; the script dedups by state-diff against
+# /var/lib/ha-state-watch.prev so only transitions push to ntfy.
+* * * * * root /usr/local/sbin/ha-state-watch.sh >/dev/null 2>&1

@@ -11,6 +11,13 @@ NFS_SERVER=192.168.8.100
 
 log() { echo "$(date -Iseconds) $*" >> "$LOG"; }
 
+# Phase 1e: push to ntfy when an actual remount happens (this is the event
+# you want to know about -- a silent NFS blip recovered automatically, OR
+# didn't recover and needs a human). No-op if /etc/ntfy-publish.env is absent.
+NTFY_HELPER=/usr/local/sbin/ntfy-publish.sh
+[ -r "$NTFY_HELPER" ] && . "$NTFY_HELPER"
+ntfy_publish() { :; }
+
 # name  export-path  mount-point
 declare -A STORES=(
   [pve-shared]="/mnt/volume1/pve/shared"
@@ -49,14 +56,24 @@ done
 if [ "$any_failed" = "1" ]; then
   sleep 2
   pvesm status >/dev/null 2>&1
+  recovered=""; still_down=""
   for name in pve-shared pve-backups; do
     state=$(pvesm status 2>/dev/null | awk -v n="$name" '$1==n {print $3}')
     if [ "$state" != "active" ]; then
       log "ERROR: $name STILL inactive after remount attempt -- needs human"
+      still_down="$still_down $name"
     else
       log "OK: $name recovered (active)"
+      recovered="$recovered $name"
     fi
   done
+  # Phone pushes: one per outcome. Both fire if mixed.
+  if [ -n "$recovered" ]; then
+    ntfy_publish "[OK] pve-shared remounted on $(hostname)" "recovered:$recovered -- NFS blip auto-recovered, no action needed" default wrench
+  fi
+  if [ -n "$still_down" ]; then
+    ntfy_publish "[FAIL] pve-shared STILL down on $(hostname)" "still inactive:$still_down -- needs human. See /var/log/pve-shared-remount.log" urgent rotating_light
+  fi
 fi
 
 exit 0
