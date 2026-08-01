@@ -47,12 +47,20 @@ The monitoring stack exists but is half-built:
   cert-expiry countdown. Two alert rules fire on 3-probe (90s) failure
   or cert <14d -- but see above, alertmanager not yet wired so they push
   nowhere.
-* **ntfy (CT 128, pve-framework)** is wired to **exactly one source: TrueNAS
-  alerts** (one Slack-type `alertservice`, id 3). Every other failure path
-  (vzdump, cert-renewal crons, the NFS-remount script, HA state changes, a
-  CT going `error`, a disk filling, a cert not renewing) is **silent**.
-  Confirmed by cross-host grep: zero other ntfy publishers on any cron or
-  systemd unit across the 5 PVE nodes.
+* **ntfy (CT 128, pve-framework)** phone pipeline now has **seven publisher
+  paths** (was 1 -- TrueNAS only -- before Phase 1d/1e):
+  1. TrueNAS alerts (the original Slack-type alertservice, id 3).
+  2. Alertmanager -> ntfy-slack-bridge AM route -> ntfy (Phase 1d): every
+     prometheus alert rule (BlackboxEndpointDown, BlackboxCertExpiringSoon,
+     + future rules) pushes to the phone.
+  3-7. The five Phase 1e silent-cron wrappers (renew-pve-tls on each PVE
+     host, renew-truenas-tls via a wrapper, pve-shared-remount on actual
+     remount, vzdump via a hookscript on the Sat 21:00 job, HA state
+     transitions via a 1-min state-diff cron). All source
+     `/usr/local/sbin/ntfy-publish.sh` + `/etc/ntfy-publish.env` (mode 0600).
+  The only remaining silent paths are disk-fill (covered by node_exporter
+  metrics but no alert rule yet) + the router/TrueNAS-base OS events
+  (Phase 2/3).
 * **No centralized logging.** `systemd-journal-remote` /
   `systemd-journal-upload` inactive on all 5 PVE hosts; no promtail / vector /
   loki in any CT. Journals accumulate **unbounded** (framework 1.2G). The

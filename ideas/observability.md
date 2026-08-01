@@ -47,19 +47,20 @@ metrics now in prometheus); what's missing is the alerting transport
 
 ### 2. More ntfy notifications
 
-| failure path | now (silent except TrueNAS) | want (phone push) |
+| failure path | now | want (phone push) |
 | --- | --- | --- |
 | TrueNAS alerts | **wired** (Slack-type service id 3) | (keep) |
-| a web CT / PVE console / truenas UI goes down | nothing | blackbox 3-probe `up==0` -> ntfy (Phase 1c) |
+| a web CT / PVE console / truenas UI goes down | **wired** (blackbox 3-probe `up==0` -> alertmanager -> ntfy, Phase 1c/1d) | (keep) |
 | a tailnet device drops > 5m | nothing | tailscale-exporter `last_seen` rule -> ntfy (Phase 3a) |
-| vzdump backup result | mail-to-root (often unset) | PVE notification-target webhook -> ntfy (Phase 3d) |
-| HA state change / CT goes `error` | nothing | PVE notification-target + a ha-manager event tailer -> ntfy (Phase 3d + 1e) |
-| cert renewal fails (`renew-pve-tls.sh` / `renew-truenas-tls.py`) | logs to mail/nowhere | one-line curl to ntfy on non-zero exit (Phase 1e) |
-| pve-shared NFS remount script actually fires | silent log only | curl to ntfy (this IS the event you want to know) (Phase 1e) |
-| disk filling / cert nearing expiry | nothing | prometheus rules (node_exporter fs + blackbox cert-expiry) -> ntfy (Phases 1a/1c) |
+| vzdump backup result | **wired** (vzdump-ntfy-hook.sh on the Sat 21:00 job, Phase 1e) | (keep) |
+| HA state change / CT goes `error` | **wired** (ha-state-watch.sh 1-min state-diff cron, error/stopped/blocked/frozen only, Phase 1e) | (keep) |
+| cert renewal fails (`renew-pve-tls.sh` / `renew-truenas-tls.py`) | **wired** (ERR trap + wrapper, Phase 1e) | (keep) |
+| pve-shared NFS remount script actually fires | **wired** (pushes on actual remount + on still-down, Phase 1e) | (keep) |
+| disk filling / cert nearing expiry | cert nearing expiry **wired** (BlackboxCertExpiringSoon <14d, Phase 1c); disk fill rule still TODO | prometheus node_exporter fs rule -> ntfy (TODO) |
 
 Confirmed by cross-host grep: only TrueNAS publishes today -- **zero** other
 publishers on any cron or systemd unit across the 5 PVE nodes.
+(Pre-Phase-1e line; now 7 publisher paths -- see docs/observability.md.)
 
 ### 3. Centralized logging
 
