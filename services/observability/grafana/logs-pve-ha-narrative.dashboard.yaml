@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785553757107016'
+  resourceVersion: '1785553789163008'
 spec:
   title: Logs -- Proxmox HA Narrative
   description: PVE HA / corosync / HA-manager / LRM + storage (pve-shared NFS, pvesm) journal lines -- the narrative of a failover.
@@ -18,7 +18,7 @@ spec:
   schemaVersion: 39
   refresh: 30s
   time:
-    from: now-6h
+    from: now-24h
     to: now
   editable: true
   graphTooltip: 1

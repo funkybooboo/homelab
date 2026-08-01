@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785553819701004'
+  resourceVersion: '1785554310525982'
 spec:
   title: Logs -- SSH and sudo Audit
   description: Successful SSH logins, failed authentications, and sudo invocations across every host in the homelab.
@@ -18,7 +18,7 @@ spec:
   schemaVersion: 39
   refresh: 30s
   time:
-    from: now-6h
+    from: now-24h
     to: now
   editable: true
   graphTooltip: 1
