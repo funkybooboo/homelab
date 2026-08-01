@@ -96,9 +96,10 @@ NFS from truenas -- and as above, we deliberately avoid it for this CT.
 
 Storage sizing: the full Monero blockchain is ~**200GB and growing** (~10GB/yr);
 a **pruned** node is ~**50GB**. Pruned is enough for your own
-broadcast/query privacy and is what we default to. Full node only if you want
-to serve the public network (then you also need inbound P2P, see open
-question 1).
+broadcast/query privacy and is what we default to. A full node *with*
+inbound P2P would make you a useful public network peer -- but it exposes
+your home IP to the Monero P2P network, so we are NOT doing that (decision
+locked, see "Decisions locked" below).
 
 ---
 
@@ -112,8 +113,9 @@ thermally weaker). **Unprivileged, `nesting=1` not needed** (no Docker
 required -- we run `monerod` natively as a systemd unit, matching the
 homelab's "no Docker, native packages" convention).
 
-- rootfs: **`local-lvm` 80GB** (pruned chain ~50GB + headroom; bump to 250GB
-  on a full-node variant, but see open question 1).
+- rootfs: **`local-lvm` 80GB** (pruned chain ~50GB + headroom). 80GB gives
+  years of headroom against ~10GB/yr chain growth. No full-node sizing
+  because we are not running a full node (IP-exposure decision, below).
 - cores 4, RAM **8GB** (Monero verification is RAM-heavy; 4GB is the floor,
   8GB is comfortable, more lets it batch-verify faster during initial sync).
 - HA: **yes** (rootfs on local-lvm of the chosen node -- but see caveat:
@@ -152,8 +154,9 @@ ExecStart=/opt/monero/monerod \
   running *on the CT itself* if you ever run a hot wallet there (Phase 3
   caveat -- by default we do NOT).
 - `--prune-blockchain` -- ~50GB instead of ~200GB. Sufficient for your own
-  broadcast/query privacy. Drop only if you decide to be a public peer
-  (open question 1).
+  broadcast/query privacy. We run pruned and with no inbound P2P (decision
+  locked: home IP not exposed to the Monero P2P network); outbound-only
+  peer connections still reveal your IP to those peers -- see Open question 1.
 - `--enable-dns-blocklist` -- drops known-phishing seed nodes. Standard.
 
 Initial sync: **2-5 days** on this hardware, pegged to ~1 core + lots of disk
@@ -356,16 +359,37 @@ alternative and we note them so the tradeoff is explicit, not implicit.
 
 ---
 
+## Decisions locked
+
+1. **No inbound P2P, no public port, tailnet-only -- home IP stays hidden.**
+   Pruned node, no `18080/tcp` forwarded through the GL-MT2500, the node is
+   NOT a public Monero peer. This matches the homelab's existing posture
+   (every other service is tailnet-only HTTPS/MagicDNS, nothing is exposed
+   to the public internet -- see [`../docs/https.md`](../docs/https.md)).
+   It is the correct choice for "I don't want to expose my IP." Tradeoff
+   accepted: the node does not give back to the P2P network; it only protects
+   *your* privacy. If you ever want to be a useful public peer cheaply later,
+   the clean way is a cheap VPS fronting P2P and tunneling to the home node
+   over the tailnet (a Phase 4 idea, not Phase 1).
+
+> Privacy corollary: because the node itself talks to the Monero P2P network
+> from your home IP, *outbound* peer connections still reveal your IP to
+> those peers. `monerod` already supports Tor (`--tx-proxy tor,127.0.0.1:9050`
+> for broadcasts + `--add-peer`/anonymous-inbound via onion). For strict
+> IP-hiding, route the node's outbound P2P through Tor or a VPS too. See
+> Open question 1 below -- this is the next decision after the build.
+
 ## Open questions (before any build)
 
-1. **Pruned vs full node + inbound P2P.** Pruned (default) gives you your own
-   broadcast/query privacy and that's it -- you don't *serve* the public
-   network because no inbound P2P port is forwarded (matches homelab
-   "nothing public" policy). A full node *with* inbound 18080/tcp forwarded
-   through the GL-MT2500 would make you a useful network peer -- but exposes
-   your home IP to the Monero P2P network, breaking the "tailnet-only,
-   nothing public" posture every other service in this homelab holds. **My
-   recommendation: pruned, no inbound, tailnet-only.** Confirm before build.
+1. **Outbound P2P IP-hiding (Tor proxy).** Even with no inbound port, your
+   node's *outbound* connections to peers reveal your home IP to those
+   peers. For strict "I don't want to expose my IP," also scope a Tor proxy
+   (`tx-proxy=tor,127.0.0.1:9050` + onion anonymous-inbound) so the node's
+   P2P traffic never originates from your home IP. Adds latency + a`tor`
+   daemon to the CT or a sibling CT. Decide: Phase 1 (strict, in from the
+   start) vs Phase 1.5 (add once the node first syncs, since Tor P2P sync is
+   slower). Recommendation: Phase 1.5 -- get it syncing cleanly first on
+   plain outbound, then add Tor for outbound + broadcasts.
 2. **Node membership in the CT catalog / IaC.** This CT is created manually
    like Loki CT 130 (which also isn't in `proxmox-iac.md`'s scope yet). When
    `ideas/proxmox-iac.md` lands, this CT should be captured there alongside
@@ -373,6 +397,8 @@ alternative and we note them so the tradeoff is explicit, not implicit.
 3. **Do you actually want Phase 2 (Haveno/Bisq) documented further, or is
    the table here enough?** It's an out-of-cluster decision either way; the
    idea file can stop at the comparison table unless you want a walk-through.
+   (Also: since you don't want to expose your IP, any Haveno/Bisq use should
+   be over Tor, which both run natively. Note it, don't build it here.)
 4. **Mining: build it, or just leave this phase as "available if you ever
    want a heater"?** Given the near-certain negative ROI, the honest default
    is "don't, unless you want to participate." Confirm we're skipping it
