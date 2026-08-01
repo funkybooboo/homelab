@@ -4,9 +4,9 @@ metadata:
   name: nodes-overview
   namespace: default
   annotations:
-    grafana.app/folder: nodes
+    grafana.app/folder: ""
 spec:
-  title: Nodes Overview
+  title: "Proxmox -- Nodes"
   description: Per-host OS-level health for the 5 PVE nodes (node_exporter :9100). CPU/mem/disk/net/load + failed systemd units. Filterable by $instance.
   tags: [nodes, node-exporter]
   timezone: browser

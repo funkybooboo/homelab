@@ -6,9 +6,9 @@ metadata:
   annotations:
     # The pre-existing 'Network' folder (created by speedtest board import)
     # has metadata.name = ffsg5e6s35iioc (auto-UID), not a slug.
-    grafana.app/folder: ffsg5e6s35iioc
+    grafana.app/folder: ""
 spec:
-  title: Service Health
+  title: "Network -- Uptime and Certs"
   description: External health of every tailnet HTTPS endpoint + PVE console via blackbox_exporter. Green/red status grid, probe latency history, TLS cert-days-remaining countdown. 25 web CTs + 5 PVE consoles + TrueNAS + prometheus = 27 endpoints. BlackboxEndpointDown alert fires on 3 consecutive probe failures (90s) once Phase 1d wires alertmanager.
   tags: [blackbox, uptime, network]
   timezone: browser

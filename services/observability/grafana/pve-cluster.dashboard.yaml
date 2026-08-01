@@ -4,9 +4,9 @@ metadata:
   name: pve-cluster
   namespace: default
   annotations:
-    grafana.app/folder: nodes
+    grafana.app/folder: ""
 spec:
-  title: PVE Cluster
+  title: "Proxmox -- Cluster"
   description: PVE cluster + per-node overview from pve-exporter (quorum, subscription, guests running, per-node CPU/memory history, storage-pool usage). The node-level companion to the node_exporter-backed
     Nodes Overview board. Split from the legacy "Proxmox via Prometheus" board.
   tags:

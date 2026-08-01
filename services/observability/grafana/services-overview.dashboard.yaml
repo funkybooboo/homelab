@@ -4,9 +4,9 @@ metadata:
   name: services-overview
   namespace: default
   annotations:
-    grafana.app/folder: services
+    grafana.app/folder: ""
 spec:
-  title: Services Overview
+  title: "Proxmox -- CTs"
   description: Per-CT/VM resource use for the whole PVE cluster (pve-exporter). Guests CPU/mem/disk-IO/net over time + a per-guest allocation summary table. Split from the legacy "Proxmox via Prometheus"
     board.
   tags:
