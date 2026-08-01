@@ -93,9 +93,51 @@ before the initial commit (2026-07-29).
 
 ## Caveats
 
-- **Reddit** (`/r/x/.rss`, no trailing slash) intermittently returns 429
-  under load. FreshRSS retries; set Reddit feeds to a ~1h refresh and disable
-  "force refresh" to avoid bans.
+- **Reddit** (`/r/x/.rss`, no trailing slash) enforces an extremely tight
+  per-IP burst limit on unauthenticated `/.rss` requests -- roughly 1 request
+  per ~30 s burst window (Reddit returns `HTTP 429` with `Retry-After:` ~1
+  min after the first request, then escalates the cooldown on repeated hits).
+  With 17 Reddit feeds in this list, the default FreshRSS schedule (`*/15 *`
+  cron in `/etc/cron.d/freshrss-actualize`, feed ttl = system default = 1 h)
+  bursts all 17 requests inside a single actualize cycle, so all but the first
+  few 429 and stay errored indefinitely (the per-feed cooldown that FreshRSS
+  honours via `/opt/freshrss/data/Retry-After/` only staggers retries by the
+  burst window, not the next cron tick, so the wave rolls every 15 min).
+
+  Fix applied to the live instance (FreshRSS CT 104, DB on postgres CT 108,
+  schema `public`, tables prefixed `nate_`):
+
+  1. Set every Reddit feed's ttl from `120` (a stale over-aggressive 2-min
+     value) to `21600` (6 h). `ttl = 0` would also work (system default 1 h)
+     but 6 h keeps the per-cycle Reddit request count at <= 1 with headroom.
+  2. Stagger each Reddit feed's `lastUpdate` by `+900 s` (15 min, one cron
+     tick) so exactly one feed becomes due per actualize cycle instead of
+     all 17 at once. This is the critical step -- the burst limit is the
+     blocker, not total volume.
+  3. Reset `error = 0` and `rm /opt/freshrss/data/Retry-After/www.reddit.com_*.txt`
+     so FreshRSS does not keep honouring the prior backoff.
+
+  SQL (idempotent -- re-running restores staggered phase from any drift):
+
+  ```sql
+  WITH ranked AS (
+      SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS rn
+      FROM nate_feed WHERE url LIKE '%reddit.com%'
+  )
+  UPDATE nate_feed f
+  SET ttl = 21600, error = 0,
+      "lastUpdate" = (extract(epoch from now())::bigint) - 21600 + 900 * (rn - 1)
+  FROM ranked r
+  WHERE f.id = r.id;
+  ```
+
+  Symptom if it regresses: the FreshRSS web UI `Subscription management ->
+  Information` column shows a red error flag on Reddit feeds, and the per-user
+  log (`/opt/freshrss/data/users/nate/log.txt`) shows repeated `HTTP 429 Too
+  Many Requests!` lines followed by `will first retry after ...`
+  backoff entries. Do NOT also bump the actualize cron tighter, and do NOT
+  issue `force refresh` on Reddit feeds (it bypasses ttl and re-triggers the
+  429 cascade).
 - **Lobsters** (`lobste.rs/rss`) publishes an AAAA-only record; hosts without
   IPv6 will fail to fetch. The FreshRSS CT (nameserver `192.168.8.1`,
   per the bulk DNS fix) gets the A record fine.
