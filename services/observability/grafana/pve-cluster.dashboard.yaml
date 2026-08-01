@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785543951811015'
+  resourceVersion: '1785553193815000'
 spec:
   title: Proxmox -- Cluster Status
   description: 'PVE cluster + per-node status from pve-exporter: quorum, guests, subscription, per-node CPU/memory gauges, storage pools.'
@@ -58,7 +58,7 @@ spec:
       textMode: value
     targets:
     - refId: A
-      expr: pve_version_info
+      expr: pve_version_info{instance="raspberrypi.tail54538d.ts.net"}
       legendFormat: '{{version}}'
       instant: true
       range: false

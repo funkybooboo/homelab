@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785544205528006'
+  resourceVersion: '1785553197711016'
 spec:
   title: App -- Grafana
   description: 'Grafana self-observability: API responses, inflight requests, datasource proxy latency, dashboard search, logins, active alerts.'

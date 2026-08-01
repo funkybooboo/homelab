@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785544338159996'
+  resourceVersion: '1785553200343993'
 spec:
   title: App -- Prometheus
   description: 'Prometheus self-observability: scrape duration, rule eval, ingestion rate, TSDB series, config reload, targets.'

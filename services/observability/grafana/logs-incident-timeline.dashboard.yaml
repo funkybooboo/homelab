@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785550337701986'
+  resourceVersion: '1785553202785983'
 spec:
   title: Logs -- Incident Timeline
   description: All error and warning journal lines across every host, newest first. The single board to look at during an outage.

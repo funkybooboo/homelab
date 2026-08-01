@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785543952365991'
+  resourceVersion: '1785553194742012'
 spec:
   title: Proxmox -- CT Resources
   description: 'Per-CT/VM resource use from pve-exporter: CPU, memory, disk, network, IO. Includes allocation summary table.'

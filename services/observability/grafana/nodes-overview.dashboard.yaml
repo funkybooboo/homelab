@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785543951188005'
+  resourceVersion: '1785553192951999'
 spec:
   title: Proxmox -- Host Health
   description: 'Per-host OS-level health: CPU, memory, disk, network, load, failed systemd units, temperatures. All 5 PVE hosts via node_exporter.'

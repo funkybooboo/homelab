@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785543952847984'
+  resourceVersion: '1785553196034018'
 spec:
   title: Network -- Uptime and Certificates
   description: 'Blackbox polling of every tailnet HTTPS endpoint + PVE console + TrueNAS: green/red grid, latency, cert expiry countdown.'

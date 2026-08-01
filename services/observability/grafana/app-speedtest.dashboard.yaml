@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785544339729008'
+  resourceVersion: '1785553201577983'
 spec:
   title: App -- Speedtest
   description: 'Speedtest Tracker results: download/upload throughput (Mbps), latency, jitter, elapsed time.'

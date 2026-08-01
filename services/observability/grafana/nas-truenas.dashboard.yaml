@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785544017664007'
+  resourceVersion: '1785553196887001'
 spec:
   title: NAS -- TrueNAS Health
   description: TrueNAS ZFS pools, ARC cache hit rate, disk I/O, filesystem usage, CPU/memory/network.
@@ -178,7 +178,7 @@ spec:
       textMode: value
     targets:
     - refId: A
-      expr: rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) / (rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) + rate(node_zfs_arc_misses_total{instance="truenas.tail54538d.ts.net:9100"}[5m]))
+      expr: rate(node_zfs_arc_hits{instance="truenas.tail54538d.ts.net:9100"}[5m]) / (rate(node_zfs_arc_hits{instance="truenas.tail54538d.ts.net:9100"}[5m]) + rate(node_zfs_arc_misses{instance="truenas.tail54538d.ts.net:9100"}[5m]))
       legendFormat: hit rate
       instant: true
       range: false
@@ -332,7 +332,7 @@ spec:
         sort: desc
     targets:
     - refId: A
-      expr: rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) / (rate(node_zfs_arc_hits_total{instance="truenas.tail54538d.ts.net:9100"}[5m]) + rate(node_zfs_arc_misses_total{instance="truenas.tail54538d.ts.net:9100"}[5m]))
+      expr: rate(node_zfs_arc_hits{instance="truenas.tail54538d.ts.net:9100"}[5m]) / (rate(node_zfs_arc_hits{instance="truenas.tail54538d.ts.net:9100"}[5m]) + rate(node_zfs_arc_misses{instance="truenas.tail54538d.ts.net:9100"}[5m]))
       legendFormat: hit rate
       datasource:
         type: prometheus

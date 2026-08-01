@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785544206290987'
+  resourceVersion: '1785553198610991'
 spec:
   title: App -- Forgejo
   description: 'Forgejo (gitea) self-hosted git: repos, users, issues, orgs, stars, watches, mirrors, milestones, public keys, teams.'
