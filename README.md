@@ -77,6 +77,12 @@ Ideas (`ideas/`) -- PROPOSALS, not deployed:
   observability plan + every PVE-side config rubs against).
 * [`ideas/llama-rpc-inference.md`](ideas/llama-rpc-inference.md) --
   distributed LLM inference with llama.cpp RPC on the cluster.
+* [`ideas/monero-node.md`](ideas/monero-node.md) -- self-hosted Monero
+  node + private buy/sell + (optional) miner. Separates the three things the
+  request bundled: the node (real win, honest fit on CT 131 tailnet-only
+  pruned), the exchange path (node can't buy you acquisition privacy --
+  Haveno/Bisq vs KYC CEX vs swap-aggregator honesty table), and mining
+  (near-certain negative ROI on this cluster, accepted-loss only).
 
 ## Conventions
 
