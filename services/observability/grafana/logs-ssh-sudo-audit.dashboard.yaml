@@ -5,7 +5,7 @@ metadata:
   namespace: default
   annotations:
     grafana.app/folder: ''
-  resourceVersion: '1785553205283013'
+  resourceVersion: '1785553591816020'
 spec:
   title: Logs -- SSH and sudo Audit
   description: Successful SSH logins, failed authentications, and sudo invocations across every host in the homelab.
@@ -38,7 +38,7 @@ spec:
       uid: loki
     targets:
     - refId: A
-      expr: '{job="systemd-journal"} |= "Accepted" |=~ "(publickey|password|keyboard-interactive)"'
+      expr: '{job="systemd-journal"} |= "Accepted" |~ "publickey|password|keyboard"'
       queryType: instant
       datasource:
         type: loki
@@ -62,7 +62,7 @@ spec:
       uid: loki
     targets:
     - refId: A
-      expr: '{job="systemd-journal"} |=~ "(?i)(Failed |Invalid user|authentication failure for)"'
+      expr: '{job="systemd-journal"} |~ "Failed |Invalid user|authentication failure"'
       queryType: instant
       datasource:
         type: loki
@@ -86,7 +86,7 @@ spec:
       uid: loki
     targets:
     - refId: A
-      expr: '{job="systemd-journal"} |=~ "(?i)(sudo:|pam_unix.sudo|COMMAND=)"'
+      expr: '{job="systemd-journal"} |~ "sudo:|pam_unix.sudo|COMMAND="}'
       queryType: instant
       datasource:
         type: loki
