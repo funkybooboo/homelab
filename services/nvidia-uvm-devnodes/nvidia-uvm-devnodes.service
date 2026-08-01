@@ -1,0 +1,13 @@
+[Unit]
+Description=Create /dev/nvidia-uvm device nodes for CUDA (dkms has no udev rule)
+Documentation=file:///usr/local/sbin/nvidia-uvm-devnodes.sh
+After=systemd-modules-load.service
+Wants=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nvidia-uvm-devnodes.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
