@@ -63,8 +63,32 @@ remain in `BaseItems`. User views now show only Collections, Movies, Shows.
 DB backup kept at `/var/lib/jellyfin/data/jellyfin.db.pre-libcleanup-20260731-221435`
 inside CT 102 for rollback.
 
-`Collections` (the auto-generated TMDB boxsets like "James Bond Collection")
-was kept for now -- asked user separately whether to remove it.
+`Collections` (the 17 auto-generated TMDB boxsets like "James Bond Collection",
+"Star Wars Collection") was also removed at the user's request. This required
+extra steps because Jellyfin re-creates the `root/default/Collections/`
+folder on startup as long as any library config references it:
+1. DELETE `/Library/VirtualFolders?name=Collections` (returned 204 both times; a
+   single delete was insufficient -- a second attempt was needed).
+2. Remove the on-disk `root/default/Collections/` AND the appdata
+   `data/collections/` directory before restart (CT root can write its own
+   rootfs ext4 -- no NFS squash applies there).
+3. While Jellyfin was stopped (for the API-key revoke), delete the orphaned
+   BoxSet BaseItems rows: `DELETE FROM BaseItems WHERE Type LIKE '%BoxSet%';`
+   and the lingering Collections CollectionFolder row.
+4. Remove the empty `root/default/Collections/` stub that Jellyfin recreates
+   on each startup (harmless, not registered, but cleaned up).
+
+Verified: user views = Movies + Shows only; virtual folders = Movies + Shows
+only; BoxSet count = 0; CollectionFolder rows = Movies + Shows only. DB
+backups kept in CT 102: `jellyfin.db.pre-libcleanup-20260731-221435` and
+`jellyfin.db.pre-collections-20260731-222214`.
+
+NOTE: Jellyfin will recreate an empty `root/default/Collections/` directory on
+startup as long as the system config option `EnableGroupingMoviesIntoCollections`
+is enabled (currently false in system.xml). The empty dir is NOT registered as a
+library, so it does not reappear as a user view. To prevent even the empty-dir
+recreation, the Movies library option `AutomaticallyAddToCollection: true` and
+`EnableAutomaticSeriesGrouping: false` could be reviewed.
 
 ## Still TODO (separate fixes)
 
