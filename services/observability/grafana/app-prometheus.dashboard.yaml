@@ -1,0 +1,138 @@
+apiVersion: dashboard.grafana.app/v1beta1
+kind: Dashboard
+metadata:
+  name: app-prometheus
+  namespace: default
+  annotations:
+    grafana.app/folder: ""
+spec:
+  title: "App -- Prometheus"
+  description: "Prometheus self-observability: scrape duration + targets per pool, rule evaluation failures + duration, ingestion rate, config reload success, TSDB series/head. Scraped from prometheus itself (job=prometheus, localhost:9090)."
+  tags: [app, prometheus]
+  timezone: browser
+  schemaVersion: 39
+  refresh: 30s
+  time: {from: now-6h, to: now}
+  editable: true
+  graphTooltip: 1
+  templating: {list: []}
+  panels:
+  - id: 1
+    title: "Scrape duration (p95) by job"
+    type: timeseries
+    gridPos: {h: 8, w: 24, x: 0, y: 0}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: s
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'histogram_quantile(0.95, sum by (le, job) (rate(prometheus_target_scrape_duration_seconds_bucket{job!=""}[5m])))'
+      legendFormat: "{{job}}"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 2
+    title: "Targets per scrape pool"
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 0, y: 8}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: short
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
+        color: {mode: palette-classic-by-name}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'prometheus_target_scrape_pool_targets'
+      legendFormat: "{{scrape_pool}}"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 3
+    title: "Rule evaluation failures/s"
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 12, y: 8}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: ops
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: fixed, fixedColor: red}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'rate(prometheus_rule_evaluation_failures_total[5m])'
+      legendFormat: "{{rule_group}}"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 4
+    title: "Ingested samples/s"
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 0, y: 16}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: cps
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 10}
+        color: {mode: fixed, fixedColor: blue}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull, max]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'rate(prometheus_tsdb_head_samples_appended_total[5m])'
+      legendFormat: "samples/s"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 5
+    title: "TSDB head series"
+    type: timeseries
+    gridPos: {h: 8, w: 12, x: 12, y: 16}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        unit: short
+        custom: {drawStyle: line, lineInterpolation: linear, fillOpacity: 5}
+        color: {mode: fixed, fixedColor: purple}
+    options:
+      legend: {displayMode: table, placement: bottom, showLegend: true, calcs: [lastNotNull]}
+      tooltip: {mode: multi, sort: desc}
+    targets:
+    - refId: A
+      expr: 'prometheus_tsdb_head_series'
+      legendFormat: "head series"
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
+  - id: 6
+    title: "Config reload success"
+    type: stat
+    gridPos: {h: 4, w: 6, x: 0, y: 24}
+    datasource: {type: prometheus, uid: afrtfru117lz4c}
+    fieldConfig:
+      defaults:
+        color: {mode: thresholds}
+        mappings:
+        - options:
+            "0": {text: FAILED, color: red, index: 1}
+            "1": {text: OK, color: green, index: 0}
+          type: value
+        thresholds:
+          mode: absolute
+          steps:
+          - {color: red, value: null}
+          - {color: green, value: 1}
+    options:
+      colorMode: background_solid
+      graphMode: none
+      reduceOptions: {calcs: [lastNotNull], fields: "", values: false}
+      textMode: value
+    targets:
+    - refId: A
+      expr: 'prometheus_config_last_reload_successful'
+      instant: true
+      range: false
+      datasource: {type: prometheus, uid: afrtfru117lz4c}
