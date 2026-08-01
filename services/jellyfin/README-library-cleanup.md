@@ -97,16 +97,29 @@ recreation, the Movies library option `AutomaticallyAddToCollection: true` and
    -> **Scan Media Library** + **Clean Library**. Could also drive via API
    with a freshly-minted key as above.
 
-2. **Duplicate `.m4v` vs `.m4v.mp4` pairs (20)** where BOTH files are real video
-   (e.g. `BATMAN_BEGINS.m4v` 3.1 GB + `BATMAN_BEGINS.m4v.mp4` 920 MB). Need a
-   keep/delete decision per pair (recommend keep the h264 `.mp4`, delete the
-   legacy-mpeg4 `.m4v`) -- see dup-pairs table in audit scratch.
+2. **Duplicate `.m4v` vs `.m4v.mp4` pairs -- DONE 2026-07-31.** ffprobe'd
+   all 202 real movie files (read-only) -> identity table
+   [identity-table-20260731.tsv](identity-table-20260731.tsv). Built a
+   keep/drop plan ([dup-cleanup-plan-20260731.tsv](dup-cleanup-plan-20260731.tsv)):
+   21 dup groups, 22 files to DROP (~20.9 GB freed). Of 20 same-name pairs,
+   17 were byte-identical (md5-verified) -- zero quality loss; only 3 were
+   real quality decisions (BATMAN_BEGINS keep .m4v 1080p; Monster_House keep
+   .mp4 higher bitrate; TOMB_RAIDER keep .m4v.mp4, drop both alternatives);
+   plus AVATAR keep full vs AVATAR_small drop. User picked quality-first.
+   EXECUTED: the 22 DROP files were `mv`'d to a TrueNAS quarantine folder
+   `/mnt/volume1/media/.jellyfin-quarantine-20260731/` (NOT `rm`'d) --
+   reversible until ZFS snapshot retention expires. Manifest:
+   [quarantine-20260731.txt](quarantine-20260731.txt). Verified: all 22 gone
+   from `movies/`, all 21 KEEP counterparts still present. Recovery also via
+   `volume1/media/movies@auto-2026-07-31_00-00` ZFS snapshot.
 
 3. **Wrong-title metadata** on the REAL movies (~50). Filenames are too cryptic
    for TMDB matching (e.g. `WALL_E.m4v` scraped as "The Wolf of Wall Street",
    `IRON_MAN.m4v` as "The Man with the Iron Fists 2", `HOLES.m4v` as "Stretch
    My Holes"). Durable fix: rename on TrueNAS to `Title (Year).ext`, rescan, and
    for stragglers use the per-item "Identify" menu in the Jellyfin web UI.
+   Next step: build a full rename map from the identity table + TMDB for
+   user line-by-line review; NO renames applied until user approves each row.
 
 ## NFS media dir info (TrueNAS)
 
