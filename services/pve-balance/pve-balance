@@ -1,0 +1,464 @@
+#!/usr/bin/env python3
+"""
+pve-balance -- load-aware Proxmox CT/VM auto-balancer (cluster-coordinated).
+
+Proxmox HA is high-availability, NOT load balancing; it never watches load.
+This script fills that gap: it scores each node's load *relative to its
+hardware*, and if the spread between the most- and least-loaded eligible
+node exceeds a threshold, it live-migrates ONE guest from the hottest node
+to the coolest node that can accept it, then exits.
+
+CLUSTER COORDINATION (deploy on EVERY cluster node that should be able to
+take a turn as scheduler). All nodes run the SAME script + the SAME
+pve-balance.timer. They coordinate via two files on /etc/pve/ -- the Proxmox
+cluster filesystem (pmxcfs), which is replicated to every node via corosync:
+
+  /etc/pve/pve-balance/state.json   -- shared cooldown memory (last move
+                                       timestamp per guest). Because it is on
+                                       /etc/pve, every node sees the same
+                                       cooldown history; a guest moved by
+                                       node A's run stays in cooldown for
+                                       node B's next run.
+  /etc/pve/pve-balance/lock         -- a heartbeat lock. The active scheduler
+                                       writes "<node> <pid> <epoch>". A
+                                       peer treats the lock as held while it
+                                       is fresh (age < LOCK_TTL) and the
+                                       owning node is online; a stale lock
+                                       (owner crashed / fenced) is taken over
+                                       after LOCK_TTL. On clean exit the
+                                       holder removes its lock.
+
+Honest non-guarantees (pmxcfs is FUSE backed by sqlite-over-corosync, NOT a
+real POSIX-lock filesystem): flock does NOT give cluster-wide mutual
+exclusion there, so the lock is a *heartbeat* (read age/writer, claim, re-read
+to win a race) rather than an atomic CAS. Two nodes can still both win in the
+same wall-clock second on rare collision; the consequence is two migrations
+in one interval instead of one -- both still monotonically converge the
+cluster, and the SHARED cooldown prevents the same guest being moved twice.
+A startup jitter (random 0..JITTER sleep for non-interactive --apply runs)
+spreads the per-node timers across a 2-minute window so collisions are rare.
+Treat the lock as a strong throttler, not a hard mutex -- by design, because
+the balancer is safe-by-construction even if it double-fires.
+
+Safe to auto-migrate because all CT rootfs live on shared storage
+(pve-shared NFS), so `pct migrate` / `qm migrate --online` / `ha-manager
+crm-command migrate` transfer only live state + the pmxcfs config pointer --
+no disk copy.
+
+Usage (identical on every node):
+  pve-balance                # dry-run: print the plan, migrate nothing (no lock)
+  pve-balance --apply        # execute one migration (acquires cluster lock;
+                             #   random startup jitter when run non-interactively
+                             #   e.g. from the systemd timer)
+  pve-balance --apply --immediate   # skip jitter (manual runs)
+  pve-balance --apply --force      # ignore per-guest cooldown
+  pve-balance --json               # machine-readable plan (+ state)
+
+Runs as root ON a cluster node (needs pvesh). One node running this is
+enough; running it on every node is for redundancy (if the active scheduler
+is fenced, a peer takes over within LOCK_TTL).
+
+Score model (transparent heuristic -- see NOTES):
+  cpu_pressure = load15 / cores            (15-min run-queue pressure rel. to capacity; 1.0 = saturated)
+  mem_pressure = (maxmem - memavail) / maxmem
+  node_score   = W_CPU * cpu_pressure + W_MEM * mem_pressure
+Decisions are PER-ARCH (an amd64 guest never lands on an arm64 witness), so
+the arm64 quorum-witness (raspberrypi) never anchors the min score and never
+receives a guest. A node is a migration TARGET only if online, not excluded,
+and adding the guest keeps mem_pressure <= MEM_FIT_LIMIT.
+
+NOTES (be honest about these):
+- loadavg includes uninterruptible (D-state / I/O-wait) tasks, so a node can
+  read high load with low %cpu (common here: guests hit pve-shared NFS). The
+  score still reflects the load users FEEL, which is the point.
+- We cannot precisely subtract one guest's contribution from node loadavg, so
+  candidate selection is a heuristic (heaviest actual-cpu guest, or heaviest
+  maxmem guest if the src node is mem-constrained), with a projected-improvement
+  check + per-guest cooldown to prevent churn.
+- Migrates AT MOST one guest per run. Hysteresis is THRESHOLD + the monotone
+  accept criterion + per-guest SHARED cooldown. Converges over runs.
+"""
+
+import argparse, json, os, random, socket, subprocess, sys, time, traceback
+
+# ---------------------------- config (edit me) ----------------------------
+EXCLUDE_NODES      = ["pve-framework"]   # never RECEIVE guests here (flaky USB-NIC fence node). Remove once NIC is fixed.
+W_CPU              = 0.7
+W_MEM              = 0.3
+THRESHOLD          = 0.15    # act only if (max_score - min_score) within the source arch family > this
+MEM_FIT_LIMIT      = 0.85    # don't place a guest on a node if it would push mem_pressure above this
+COOLDOWN_HOURS     = 3       # don't migrate the same guest again within N hours (anti-thrash; shared via /etc/pve)
+LOCK_TTL           = 900     # seconds a cluster lock is considered fresh (~15 min >> max runtime)
+JITTER             = 120     # max random startup delay (sec) for non-interactive --apply (spreads peers)
+
+# cluster-shared (pmxcfs) -- same view on every node:
+PVE_SHARED_DIR      = "/etc/pve/pve-balance"
+STATE_FILE          = f"{PVE_SHARED_DIR}/state.json"
+LOCK_FILE           = f"{PVE_SHARED_DIR}/lock"
+# per-node (local): logs grow, so they stay OFF the size-limited pmxcfs.
+LOG_FILE            = "/var/log/pve-balance.log"
+# ---------------------------------------------------------------------------
+
+HOST = socket.gethostname().split(".")[0]
+
+
+def log(msg):
+    line = f"{time.strftime('%Y-%m-%d %H:%M:%S')} [{HOST}] {msg}"
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
+    print(line)
+
+
+PVE_TIMEOUT = 12  # seconds; pveproxy on a stalled node can hang forever
+
+
+def pvesh(path, *extra, kind="get"):
+    try:
+        out = subprocess.run(["pvesh", kind, path, *extra, "--output-format", "json"],
+                             capture_output=True, text=True, timeout=PVE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return None
+    if out.returncode != 0:
+        return None
+    try:
+        return json.loads(out.stdout)
+    except json.JSONDecodeError:
+        return None
+
+
+def run(cmd, check=True):
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if check and r.returncode != 0:
+        raise RuntimeError(f"cmd {cmd} failed rc={r.returncode}: {r.stderr.strip()[:200]}")
+    return r
+
+
+def _ensure_dir():
+    try:
+        os.makedirs(PVE_SHARED_DIR, exist_ok=True)
+    except OSError as e:
+        log(f"  WARN: cannot create {PVE_SHARED_DIR}: {e} (state/lock will be per-node-best-effort)")
+
+
+def load_state():
+    try:
+        with open(STATE_FILE) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {"moves": {}}
+
+
+def save_state(st):
+    _ensure_dir()
+    try:
+        with open(STATE_FILE, "w") as f:
+            json.dump(st, f, indent=2)
+    except OSError as e:
+        log(f"  WARN: cannot write shared state {STATE_FILE}: {e}")
+
+
+# ---- cluster heartbeat lock (no real mutex on pmxcfs; see docstring) ----
+def _read_lock():
+    """Return (holder_host, age_seconds) or (None, None) if no fresh/parseable lock."""
+    try:
+        with open(LOCK_FILE) as f:
+            parts = f.read().split()
+    except OSError:
+        return None, None
+    if len(parts) < 3:
+        return None, None
+    try:
+        ts = float(parts[2])
+    except ValueError:
+        return None, None
+    return parts[0], (time.time() - ts)
+
+
+def acquire_lock():
+    """Best-effort cluster mutex. Returns True if this node won the lock."""
+    _ensure_dir()
+    holder, age = _read_lock()
+    if holder and holder != HOST and age is not None and age < LOCK_TTL:
+        log(f"  lock held by {holder} (age {age:.0f}s < TTL {LOCK_TTL}); deferring")
+        return False
+    # claim it (stale or unheld)
+    try:
+        with open(LOCK_FILE, "w") as f:
+            f.write(f"{HOST} {os.getpid()} {time.time()}\n")
+    except OSError as e:
+        log(f"  WARN: cannot write lock {LOCK_FILE}: {e}")
+        return False
+    # race-break: let a concurrent peer's write settle, then confirm we still own it
+    time.sleep(0.3)
+    holder, _ = _read_lock()
+    if holder == HOST:
+        return True
+    if holder and holder != HOST:
+        log(f"  lost lock race to {holder}; deferring")
+        return False
+    # unreadable / empty -- assume ours
+    return True
+
+
+def release_lock():
+    try:
+        holder, _ = _read_lock()
+        if holder == HOST:
+            os.unlink(LOCK_FILE)
+    except OSError:
+        pass
+
+
+def _node_arch(status):
+    ci = status.get("cpuinfo") or {}
+    model = str(ci.get("model") or "")
+    kv = str(status.get("kversion") or "")
+    if "Cortex" in model or "aarch" in kv or "rpi" in kv or "arm64" in kv:
+        return "arm64"
+    return "amd64"
+
+
+def guest_arch(g):
+    path = (f"/nodes/{g['node']}/lxc/{g['vmid']}/config"
+            if g["type"] == "lxc" else f"/nodes/{g['node']}/qemu/{g['vmid']}/config")
+    cfg = pvesh(path) or {}
+    return cfg.get("arch") or "amd64"
+
+
+def gather():
+    nodes = []
+    for n in pvesh("/nodes") or []:
+        if n.get("status") != "online":
+            continue
+        name = n["node"]
+        cores = int(n.get("maxcpu") or 0)
+        maxmem = float(n.get("maxmem") or 0)
+        memused = float(n.get("mem") or 0)
+        st = pvesh(f"/nodes/{name}/status") or {}
+        if not st:
+            log(f"  skipping node {name}: /status fetch failed/timed out")
+            continue
+        loadavg = st.get("loadavg") or ["0", "0", "0"]
+        memavail = float((st.get("memory") or {}).get("available") or (maxmem - memused))
+        arch = _node_arch(st)
+        load1 = float(loadavg[0])
+        load15 = float(loadavg[2])  # 15-min avg -> stable decision score (anti-flap)
+        cpu_pressure = load15 / cores if cores else 0.0
+        mem_pressure = (maxmem - memavail) / maxmem if maxmem else 0.0
+        score = W_CPU * cpu_pressure + W_MEM * mem_pressure
+        excluded = name in EXCLUDE_NODES
+        nodes.append({
+            "name": name, "cores": cores, "maxmem": maxmem, "memused": memused,
+            "memavail": memavail, "load1": load1, "load15": load15,
+            "cpu": float(n.get("cpu") or 0),
+            "cpu_pressure": cpu_pressure, "mem_pressure": mem_pressure,
+            "score": score, "excluded": excluded, "arch": arch,
+        })
+
+    guests = []
+    for g in pvesh("/cluster/resources", "--type", "vm") or []:
+        if g.get("status") != "running":
+            continue
+        if g.get("type") not in ("lxc", "qemu"):
+            continue
+        guests.append({
+            "vmid": int(g["vmid"]), "node": g["node"], "name": g.get("name", ""),
+            "type": g["type"],
+            "cpu": float(g.get("cpu") or 0),
+            "mem": float(g.get("mem") or 0),
+            "maxmem": float(g.get("maxmem") or 0),
+        })
+
+    ha = set()
+    for r in pvesh("/cluster/ha/resources") or []:
+        sid = r.get("id") or r.get("sid") or ""
+        if sid:
+            ha.add(sid)
+    return nodes, guests, ha
+
+
+def guest_weight(g, node):
+    return W_CPU * (g["cpu"]) + W_MEM * (g["maxmem"] / node["maxmem"] if node["maxmem"] else 0)
+
+
+def node_mem_after(node, guest_mem):
+    return ((node["maxmem"] - node["memavail"]) + guest_mem) / node["maxmem"]
+
+
+def plan(nodes, guests, ha, state, force=False):
+    online = [n for n in nodes if not n["excluded"]]
+    if len(online) < 2:
+        return None, "fewer than 2 non-excluded nodes"
+    online_names = {n["name"] for n in online}
+    src = max(online, key=lambda n: n["score"])
+    family = [n for n in online if n.get("arch") == src.get("arch") and n["name"] != src["name"]]
+    if not family:
+        return None, f"no other same-arch receiver for {src['name']} ({src.get('arch')})"
+    fam_scores = {n["name"]: n["score"] for n in online if n.get("arch") == src.get("arch")}
+    cur_gap = max(fam_scores.values()) - min(fam_scores.values())
+    if cur_gap <= THRESHOLD:
+        return None, f"balanced within {src.get('arch')} (gap {cur_gap:.3f} <= {THRESHOLD})"
+    dst_candidates = sorted(family, key=lambda n: n["score"])
+
+    now = time.time()
+    cooldown = COOLDOWN_HOURS * 3600
+    moved = state.setdefault("moves", {})
+    cands = [g for g in guests if g["node"] == src["name"]]
+    if not cands:
+        return None, f"hottest node {src['name']} has no running guests to move"
+
+    mem_constrained = src["mem_pressure"] > MEM_FIT_LIMIT - 0.10
+    def rank_key(g):
+        return (-g["maxmem"], -g["cpu"]) if mem_constrained else (-g["cpu"], -g["maxmem"])
+    cands.sort(key=rank_key)
+
+    best = None
+    for g in cands:
+        sid = f"{'ct' if g['type']=='lxc' else 'vm'}:{g['vmid']}"
+        if guest_arch(g) != src.get("arch"):
+            continue
+        last = moved.get(sid)
+        if last and not force and (now - last) < cooldown:
+            continue
+        for dst in dst_candidates:
+            if dst["maxmem"] and node_mem_after(dst, g["maxmem"]) > MEM_FIT_LIMIT:
+                continue
+            wsrc = guest_weight(g, src)
+            wdst = guest_weight(g, dst)
+            new_src_score = max(0.0, src["score"] - wsrc)
+            new_dst_score = dst["score"] + wdst
+            scores = dict(fam_scores)
+            scores[src["name"]] = new_src_score
+            scores[dst["name"]] = new_dst_score
+            new_gap = max(scores.values()) - min(scores.values())
+            improvement = cur_gap - new_gap
+            if new_dst_score > new_src_score:   # would overshoot -> dst becomes hotter than src
+                continue
+            if improvement < 0.01:              # strictly help (epsilon vs float noise)
+                continue
+            if best is None or improvement > best["improvement"]:
+                best = {"guest": g, "src": src, "dst": dst,
+                        "sid": sid, "ha": sid in ha,
+                        "improvement": improvement,
+                        "new_gap": new_gap, "wsrc": wsrc, "wdst": wdst,
+                        "mem_constrained": mem_constrained}
+            break
+    if best is None:
+        return None, (f"hottest {src['name']} (score {src['score']:.3f}, {src.get('arch')}) "
+                      f"family gap {cur_gap:.3f} -> no monotone-improving move found "
+                      f"(cooldown/mem-fit/overshoot blocked all)")
+    return best, ("mem relief" if best["mem_constrained"] else "cpu relief")
+
+
+def execute(best):
+    g = best["guest"]; dst = best["dst"]["name"]; sid = best["sid"]
+    if best["ha"]:
+        cmd = ["ha-manager", "crm-command", "migrate", sid, dst]
+    elif g["type"] == "lxc":
+        cmd = ["pct", "migrate", str(g["vmid"]), dst]
+    else:
+        cmd = ["qm", "migrate", str(g["vmid"]), dst, "--online"]
+    log(f"APPLY migrate {best['src']['name']} -> {dst}: {sid} ({g['name']}) "
+        f"ha={best['ha']} improvement={best['improvement']:.3f} cmd={' '.join(cmd)}")
+    r = run(cmd, check=False)
+    if r.returncode == 0:
+        log(f"  ok: {r.stdout.strip()[:120]}")
+        return True
+    log(f"  FAILED rc={r.returncode}: {r.stderr.strip()[:200]} {r.stdout.strip()[:120]}")
+    return False
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--force", action="store_true", help="ignore per-guest cooldown")
+    ap.add_argument("--immediate", action="store_true", help="skip startup jitter (manual runs)")
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    # Only real (migrating) runs need the cluster lock + jitter; dry-run/json are read-only.
+    want_lock = args.apply
+    if want_lock and not args.immediate and not args.json and not os.isatty(0):
+        jitter = random.uniform(0, JITTER)
+        log(f"  non-interactive --apply: startup jitter {jitter:.1f}s (spreads peers across {JITTER}s)")
+        time.sleep(jitter)
+
+    try:
+        nodes, guests, ha = gather()
+    except Exception as e:
+        log(f"gather failed: {e}")
+        traceback.print_exc()
+        return 2
+
+    held_lock = False
+    if want_lock:
+        if not acquire_lock():
+            return 0  # a peer is active this interval; nothing to do here
+        held_lock = True
+
+    try:
+        state = load_state()
+        best, note = plan(nodes, guests, ha, state, force=args.force)
+
+        summary = {
+            "node": HOST,
+            "nodes": [{"name": n["name"], "cores": n["cores"], "load1": n["load1"],
+                       "load15": n.get("load15"),
+                       "cpu_pressure": round(n["cpu_pressure"], 3),
+                       "mem_pressure": round(n["mem_pressure"], 3),
+                       "score": round(n["score"], 3), "arch": n.get("arch"),
+                       "excluded": n["excluded"]} for n in sorted(nodes, key=lambda x: x["score"], reverse=True)],
+            "running_guests": len(guests),
+            "excluded_targets": EXCLUDE_NODES,
+            "plan": None, "note": note,
+        }
+
+        if best:
+            g = best["guest"]; src = best["src"]; dst = best["dst"]
+            summary["plan"] = {
+                "vmid": g["vmid"], "name": g["name"], "type": g["type"],
+                "sid": best["sid"], "ha": best["ha"],
+                "from": src["name"], "to": dst["name"],
+                "from_score": round(src["score"], 3), "to_score": round(dst["score"], 3),
+                "gap": round(src["score"] - dst["score"], 3),
+                "improvement": round(best["improvement"], 3),
+                "reason": "mem-constrained source" if best["mem_constrained"] else "cpu relief",
+            }
+
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            print(f"=== pve-balance {'APPLY' if args.apply else 'DRY-RUN'} (scheduler={HOST}) ===")
+            print(f"note: {note}")
+            print(f"{'node':<16} {'cores':>5} {'load1':>6} {'load15':>6} {'cpu_press':>9} {'mem_press':>9} {'score':>6} {'arch':>6} {'excl':>4}")
+            for n in summary["nodes"]:
+                print(f"{n['name']:<16} {n['cores']:>5} {n['load1']:>6.2f} {n.get('load15',0):>6.2f} "
+                      f"{n['cpu_pressure']:>9.3f} {n['mem_pressure']:>9.3f} {n['score']:>6.3f} "
+                      f"{n.get('arch','?'):>6} {'Y' if n['excluded'] else '':>4}")
+            if best:
+                p = summary["plan"]
+                print(f"\nPLAN: migrate {p['sid']} {p['name']} ({p['type']}) "
+                      f"{p['from']} (score {p['from_score']}) -> {p['to']} (score {p['to_score']})  "
+                      f"ha={p['ha']} reason={p['reason']} improvement~{p['improvement']}")
+                if args.apply:
+                    ok = execute(best)
+                    if ok:
+                        state.setdefault("moves", {})[best["sid"]] = time.time()
+                        save_state(state)
+                    sys.exit(0 if ok else 1)
+                else:
+                    print("(dry-run: not migrated. use --apply to execute.)")
+            else:
+                print("\nNo migration planned.")
+    finally:
+        if held_lock:
+            release_lock()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main() or 0)

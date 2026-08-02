@@ -1,0 +1,14 @@
+[Unit]
+Description=Proxmox load-aware auto-balancer (one migration if beneficial)
+After=pve-cluster.service corosync.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pve-balance --apply
+# The script acquires its OWN cluster-wide heartbeat lock on /etc/pve/, so no
+# per-node flock wrapper is needed here. Timeout = gather (worst case a stalled
+# peer pveproxy) + startup jitter (up to 120s) + one live migration (~10-30s).
+TimeoutStartSec=300
+# Best-effort; a single run failing must never fault the host or be retried
+# aggressively by systemd.
+SuccessExitStatus=0 1
