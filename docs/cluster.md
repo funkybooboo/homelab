@@ -45,6 +45,16 @@ HA can relocate CTs between nodes automatically on failure -- proven live
 when pve-aspires briefly lost pve-shared and ha-manager migrated 5 CTs onto
 pve-framework while it stayed reachable.
 
+Note that HA is high-availability only -- it never watches load and never
+redistributes guests for balance. That gap is filled by `pve-balance`
+([`services/pve-balance/`](../services/pve-balance/)): a load-aware
+auto-balancer that scores each node relative to its hardware and, when the
+within-arch spread exceeds a threshold, live-migrates one guest from the
+hottest node to the coolest same-arch receiver. It runs on the same 1h
+timer on all 4 x86 nodes and they coordinate through a heartbeat lock +
+shared cooldown on `/etc/pve/` (pmxcfs), so a fenced scheduler is taken over
+by a peer within ~15 min -- no single node is the balancer.
+
 ## Storage
 
 Shared storage comes from `truenas` (TrueNAS) over NFS:
