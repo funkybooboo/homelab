@@ -50,10 +50,13 @@ redistributes guests for balance. That gap is filled by `pve-balance`
 ([`services/pve-balance/`](../services/pve-balance/)): a load-aware
 auto-balancer that scores each node relative to its hardware and, when the
 within-arch spread exceeds a threshold, live-migrates one guest from the
-hottest node to the coolest same-arch receiver. It runs on the same 1h
-timer on all 4 x86 nodes and they coordinate through a heartbeat lock +
-shared cooldown on `/etc/pve/` (pmxcfs), so a fenced scheduler is taken over
-by a peer within ~15 min -- no single node is the balancer.
+hottest node to the coolest same-arch receiver. It runs on **`raspberrypi`
+only** on a 1h timer -- the arm64 quorum-witness is the neutral arbiter
+(zero workloads = no bias toward offloading itself; and if the Pi dies the
+cluster loses its 5th corosync vote anyway, so the balancer failing is the
+least of the problems). The script still carries cluster-coordination code
+(heartbeat lock + shared cooldown on `/etc/pve/`) so it can be flipped back
+to multi-node any time by enabling the timer on x86 nodes.
 
 ## Storage
 

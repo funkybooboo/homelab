@@ -1,5 +1,13 @@
 # pve-balance -- load-aware auto-balancer for the PVE cluster
 
+> **Runs on `raspberrypi` only.** The Pi is the cluster's quorum-witness
+> (arm64, no workloads, no LRM) -- a genuinely *neutral arbiter*. It hosts
+> zero guests, so it has no skin in the game (an x86 scheduler would be
+> tempted to keep load off itself). It is the most stable node in the cluster
+> (6+ day uptime, idle). If the Pi dies you lose quorum and the balancer is
+> the least of your problems. See *Deployment* below for why this beats a
+> multi-node design.
+
 Proxmox HA does **high-availability** (fence + relocate), not **load
 balancing**. It never watches load and never redistributes guests to even
 out utilization. `pve-balance` fills that gap: it scores each node's load
@@ -21,11 +29,60 @@ no disk copy, a sub-second-to-seconds pause per migration.
 | `pve-balance.service` | systemd oneshot unit (calls the script once, then exits).
 | `pve-balance.timer`   | systemd timer: starts the service every 1h (+ once 3min after boot).
 
-## Cluster coordination (why it runs on EVERY node, not one)
+## Deployment: Pi-only (neutral arbiter)
 
-All 4 x86 cluster nodes run the same script + the same timer. They coordinate
-through two files on `/etc/pve/` -- the Proxmox cluster filesystem (pmxcfs),
-replicated to every node by corosync:
+The scheduler runs **only on `raspberrypi`** -- the arm64 quorum-witness.
+The 4 x86 nodes (pve-aspires, pve-aspiree15, pve-thermaltake, pve-framework)
+do NOT run the timer. Rationale:
+
+* **Neutral arbiter** -- the Pi hosts zero guests, so its placement decisions
+  can't be biased toward offloading itself. An x86 scheduler would both host
+  guests AND decide migrations (mild conflict of interest).
+* **Most stable node** -- idle, low-power, always-on, multi-day uptimes.
+* **Quorum coupling** -- if the Pi dies it takes the 5th corosync vote with
+  it, so `pvesh` (and HA) degrade cluster-wide anyway; the balancer failing
+  is the least of the problems. There is no real failure mode unique to
+  Pi-only.
+
+The script STILL carries its cluster-coordination code (heartbeat lock +
+shared state on `/etc/pve/` + startup jitter). With a single scheduler this
+is harmless dead weight -- the Pi always wins its own lock. It is kept as
+**defense-in-depth**: to flip back to multi-node, just `systemctl enable
+--now pve-balance.timer` on any x86 node and the peers will coordinate.
+See *Cluster coordination (kept for defense-in-depth)* below.
+
+## Install (on `raspberrypi` only)
+
+```sh
+install -m 755 -o root -g root pve-balance         /usr/local/sbin/pve-balance
+install -m 644 -o root -g root pve-balance.service  /etc/systemd/system/pve-balance.service
+install -m 644 -o root -g root pve-balance.timer    /etc/systemd/system/pve-balance.timer
+systemctl daemon-reload
+systemctl enable --now pve-balance.timer
+/usr/local/sbin/pve-balance          # dry-run sanity check
+```
+
+One-liner from a machine that can reach the Pi over Tailscale:
+
+```sh
+scp pve-balance pve-balance.service pve-balance.timer root@raspberrypi.tail54538d.ts.net:/tmp/
+ssh root@raspberrypi.tail54538d.ts.net '
+  install -m755 /tmp/pve-balance         /usr/local/sbin/pve-balance &&
+  install -m644 /tmp/pve-balance.service  /etc/systemd/system/ &&
+  install -m644 /tmp/pve-balance.timer    /etc/systemd/system/ &&
+  systemctl daemon-reload && systemctl enable --now pve-balance.timer'
+```
+
+To flip back to multi-node later (optional), repeat the same install on each
+x86 node -- peers self-coordinate via the heartbeat lock in
+`/etc/pve/pve-balance/`.
+
+## Cluster coordination (kept for defense-in-depth)
+
+With the Pi-only deployment the coordination code is dormant. If you later
+enable the timer on x86 nodes too, all instances coordinate through two files
+on `/etc/pve/` -- the Proxmox cluster filesystem (pmxcfs), replicated to every
+node by corosync:
 
 * `/etc/pve/pve-balance/state.json` -- shared cooldown memory. A guest moved
   by node A's run is in cooldown for node B's next run, so a guest is never
@@ -47,37 +104,6 @@ non-interactive `--apply`, e.g. the systemd timer) spreads the per-node timers
 across a 2-minute window so collisions are rare. The lock is a strong
 throttler, not a hard mutex -- by design, because the balancer is
 safe-by-construction even if it double-fires.
-
-**Redundancy:** if the node that currently holds the lock is fenced, its lock
-goes stale and another node takes over within `LOCK_TTL` on its next tick. No
-single node is the scheduler -- any of the 4 can be.
-
-Not deployed to `raspberrypi` (arm64 quorum-witness; it cannot host amd64
-guests and stays a pure witness -- see [`docs/cluster.md`](../../docs/cluster.md)).
-
-## Install (identical on each of the 4 x86 nodes)
-
-```sh
-install -m 755 -o root -g root pve-balance         /usr/local/sbin/pve-balance
-install -m 644 -o root -g root pve-balance.service  /etc/systemd/system/pve-balance.service
-install -m 644 -o root -g root pve-balance.timer    /etc/systemd/system/pve-balance.timer
-systemctl daemon-reload
-systemctl enable --now pve-balance.timer
-/usr/local/sbin/pve-balance          # dry-run sanity check
-```
-
-One-liner fan-out from a machine that can reach all nodes over Tailscale:
-
-```sh
-for n in pve-aspires pve-aspiree15 pve-thermaltake pve-framework; do
-  scp pve-balance pve-balance.service pve-balance.timer "root@$n.tail54538d.ts.net:/tmp/"
-  ssh "root@$n.tail54538d.ts.net" '
-    install -m755 /tmp/pve-balance         /usr/local/sbin/pve-balance &&
-    install -m644 /tmp/pve-balance.service  /etc/systemd/system/ &&
-    install -m644 /tmp/pve-balance.timer    /etc/systemd/system/ &&
-    systemctl daemon-reload && systemctl enable --now pve-balance.timer'
-done
-```
 
 ## How one run works
 
@@ -106,30 +132,30 @@ done
 ## Config (edit top of `/usr/local/sbin/pve-balance`; no daemon-reload needed)
 
 | name | default | meaning
-| --- | --- | ---
+| --- | --- | --- |
 | `EXCLUDE_NODES`      | `["pve-framework"]` | never RECEIVE guests here. pve-framework is the flaky USB-NIC fence node; remove once the NIC is fixed physically so it can receive.
 | `W_CPU` / `W_MEM`    | 0.7 / 0.3           | score weights.
 | `THRESHOLD`          | 0.15               | act only if the within-arch score gap exceeds this.
 | `MEM_FIT_LIMIT`      | 0.85               | never push a target's mem_pressure above this.
 | `COOLDOWN_HOURS`     | 3                  | don't move the same guest again within N hours (anti-thrash; shared via /etc/pve).
-| `LOCK_TTL`           | 900 (15 min)        | freshness window for the cluster lock; takeover-after-crash latency.
-| `JITTER`             | 120                 | max random startup delay (s) for timer runs (spreads peer collision).
+| `LOCK_TTL`           | 900 (15 min)        | freshness window for the cluster lock; takeover-after-crash latency (dormant under Pi-only).
+| `JITTER`             | 120                 | max random startup delay (s) for timer runs (dormant under Pi-only).
 
 ## Operating it
+
+All from the Pi:
 
 ```sh
 /usr/local/sbin/pve-balance                 # dry-run: show what the NEXT run would do (no lock, no change)
 /usr/local/sbin/pve-balance --apply --immediate   # run one cycle right now (manual; skips jitter)
 /usr/local/sbin/pve-balance --json            # machine-readable
 systemctl list-timers pve-balance.timer      # cadence + next fire
-systemctl stop  pve-balance.timer            # pause cluster-wide (do on every node)
+systemctl stop  pve-balance.timer            # pause
 journalctl -u pve-balance.service           # systemd view of each run
-tail /var/log/pve-balance.log                # per-node audit trail (logs stay LOCAL -- pmxcfs is size-limited)
+tail /var/log/pve-balance.log                # audit trail (logs stay LOCAL -- pmxcfs is size-limited)
 cat /etc/pve/pve-balance/state.json          # shared cooldown history (cluster-wide)
 cat /etc/pve/pve-balance/lock                # current lock holder ("node pid epoch")
 ```
-
-Audit across the cluster: `for n in pve-aspires pve-aspiree15 pve-thermaltake pve-framework; do echo "== $n =="; ssh root@$n.tail54538d.ts.net tail -5 /var/log/pve-balance.log; done`
 
 ## Honest caveats
 
@@ -146,3 +172,8 @@ Audit across the cluster: `for n in pve-aspires pve-aspiree15 pve-thermaltake pv
   box (`pct migrate <vmid> <stable-node>`).
 * VMs: the 4 VMs are stopped templates today. If you run real VMs later they
   flow through the same balancer via `qm migrate --online`.
+* Single scheduler (the Pi): if the `raspberrypi` host itself is down/suspended,
+  no balancing happens until it's back. This is acceptable because the Pi
+  going down also costs the cluster its 5th corosync vote -- balancing would
+  be the least of the problems. To make the balancer redundant again, enable
+  the timer on x86 nodes (the coordination code is already in the script).
