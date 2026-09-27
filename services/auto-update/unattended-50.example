@@ -1,20 +1,23 @@
 // /etc/apt/apt.conf.d/50unattended-upgrades -- auto-update (homelab)
 // Full-update allowlist (locked user decision 2026-08: security + regular
-// updates for both CTs and PVE hosts). Automatic-Reboot is FALSE everywhere
-// by design: on PVE hosts the serialized cluster reboot controller
-// (pve-cluster-reboot-controller.sh) owns reboots, quorum-gated, one node
-// at a time, HA master last; CTs share the host kernel and never need a
-// reboot for kernel updates (needrestart restarts services live instead).
+// updates for both CTs and PVE hosts). Uses Origins-Pattern (the stock
+// format on every distro generation in this fleet) instead of the legacy
+// Allowed-Origins key: u-u 2.9 (Ubuntu 24.04) and 2.12 (Debian trixie) both
+// crash parsing modern "o=...,a=..." strings through the legacy parser.
+// origin+codename matching covers all suites at once (Debian trixie main,
+// -updates, -security share codename "trixie"; likewise Ubuntu noble and
+// the Proxmox trixie repo).
+// Automatic-Reboot is FALSE everywhere by design: on PVE hosts the
+// serialized cluster reboot controller (pve-cluster-reboot-controller.sh)
+// owns reboots, quorum-gated, one node at a time, HA master last; CTs share
+// the host kernel and never need a reboot (needrestart restarts services
+// live instead).
 // Deployed by install-ct.sh / install-host.sh (same file everywhere).
 
-Unattended-Upgrade::Allowed-Origins {
-        "o=Debian,a=trixie";
-        "o=Debian,a=trixie-updates";
-        "o=Debian,a=trixie-security";
-        "o=Proxmox,a=trixie";
-        "o=Ubuntu,a=noble";
-        "o=Ubuntu,a=noble-updates";
-        "o=Ubuntu,a=noble-security";
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=trixie";
+        "origin=Proxmox,codename=trixie";
+        "origin=Ubuntu,codename=noble";
 };
 
 Unattended-Upgrade::Package-Blacklist {
