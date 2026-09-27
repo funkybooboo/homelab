@@ -1,0 +1,25 @@
+// /etc/apt/apt.conf.d/50unattended-upgrades -- auto-update (homelab)
+// Full-update allowlist (locked user decision 2026-08: security + regular
+// updates for both CTs and PVE hosts). Automatic-Reboot is FALSE everywhere
+// by design: on PVE hosts the serialized cluster reboot controller
+// (pve-cluster-reboot-controller.sh) owns reboots, quorum-gated, one node
+// at a time, HA master last; CTs share the host kernel and never need a
+// reboot for kernel updates (needrestart restarts services live instead).
+// Deployed by install-ct.sh / install-host.sh (same file everywhere).
+
+Unattended-Upgrade::Allowed-Origins {
+        "o=Debian,a=trixie";
+        "o=Debian,a=trixie-updates";
+        "o=Debian,a=trixie-security";
+        "o=Proxmox,a=trixie";
+        "o=Ubuntu,a=noble";
+        "o=Ubuntu,a=noble-updates";
+        "o=Ubuntu,a=noble-security";
+};
+
+Unattended-Upgrade::Package-Blacklist {
+};
+
+// Hosts: never self-reboot (controller does it, serialized).
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Automatic-Reboot-Time "04:30";

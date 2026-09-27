@@ -1,5 +1,11 @@
 # Automated updates for the homelab
 
+> **STATUS: IMPLEMENTED 2026-09-27** (S-variant reboot serialization chosen).
+> See `services/auto-update/` for the shipped code, install steps, and the
+> operational notes below that diverged from this design during the build
+> (reboot-flag detection, controller cadence, router tier deferred). This
+> document stays as the design record + decision log.
+
 ## Executive summary
 
 Patch every host in the homelab automatically, but tiered by blast radius:

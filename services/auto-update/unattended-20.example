@@ -1,0 +1,7 @@
+// /etc/apt/apt.conf.d/20auto-upgrades -- auto-update (homelab)
+// Enables the stock apt-daily/apt-daily-upgrade timers as a BACKSTOP.
+// The primary runner is the 03:30 wrapper (systemd timer on PVE hosts,
+// /etc/cron.d in CTs); a backstop run that finds nothing to do is free.
+
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";

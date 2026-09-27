@@ -1,0 +1,10 @@
+// /etc/needrestart/conf.d/auto-update.conf -- auto-update (homelab)
+// CTs only (pushed by install-ct.sh): restart services that picked up
+// upgraded libraries, live, right after the nightly unattended-upgrade.
+// There is no per-CT kernel, so a CT never needs a reboot for this --
+// needrestart's live restarts are the whole story (design decision: a
+// postgres/nginx/jellyfin restart blip at 03:30 is accepted).
+// PVE hosts do NOT get this file: cluster services restart only via the
+// serialized reboot controller (see unattended-upgrade-wrapper.sh).
+
+$nrconf{restart} = 'a';
