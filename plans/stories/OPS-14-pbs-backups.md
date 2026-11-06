@@ -6,7 +6,7 @@ completed, so that backups are deduplicated, verified, and provably
 restorable.
 
 **Status**: planned
-**Arc**: v4 (pending: [../issues.md](../issues.md) item 5)
+**Arc**: v4
 
 ## Acceptance criteria
 
@@ -21,6 +21,7 @@ restorable.
 
 ## Notes
 
-If issues item 5 lands on vzdump instead, this story becomes the
-vzdump baseline + the same drill -- either way the deliverable is a
-PROVEN restore, not a backup job.
+If issues item 5 had landed on vzdump instead, this story would be
+the vzdump baseline + the same drill -- either way the deliverable is
+a PROVEN restore, not a backup job. (It landed on PBS; the operator
+provisions truenas access for the datastore.)

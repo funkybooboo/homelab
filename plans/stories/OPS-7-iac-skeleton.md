@@ -14,7 +14,8 @@ YAML + one role.
 - [ ] Ansible playbooks data-driven from the manifests via
       community.proxmox; idempotent re-run proven
 - [ ] `make converge` + `make verify` targets; access path per
-      [../issues.md](../issues.md) item 4
+      [../issues.md](../issues.md) item 4 = (a): one subnet router,
+      `tailscale serve` fronts only on TLS-worthy hosts
 - [ ] Adding a test guest from manifest to running service works
       end-to-end
 

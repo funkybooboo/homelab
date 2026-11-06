@@ -6,7 +6,7 @@ tailscale, no-subscription repo, cluster join), so that a node is a
 replaceable part.
 
 **Status**: planned
-**Arc**: v1 (blocked: [../issues.md](../issues.md) item 2)
+**Arc**: v1
 
 ## Acceptance criteria
 
@@ -15,6 +15,9 @@ replaceable part.
 - [ ] Per-node glue codified from the inventory in
       [../design/proxmox-iac.md](../design/proxmox-iac.md) section 1:
       renew-pve-tls crons, laptop lid-ignored + screen-off units
+- [ ] pve-framework enrolls with its USB-NIC fix in place (powered
+      hub or PCIe NIC, per issues item 2) + a stability soak before
+      it hosts HA-managed guests again
 - [ ] Node facts live in `infra/nodes/`
 
 ## Notes

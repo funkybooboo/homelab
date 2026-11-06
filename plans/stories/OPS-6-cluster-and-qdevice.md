@@ -5,15 +5,15 @@ As the operator, I want the greenfield cluster formed natively on
 exists without ever hosting guests on arm64.
 
 **Status**: planned
-**Arc**: v1 (blocked: [../issues.md](../issues.md) items 2 + 3)
+**Arc**: v1
 
 ## Acceptance criteria
 
 - [ ] Corosync on 192.168.1.x from formation day (no renumbering debt)
 - [ ] Pi runs corosync-qnetd only; never a guest host
-- [ ] HA decision recorded per [../issues.md](../issues.md) item 3; if
-      fleet HA: node-affinity rules + the arm/disarm maintenance
-      runbook
+- [ ] HA decision recorded per [../issues.md](../issues.md) item 3:
+      fleet HA it is -- node-affinity rules (amd64 only) + the
+      arm/disarm maintenance runbook + native-balancer policy
 
 ## Notes
 

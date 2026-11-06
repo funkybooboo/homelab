@@ -14,10 +14,13 @@ constitution is [identity.md](./identity.md); the shipped record is
   truenas + its data + B2, re-platform OPNsense as a VM on Proxmox.
   Research done 2026-11-05; the arc-level design record is
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md).
-- **Nothing is built yet. v1 is blocked ONLY on [issues.md](./issues.md)
-  item 2** (node roster + framework NIC verdict) -- the router box is
-  answered: Protectli V1210, 2x 2.5GbE, OPNsense 25.7 running at .1.
-  v0 needs no hardware.
+- **Nothing is built yet, but v1 is FULLY UNBLOCKED**: all open
+  questions answered 2026-11-06 ([issues.md](./issues.md) items
+  1-7) -- router = Protectli V1210; all 5 nodes return with
+  framework's USB-NIC fixed; Pi = QDevice only; fleet HA + the native
+  9.2 balancer; one tailscale subnet router; PBS; curated services.
+  v0 shipped. Next: write the v1 scripts (`ips.yaml`, the truenas
+  move, `bootstrap.sh`), then the hardware evening.
 
 ## v0: Legacy archive -- SHIPPED 2026-11-06
 
