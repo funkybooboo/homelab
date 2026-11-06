@@ -19,11 +19,12 @@ constitution is [identity.md](./identity.md); the shipped record is
   answered: Protectli V1210, 2x 2.5GbE, OPNsense 25.7 running at .1.
   v0 needs no hardware.
 
-## v0: Legacy archive
+## v0: Legacy archive -- SHIPPED 2026-11-06
 
-[OPS-1 the legacy archive](./stories/OPS-1-legacy-archive.md) -- the old
-homelab documented before anything is wiped: `docs/legacy/` + the
-old-rootfs data inventory.
+[OPS-1 the legacy archive](./stories/OPS-1-legacy-archive.md) --
+done: `docs/legacy/` (guest catalog, old LAN, quirks + incidents,
+data-to-extract inventory) + `scripts/extract-legacy.sh`. The script
+RUNS at the first hardware touch, after the truenas move (OPS-4).
 
 ## v1: Foundations
 
