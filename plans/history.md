@@ -30,10 +30,12 @@ As shipped (state at the 2026-10 shutdown):
 - 2026-09-27: `pve-framework` last seen online (suspected: the
   reboot-controller's reboot + its flaky USB NIC; it never returned).
 - 2026-10-01: `pve-thermaltake`.
-- 2026-10-19: truenas + every remaining CT (one mass stop).
+- 2026-10-19: truenas + every remaining CT (one mass stop). Same day:
+  the Protectli V1210 router box ordered (#10610317, $563.04 -- Intel
+  N5105, 2x 2.5GbE, 4GB, 500GB NVMe, OPNsense 25.7 pre-installed).
 - 2026-10-28: the last three nodes (`pve-aspires`, `pve-aspiree15`,
-  `raspberrypi`) + the GL-MT2500 retired; OPNsense at 192.168.1.1 takes
-  the LAN (new subnet: 192.168.1.0/24).
+  `raspberrypi`) + the GL-MT2500 retired; the V1210's OPNsense takes
+  the LAN at 192.168.1.1 (new subnet: 192.168.1.0/24).
 - 2026-11-04: state verified by network forensics -- everything dark,
   the old subnet dead, only debbie + the laptops on the tailnet.
 

@@ -7,9 +7,16 @@ OPEN).
 
 ## Open questions (blockers first)
 
-1. **Router box specs** -- NIC count (2+ needed for clean WAN/LAN; 1
-   NIC blocks the re-platform until a NIC is added), CPU/RAM/disk.
-   *Blocks v1 (OPS-3).*
+1. **Router box specs** -- ANSWERED 2026-11-06 (order #10610317,
+   ordered 2026-10-19, $563.04): **Protectli Vault V1210**, 2-port Intel
+   N5105 (Jasper Lake quad-core; 2x Intel 2.5GbE per Protectli spec --
+   `lspci` on install re-verifies), 4GB LPDDR4 (soldered: the node stays
+   router-only), 500GB Kingston NV3 NVMe, coreboot BIOS, **OPNsense 25.7
+   pre-installed** (= the box currently running at 192.168.1.1). Two
+   NICs = clean WAN + LAN; blocker lifted. Follow-up: pin the
+   oxlorg.opnsense release matching OPNsense 25.7 before any
+   router-as-code playbook runs.
+   *Unblocks OPS-3.*
 2. **Node roster** -- all 5 old machines back? pve-framework's flaky
    USB NIC: powered hub, PCIe NIC, or retire? *Blocks v1 (OPS-5,
    OPS-6).*
