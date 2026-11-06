@@ -1,5 +1,17 @@
 # Proxmox Infrastructure as Code (IaC) for the homelab cluster
 
+> **STATUS: SUPERSEDED 2026-11-05** by [`greenfield-rebuild.md`](./greenfield-rebuild.md).
+> This was the in-place adoption plan for the live 192.168.8.x cluster with the
+> GL-MT2500 router, per-CT tailscale, and OpenTofu-first tooling. The October
+> 2026 staged power-down + router swap (LAN is now 192.168.1.0/24) killed those
+> assumptions, and the 2026-11-05 research pass moved the tooling to
+> Ansible-only (the `community.proxmox` collection now covers cluster/storage/
+> guest lifecycle, so no Terraform state layer is needed). Kept as the design
+> record: section 1's inventory of per-node glue (renew-pve-tls crons, laptop
+> lid/screen units, per-CT DNS fixes) is still the input checklist for the
+> greenfield node-bootstrap role, and the security/operations principles in
+> section 6 carry over unchanged.
+
 ## Executive Summary
 
 Today the homelab is managed ClickOps-first: containers are created through the
