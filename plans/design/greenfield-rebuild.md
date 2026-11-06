@@ -1,6 +1,11 @@
 # Greenfield homelab rebuild: infrastructure as code from scratch
 
 > **STATUS: PROPOSAL** -- research complete 2026-11-05, nothing built yet.
+> Reorganized 2026-11-06: the demand + queue now live in
+> [`../roadmap.md`](../roadmap.md) and [`../stories/`](../stories/); the open
+> questions live in [`../issues.md`](../issues.md). This document stays as the
+> arc-level DESIGN RECORD (keep-vs-rebuild, architecture, IP plan, tooling
+> decisions, traps, research sources).
 > Supersedes [`proxmox-iac.md`](./proxmox-iac.md) (the in-place adoption plan for
 > the old 192.168.8.x cluster -- dead: that cluster is powered down and its
 > subnet no longer exists). Research sources are listed at the bottom; the raw

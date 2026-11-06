@@ -21,10 +21,10 @@ Read the rest as "here is how each of the three maps onto *these* boxes, with
 the tradeoffs that actually matter for a 1GbE tailnet-only Proxmox homelab."
 
 > Status: PROPOSAL. Nothing here is deployed.
-> Grounded in [`../docs/services.md`](../docs/services.md) (CT catalog),
-> [`../docs/https.md`](../docs/https.md) (tailnet-only HTTPS + LE via
-> `tailscale serve`), [`../docs/cluster.md`](../docs/cluster.md) (HA + the
-> "Pi rule"), and [`../docs/storage.md`](../docs/storage.md) (the
+> Grounded in [`../../docs/services.md`](../../docs/services.md) (CT catalog),
+> [`../../docs/https.md`](../../docs/https.md) (tailnet-only HTTPS + LE via
+> `tailscale serve`), [`../../docs/cluster.md`](../../docs/cluster.md) (HA + the
+> "Pi rule"), and [`../../docs/storage.md`](../../docs/storage.md) (the
 > `pve-shared` NFS + random-IO-abhors-NFS lesson already learned on the
 > Loki CT, see `ideas/observability.md`).
 
@@ -59,7 +59,7 @@ whole thesis of this doc:
 
 - 5-node PVE cluster, 23 running CTs, all web surfaces tailnet-only HTTPS over
   `tailscale serve --https 443` with auto-renewed LE certs
-  ([`../docs/https.md`](../docs/https.md)). A Monero node fits this pattern
+  ([`../../docs/https.md`](../../docs/https.md)). A Monero node fits this pattern
   exactly: no public port needed for *your* privacy, RPC stays inside the
   tailnet, certs are free.
 - `local-lvm` vs `pve-shared` NFS storage tradeoff -- already learned the
@@ -69,13 +69,13 @@ whole thesis of this doc:
   constant block I/O while peered). Same answer: **local-lvm, not NFS.** Don't
   relearn this.
 - ntfy push pipeline + alertmanager->ntfy bridge already live
-  ([`../docs/notifications.md`](../docs/notifications.md)) -- node-stuck /
+  ([`../../docs/notifications.md`](../../docs/notifications.md)) -- node-stuck /
   sync-stalled / disk-full alerts ride the existing rail for free.
 - vzdump Saturday 21:00 snapshot of every HA-managed CT -- gives us the
   "rollback a bad upgrade" path for the node CT for free, same as every
   other CT.
 - The `accept-dns=false` + MagicDNS renewal gotcha
-  ([`../docs/https.md`](../docs/https.md)) -- already solved cluster-wide, the
+  ([`../../docs/https.md`](../../docs/https.md)) -- already solved cluster-wide, the
   new CT just joins the tailnet the same way CT 122/123/130 did.
 
 ---
@@ -88,7 +88,7 @@ whole thesis of this doc:
 | `pve-aspiree15` | x86_64 | laptop, HA master | yes | weak (laptop CPU, thermals) |
 | `pve-aspires` | x86_64 | laptop | yes | weak (laptop CPU) |
 | `pve-framework` | x86_64 | desktop | yes | OK-ish CPU, but was offline Jul 18-26 once -- don't put a 24/7 miner here |
-| `raspberrypi` | arm64 | quorum-witness | **no** -- arm64 + no `pve-lrm` (Pi rule, [`../docs/cluster.md`](../docs/cluster.md)) | **no** |
+| `raspberrypi` | arm64 | quorum-witness | **no** -- arm64 + no `pve-lrm` (Pi rule, [`../../docs/cluster.md`](../../docs/cluster.md)) | **no** |
 | `truenas` | x86_64 | storage/NFS | **no** -- never load the node onto the storage box | n/a |
 
 LAN: 192.168.8.x /24, **1GbE**. Tailnet: tail54538d.ts.net. Shared storage is
@@ -365,7 +365,7 @@ alternative and we note them so the tradeoff is explicit, not implicit.
    Pruned node, no `18080/tcp` forwarded through the GL-MT2500, the node is
    NOT a public Monero peer. This matches the homelab's existing posture
    (every other service is tailnet-only HTTPS/MagicDNS, nothing is exposed
-   to the public internet -- see [`../docs/https.md`](../docs/https.md)).
+   to the public internet -- see [`../../docs/https.md`](../../docs/https.md)).
    It is the correct choice for "I don't want to expose my IP." Tradeoff
    accepted: the node does not give back to the P2P network; it only protects
    *your* privacy. If you ever want to be a useful public peer cheaply later,
@@ -422,8 +422,8 @@ alternative and we note them so the tradeoff is explicit, not implicit.
 - Monero node privacy model (why your own node matters for broadcast):
   https://monero-docs.lza.dev/running-node/
 - Existing homelab related docs:
-  [`../docs/https.md`](../docs/https.md), [`../docs/cluster.md`](../docs/cluster.md),
-  [`../docs/storage.md`](../docs/storage.md), [`./observability.md`](./observability.md)
+  [`../../docs/https.md`](../../docs/https.md), [`../../docs/cluster.md`](../../docs/cluster.md),
+  [`../../docs/storage.md`](../../docs/storage.md), [`../../docs/observability-build-plan.md`](../../docs/observability-build-plan.md)
   (Loki CT 130 local-lvm precedent), [`./proxmox-iac.md`](./proxmox-iac.md).
 
 ---

@@ -1,6 +1,6 @@
 # auto-update -- tiered unattended patching for the homelab
 
-Implements the locked design in `ideas/auto-update.md` (decisions locked
+Implements the locked design in `plans/design/auto-update.md` (decisions locked
 2026-08; S-variant reboot serialization chosen 2026-09-27).
 
 Three layers by blast radius:

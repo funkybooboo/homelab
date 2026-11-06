@@ -7,7 +7,7 @@
 >   [`../docs/notifications.md`](../docs/notifications.md).
 > * The CT catalog is in [`../docs/services.md`](../docs/services.md).
 > * The IaC / deploy gap this whole plan rubs against is in
->   [`proxmox-iac.md`](./proxmox-iac.md).
+>   [`proxmox-iac.md`](../plans/design/proxmox-iac.md).
 >
 > This doc is only the **plan**: what to build, in what order, with what
 > tradeoffs. Read the current-state doc first -- every "now" column below
@@ -472,7 +472,7 @@ fleet.
 
 ## The deploy gap (be honest about it)
 
-Per [`proxmox-iac.md`](./proxmox-iac.md), **nothing in `~/dotfiles/migrate.sh`
+Per [`proxmox-iac.md`](../plans/design/proxmox-iac.md), **nothing in `~/dotfiles/migrate.sh`
 provisions PVE hosts or PVE CTs.** That means every new thing above
 (node_exporter on the 5 hosts, blackbox/alertmanager/tailscale-exporter on
 CT 122, promtail on the 8 CTs, node_exporter on the router) is a

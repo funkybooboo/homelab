@@ -40,7 +40,8 @@ Docs (`docs/`):
   logging stack as deployed today (probed live 2026-08-30): prometheus scrape
   config, grafana datasource state, ntfy publishers, journald-remote status,
   per-CT agent audit, router/truenas/dotfiles state. The build plan for what
-  to add on top of this is in `ideas/observability.md`.
+  to add on top of this is in
+  [`docs/observability-build-plan.md`](docs/observability-build-plan.md).
 
 Service configs (`services/`):
 
@@ -71,24 +72,37 @@ Service configs (`services/`):
   Grafana dashboard manifests, and all the silent-cron ntfy wrappers
   (renew-tls, vzdump, HA-watch, pve-shared-remount).
 
-Ideas (`ideas/`) -- PROPOSALS, not deployed:
+Plans (`plans/`) -- how work is queued, tracked, and shipped
+(erledigen-style: identity, roadmap, stories, design records, history,
+issues):
 
-* [`docs/observability-build-plan.md`](docs/observability-build-plan.md) -- observability build
-  plan: a "what we have vs what I want" gap matrix, then 3 phases
-  (node_exporter + grafana dashboards + alertmanager->ntfy; Loki centralized
-  logging; tailscale-exporter + router + app exporters). Ends with open
-  questions before any build. Grounded in the current-state doc above.
-* [`ideas/proxmox-iac.md`](ideas/proxmox-iac.md) -- Proxmox
-  Infrastructure-as-Code for this specific cluster (the deploy gap the
-  observability plan + every PVE-side config rubs against).
-* [`ideas/llama-rpc-inference.md`](ideas/llama-rpc-inference.md) --
-  distributed LLM inference with llama.cpp RPC on the cluster.
-* [`ideas/monero-node.md`](ideas/monero-node.md) -- self-hosted Monero
-  node + private buy/sell + (optional) miner. Separates the three things the
-  request bundled: the node (real win, honest fit on CT 131 tailnet-only
-  pruned), the exchange path (node can't buy you acquisition privacy --
+* [`plans/roadmap.md`](plans/roadmap.md) +
+  [`plans/stories/`](plans/stories/) -- the greenfield rebuild queue
+  (v0 legacy archive -> v1 foundations -> v2 IaC skeleton + core services
+  -> v3 service batches -> v4 automation polish), one story file per work
+  item.
+* [`plans/identity.md`](plans/identity.md) -- the homelab constitution:
+  the declaratively-managed fleet identity + the rules every change obeys.
+* [`plans/design/greenfield-rebuild.md`](plans/design/greenfield-rebuild.md)
+  -- the active arc design record: keep-vs-rebuild, architecture, IP plan,
+  tooling decisions (Ansible-only, PVE 9.2, OPNsense-as-VM), research
+  sources. The former `ideas/proxmox-iac.md` in-place plan is superseded
+  inside it.
+* [`plans/design/auto-update.md`](plans/design/auto-update.md) -- shipped
+  2026-09-27 (the implemented design record behind
+  [`services/auto-update/`](services/auto-update/)).
+* [`plans/design/llama-rpc-inference.md`](plans/design/llama-rpc-inference.md)
+  -- distributed LLM inference with llama.cpp RPC on the cluster.
+* [`plans/design/monero-node.md`](plans/design/monero-node.md) --
+  self-hosted Monero node + private buy/sell + (optional) miner. Separates
+  the three things the request bundled: the node (real win, honest fit),
+  the exchange path (node can't buy you acquisition privacy --
   Haveno/Bisq vs KYC CEX vs swap-aggregator honesty table), and mining
   (near-certain negative ROI on this cluster, accepted-loss only).
+* [`plans/design/firefox-sync-server.md`](plans/design/firefox-sync-server.md),
+  [`plans/design/homelab-auto-repair.md`](plans/design/homelab-auto-repair.md)
+  -- more someday design records, each queued as a story in
+  [`plans/stories/`](plans/stories/).
 
 ## Conventions
 
