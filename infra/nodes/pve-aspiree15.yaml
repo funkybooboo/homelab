@@ -1,0 +1,10 @@
+# pve-aspiree15 -- laptop node
+name: pve-aspiree15
+arch: amd64
+role: pve-node
+hardware: laptop
+constraints: []
+glue:
+  - renew-pve-tls.sh + cron (all nodes)
+  - logind no-lid-suspend drop-in + screen-off.service (docs/laptop-nodes.md)
+  - pve-shared-nfs-remount helper

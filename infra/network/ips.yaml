@@ -1,0 +1,67 @@
+# infra/network/ips.yaml -- THE one IP plan for 192.168.1.0/24 (OPS-2).
+#
+# Everything that assigns addresses reads or respects this file:
+# scripts/bootstrap.sh (node static IPs), scripts/truenas-network-move.sh,
+# the guest manifests + oxlorg.opnsense DHCP playbook (OPS-7+), and
+# scripts/deploy-node-glue.sh. Plans/identity.md rule 4: one flat LAN,
+# one file. The old fleet's lesson (docs/legacy/network.md): no host is
+# ever DHCP-pinned again -- infra hosts are static at the OS, guests
+# are static at pct level (plans/issues.md item 7), and only true
+# clients (phones, laptops, ephemerals) live in the pool.
+#
+# MACs are carried forward from the old fleet (same physical boxes);
+# pve-router's two V1210 NICs get recorded at install (lspci).
+
+lan:
+  subnet: 192.168.1.0/24
+  gateway: 192.168.1.1              # the OPNsense VM on pve-router (OPS-3)
+  dns: [192.168.1.1, 1.1.1.1]
+  dhcp_pool: [192.168.1.100, 192.168.1.249]   # clients only, never infra
+
+# --- .1-.9: router + PVE nodes (static at OS, assigned at install) ---
+
+hosts:
+  opnsense:
+    ip: 192.168.1.1                # VM on pve-router; never a DHCP client
+    note: config.xml imported from the V1210's live OPNsense (OPS-3)
+
+  pve-router:
+    ip: 192.168.1.2
+    mac: tbd-v1210                 # record both NICs at install (lspci)
+    note: Protectli V1210; WAN NIC bridges to vmbr1, LAN NIC to vmbr0
+
+  pve-thermaltake:
+    ip: 192.168.1.3
+    mac: 4c:ed:fb:bf:ab:7d         # only GPU node; jellyfin lives here
+
+  pve-framework:
+    ip: 192.168.1.4
+    mac: 9c:bf:0d:01:4c:d6         # enroll only after the USB-NIC fix
+
+  pve-aspiree15:
+    ip: 192.168.1.5
+    mac: 54:ab:3a:9b:e9:4c         # laptop; HA master was here in the old fleet
+
+  pve-aspires:
+    ip: 192.168.1.6
+    mac: 00:e0:4c:68:a4:fa         # laptop
+
+# --- .10-.19: storage + infrastructure (static at OS) ---
+
+  truenas:
+    ip: 192.168.1.10
+    mac: 6c:bf:b5:04:d9:97         # kept in place; only network moves (OPS-4)
+
+  raspberrypi:
+    ip: 192.168.1.11
+    mac: d8:3a:dd:45:d3:7e         # QDevice ONLY, never hosts guests (OPS-6)
+
+  pbs:        { ip: 192.168.1.12, reserved-for: "PBS VM (OPS-14)" }
+  subnetrouter: { ip: 192.168.1.13, reserved-for: "tailscale subnet router (OPS-7)" }
+
+# --- .50-.99: static guests (assigned at pct level in guest manifests) ---
+#   The greenfield guest numbering restarts clean; old CTIDs are history
+#   (docs/legacy/guest-catalog.md). Assignment starts at .50 and is
+#   recorded per-guest in guests/*.yaml as those stories ship (v2+).
+
+# --- .250-.254: spare statics (printers, bench gear, temp debug) ---

@@ -19,3 +19,13 @@ continuing, so that the data layer survives the router swap unchanged.
 
 Everything else on truenas stays as-is: datasets, ACLs, TLS cron, the
 B2 task tree. Rule 10: extract before wipe; B2 never stops.
+
+SHIPPED ARTIFACT: `scripts/truenas-network-move.sh` (--check /
+--apply; interface + gateway + DNS + NFS-export networks in one
+pass). It runs ON truenas as root -- and truenas needs NO console:
+root ssh is enabled, so the flow is debbie-side temp alias
+(`sudo ip addr add 192.168.8.99/24 dev <nic>`) -> ssh
+root@192.168.8.100 -> `sh -s < scripts/truenas-network-move.sh
+--apply` (the session drops at commit; reconnect at .10) ->
+`sudo ip addr del ...` -> verify from debbie. The operator runs the
+two debbie sudo commands; the agent drives the rest.

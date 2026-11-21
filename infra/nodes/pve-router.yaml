@@ -1,0 +1,14 @@
+# pve-router -- the Protectli V1210 (issues.md item 1)
+name: pve-router
+arch: amd64
+role: pve-node
+hardware: Protectli Vault V1210 -- Intel N5105, 4GB LPDDR4 (soldered),
+  500GB Kingston NV3 NVMe, coreboot, 2x Intel 2.5GbE
+constraints:
+  - router-only node: the 4GB stays OPNsense's; no other guests
+  - never auto-reboots (OPNsense ACPI hang pitfall; notify-only tier)
+  - WAN NIC -> vmbr1 (no IP on the node), LAN NIC -> vmbr0 (192.168.1.2)
+glue:
+  - vmbr0/vmbr1 bridges + OPNsense VM (OPS-3; scripts/create-opnsense-vm.sh)
+record-at-install:
+  - both NIC MACs + lspci names -> ips.yaml hosts.pve-router

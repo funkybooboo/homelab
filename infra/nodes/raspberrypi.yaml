@@ -1,0 +1,12 @@
+# raspberrypi -- the arm64 box; QDevice ONLY (issues.md item 2)
+name: raspberrypi
+arch: arm64
+role: qdevice
+hardware: Raspberry Pi
+constraints:
+  - NEVER hosts guests; not a PVE node (fresh Raspberry Pi OS Lite, not
+    the arm64 PVE port)
+  - provides corosync quorum via qnetd; pvecm qdevice setup runs FROM
+    a PVE node (scripts/setup-qdevice.sh documents the dance)
+glue:
+  - none by design; the qnetd service is the only workload

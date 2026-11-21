@@ -5,18 +5,28 @@ As the operator, I want the 192.168.1.0/24 IP plan in one file
 and the router playbooks, so that addresses never drift or conflict
 again.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-06)
 **Arc**: v1
 
 ## Acceptance criteria
 
-- [ ] `ips.yaml`: nodes `.2`-`.9`, truenas `.10`, infrastructure
+- [x] `ips.yaml`: nodes `.2`-`.9`, truenas `.10`, infrastructure
       `.11`-`.19`, guests `.50`-`.99`, DHCP pool `.100`-`.249`
-- [ ] Flat-LAN decision + VLAN deferral documented
-- [ ] Guest IP mechanism pinned (static at pct level unless
+- [x] Flat-LAN decision + VLAN deferral documented
+- [x] Guest IP mechanism pinned (static at pct level unless
       [../issues.md](../issues.md) item 7 is overridden)
 
 ## Notes
 
-The old lesson stays law: static at the OS (pct), not DHCP-lease
-pinning -- see `services/network/README.md`.
+Shipped as `infra/network/ips.yaml` + `infra/nodes/*.yaml` (per-node
+facts: arch, role, hardware, glue lists, constraints) + the admin
+public key at `infra/keys/admin.ed25519.pub`. Consumers:
+`scripts/bootstrap.sh`, `scripts/deploy-node-glue.sh`,
+`scripts/truenas-network-move.sh`, and the v2 guest manifests.
+
+Assignments: `.1` opnsense VM, `.2` pve-router (the V1210), `.3`
+pve-thermaltake, `.4` pve-framework, `.5` pve-aspiree15, `.6`
+pve-aspires, `.10` truenas, `.11` raspberrypi (QDevice), `.12` reserved
+PBS, `.13` reserved subnet router. The old fleet's no-pattern node IPs
+and DHCP-pinning are gone for good (docs/legacy/network.md is the
+record of why).

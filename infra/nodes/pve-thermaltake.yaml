@@ -1,0 +1,12 @@
+# pve-thermaltake -- the GPU desktop
+name: pve-thermaltake
+arch: amd64
+role: pve-node
+hardware: desktop; only node with an NVIDIA GPU
+constraints:
+  - jellyfin lives here permanently (GPU transcode)
+glue:
+  - renew-pve-tls.sh + cron (all nodes)
+  - nvidia-uvm-devnodes hook (services/nvidia-uvm-devnodes/)
+  - 5-line NFS media fstab (post-truenas-move; /mnt/tnas-media/media/*)
+  - start-jellyfin.service boot-race fix (v3, when jellyfin returns)

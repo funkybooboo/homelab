@@ -20,5 +20,9 @@ exists without ever hosting guests on arm64.
 The old failure modes (arm64 stranding, LRM watchdog resets) are what
 the QDevice role and PVE 9.2's HA arm/disarm exist to prevent. The old
 `pve-balance` is not rebuilt: the native Dynamic Load Balancer replaces
-it (and only manages HA-managed guests -- see the issues item before
-choosing "no HA").
+it (and only manages HA-managed guests -- decided, issues item 3).
+
+SHIPPED ARTIFACT: `scripts/setup-qdevice.sh` (--prepare-pi on the Pi:
+installs corosync-qnetd + root key-ssh for pvecm; --join <node> from
+debbie: runs `pvecm qdevice setup 192.168.1.11` per node, the
+supported Proxmox path).

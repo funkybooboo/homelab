@@ -10,8 +10,9 @@ replaceable part.
 
 ## Acceptance criteria
 
-- [ ] `scripts/bootstrap.sh` idempotent; cluster join via the
-      community.proxmox `proxmox_cluster` module
+- [ ] `scripts/bootstrap.sh` idempotent; cluster join via agent-forwarded
+      `pvecm add` at bring-up (folded into the community.proxmox
+      `proxmox_cluster` module when OPS-7's ansible skeleton lands)
 - [ ] Per-node glue codified from the inventory in
       [../design/proxmox-iac.md](../design/proxmox-iac.md) section 1:
       renew-pve-tls crons, laptop lid-ignored + screen-off units
@@ -22,5 +23,9 @@ replaceable part.
 
 ## Notes
 
-The only manual step remains the PVE ISO install itself; everything
-after enrollment is code (rule 1).
+The only manual step remains the PVE ISO install itself (physical +
+console + the ips.yaml static IP + a root password + the admin pub key
+into authorized_keys); the agent drives everything after via ssh from
+debbie (the recorded bring-up mode, 2026-11-06). SHIPPED ARTIFACTS:
+`scripts/bootstrap.sh` + `scripts/deploy-node-glue.sh` +
+`infra/nodes/*.yaml` + `infra/keys/admin.ed25519.pub`.
