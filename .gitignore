@@ -25,4 +25,5 @@ __pycache__/
 .DS_Store
 # Local-only (not tracked): credentials the agent uses against live
 # systems, e.g. opnsense-api.env (OPNSENSE_KEY/OPNSENSE_SECRET)
-local/
+local/*
+!local/*.example
