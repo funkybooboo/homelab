@@ -12,7 +12,7 @@
 # (no console needed: root ssh is enabled on truenas and the alias
 # trick reaches it on the old subnet across the shared L2)
 #
-# Target state (infra/network/ips.yaml): 192.168.1.10/24, gw
+# Target state (ansible/inventory/host_vars/truenas.yml): 192.168.1.10/24, gw
 # 192.168.1.1, dns [192.168.1.1, 1.1.1.1], NFS exports on
 # 192.168.1.0/24. --check prints current state + the planned changes;
 # --apply executes them. Method names verified against 24.10+/25.x

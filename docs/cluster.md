@@ -46,8 +46,9 @@ when pve-aspires briefly lost pve-shared and ha-manager migrated 5 CTs onto
 pve-framework while it stayed reachable.
 
 Note that HA is high-availability only -- it never watches load and never
-redistributes guests for balance. That gap is filled by `pve-balance`
-([`services/pve-balance/`](../services/pve-balance/)): a load-aware
+redistributes guests for balance. That gap was filled by `pve-balance`
+(the retired balancer; its code lives in git history, and the native
+PVE 9 Dynamic Load Balancer replaces it at v5): a load-aware
 auto-balancer that scores each node relative to its hardware and, when the
 within-arch spread exceeds a threshold, live-migrates one guest from the
 hottest node to the coolest same-arch receiver. It runs on **`raspberrypi`

@@ -1,0 +1,10 @@
+# truenas -- storage (kept in place; only its network moves, OPS-4)
+ansible_host: 192.168.1.10
+arch: amd64
+role: storage
+mac: 6c:bf:b5:04:d9:97              # carried from the old fleet
+hardware: TrueNAS 25.10 appliance; root ssh enabled, nate (uid 3000)
+  has no sudo -- midclt writes need root
+constraints:
+  - boots FIRST on the UPS (boot-order law, identity rule 7)
+  - never reinstalled; B2 cloud-sync never stops (identity rule 10)

@@ -10,8 +10,8 @@ everyday workflows return.
 ## Acceptance criteria
 
 - [ ] Curated list decided from the old ~28 (lean: ~12-15 total
-      resurrected; the rest stay archived + documented in
-      `docs/legacy/`)
+      resurrected; the rest stay stopped + documented in the
+      curation list)
 - [ ] Each service: manifest + role, data extracted from old rootfs,
       verified, THEN old rootfs archived
 - [ ] Postgres-backed services (linkwarden, omnivore if kept) point at
@@ -20,7 +20,7 @@ everyday workflows return.
 ## Notes
 
 The deliberately-not-resurrected get a one-line reason each in
-`docs/legacy/` -- "unused", "superseded by X", or "resurrect on
+one-liner each -- "unused", "superseded by X", or "resurrect on
 demand"; that list is what makes lazy resurrection cheap later.
 
 REVISED 2026-11-21 (revival): everything revives first, so this story

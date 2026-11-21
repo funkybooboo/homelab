@@ -1,10 +1,10 @@
-# pve-aspires -- laptop node
-name: pve-aspires
+# pve-aspiree15 -- laptop node
+ansible_host: 192.168.1.5
 arch: amd64
 role: pve-node
+mac: 54:ab:3a:9b:e9:4c              # carried from the old fleet
 hardware: laptop
-constraints: []
 glue:
-  - renew-pve-tls.sh + cron (all nodes)
+  - renew-pve-tls.sh + cron
   - logind no-lid-suspend drop-in + screen-off.service (docs/laptop-nodes.md)
   - pve-shared-nfs-remount helper

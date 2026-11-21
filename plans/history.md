@@ -61,7 +61,10 @@ The first greenfield deliverable, no hardware needed. As built:
 Knowledge corrections made while archiving: the July services.md
 snapshot was missing CTs 130-134 (loki + the media batch); ntfy +
 loki rootfs live on local-lvm, not pve-shared; the final running count
-is 28. All recorded with sources in `docs/legacy/README.md`.
+is 28. All recorded with sources in the v0 notes (the archive files
+themselves were retired to git history 2026-11-21 per the operator's
+git-is-the-archive call; `docs/data-to-extract.md` survives as the
+live extraction inventory).
 
 ## Greenfield arcs (to be written as they ship)
 

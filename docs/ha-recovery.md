@@ -31,7 +31,7 @@ ha-manager status | grep ct:N      # should now read "(<node>, disabled)"
 # 3. Fix the underlying cause FIRST (the disk must be reachable). For an
 #    NFS/pve-shared problem: `pvesm status` must show pve-shared active on
 #    the node you intend to start the CT on. If not, fix TrueNAS / NFS first
-#    (see services/pve-shared-nfs-remount/ + services/network/).
+#    (see services/pve-shared-nfs-remount/).
 
 # 4. Start the CT directly.
 pct start N
@@ -68,7 +68,8 @@ step gives the exit-255 refusal.
   `disabled` state unless you intend for HA to ignore it across reboots
   (some users do this on purpose for one-off services).
 * See `docs/services.md` for which CTs are HA-managed (almost all the
-  LXC services). See `services/network/` for the TrueNAS static-IP fix
+  LXC services). The TrueNAS static-IP fix (now baked into
+scripts/truenas-network-move.sh + the ansible inventory)
   that prevents the pve-shared outage cascade at source.
 
 ## Reboot-required case: emergency read-only rootfs

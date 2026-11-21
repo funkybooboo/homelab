@@ -20,16 +20,20 @@ constitution is [identity.md](./identity.md); the shipped record is
   untouched; framework + Pi stay off), so the entire 28-CT service
   fleet comes back the same evening. The platform goals (PVE 9, the
   QDevice re-role, the router re-platform) move to v5; the IaC goals
-  converge the RUNNING fleet in v2-v4. Shipped: `docs/legacy/` +
-  `infra/` (ips.yaml, node facts, admin key) +
+  converge the RUNNING fleet in v2-v4. Shipped: `docs/` (the live
+  data-to-extract inventory) + `ansible/inventory/` (LAN plan, host
+  facts, admin key) +
   `scripts/{truenas-network-move,extract-legacy,bootstrap,deploy-node-glue,setup-qdevice}.sh`
   (the last three parked as future-tooling) + `revive-node.sh`.
 
 ## v0: Legacy archive -- SHIPPED 2026-11-06
 
 [OPS-1 the legacy archive](./stories/OPS-1-legacy-archive.md) --
-done: `docs/legacy/` (guest catalog, old LAN, quirks + incidents,
-data-to-extract inventory) + `scripts/extract-legacy.sh`. The script
+done: the old-fleet archive (guest catalog, old LAN, quirks +
+incidents, extraction inventory) + `scripts/extract-legacy.sh`.
+2026-11-21: per the operator's git-is-the-archive call, the
+pure-history archive files were retired to git history;
+`docs/data-to-extract.md` survives as the live inventory. The script
 RUNS at the first hardware touch, after the truenas move (OPS-4).
 
 ## v1: Revival -- SHIPPED-PREP as of 2026-11-21
@@ -79,7 +83,7 @@ the hard direction) and verifying the media fleet on its GPU node.
 [USER-3 daily tools](./stories/USER-3-daily-tools.md).
 
 Ends with: the curated list enforced (stopped + documented), the rest
-still archived in `docs/legacy/`.
+re-enabled on demand.
 
 ## v4: Automation polish
 

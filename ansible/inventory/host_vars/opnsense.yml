@@ -1,0 +1,11 @@
+# opnsense -- the router (bare-metal Protectli V1210 today; re-platforms
+# as a VM on pve-router at v5, OPS-3/OPS-17)
+ansible_host: 192.168.1.1
+arch: amd64
+role: router
+hardware: the V1210 itself, running OPNsense 25.7
+constraints:
+  - config.xml on this box = the export OPS-3 imports at re-platform
+  - agent operates it via the RESTCONF API as the dedicated 'agent'
+    user (scripts/opnsense.sh; credentials in local/opnsense-api.env)
+  - oxlorg release must match the OPNsense version (issues item 1)

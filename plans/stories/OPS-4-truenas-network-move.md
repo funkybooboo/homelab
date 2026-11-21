@@ -10,7 +10,7 @@ continuing, so that the data layer survives the router swap unchanged.
 ## Acceptance criteria
 
 - [ ] Scripted midclt move (aliases + commit; the repro pattern in
-      `services/network/README.md`)
+      `docs/ha-recovery.md` covers the outage cascade this prevents)
 - [ ] NFS exports re-exported on the new subnet; mounts verified from
       a PVE node
 - [ ] B2 cloud-sync jobs verified running after the move

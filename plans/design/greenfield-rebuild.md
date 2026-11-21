@@ -34,7 +34,7 @@ than rebuild-as-code. The plan:
 
 | Thing | Verdict | Why |
 | --- | --- | --- |
-| truenas box, datasets, B2 sync | KEEP | Data intact, backups proven. Only its IP/gw moves to 192.168.1.x (2 midclt calls, see `services/network/README.md`) |
+| truenas box, datasets, B2 sync | KEEP | Data intact, backups proven. Only its IP/gw moves to 192.168.1.x (2 midclt calls, see docs/legacy/network.md) |
 | OPNsense config (LAN 192.168.1.1) | KEEP, re-platform | Bare metal -> VM on the new `pve-router` node; config.xml export/import |
 | Old CT rootfs on `pve-shared` NFS | KEEP READ-ONLY (temp) | Data-extraction source: vaultwarden db, postgres, n8n workflows, service configs. Wipe last |
 | 5 PVE nodes | REBUILD (PVE 9.2) | Fresh installs; cluster re-formed natively on 192.168.1.x -- no renumbering debt |
@@ -63,7 +63,7 @@ than rebuild-as-code. The plan:
 - The IP plan lives in ONE file (`infra/network/ips.yaml`), consumed by guest
   manifests, node bootstrap, and the oxlorg router playbooks.
 - Guests get static IPs at pct level (the old static-at-OS lesson,
-  `services/network/README.md`), not DHCP-lease pinning.
+  docs/legacy/network.md), not DHCP-lease pinning.
 
 ### Router on Proxmox: `pve-router`
 
@@ -92,7 +92,7 @@ than rebuild-as-code. The plan:
 | Layer | Choice | Notes |
 | --- | --- | --- |
 | Engine | **Ansible only** | `community.proxmox` (~45 modules: cluster create/join, node network, storage, VM/CT lifecycle, disks, pools, HA rules, SDN, IPAM; inventory plugin; `pct`/guest-agent connection plugins run roles inside guests). No state files to corrupt |
-| Router | **oxlorg.opnsense** | aliases, firewall rules, routes, gateways, Unbound DNS, WireGuard, cron, `dhcp_reservation`. The "no router provisioner" gap in `services/network/README.md` is closed |
+| Router | **oxlorg.opnsense** | aliases, firewall rules, routes, gateways, Unbound DNS, WireGuard, cron, `dhcp_reservation`. The "no router provisioner" gap in docs/legacy/network.md is closed |
 | Secrets | SOPS + age | carried over from `proxmox-iac.md`; no secrets in state, least-privilege PVE API token |
 | Terraform | **Not in v1** | If ever wanted: `bpg/proxmox` (PVE 9.x-tested) only; Telmate is dead on PVE 9 |
 | Git flow | GitHub canonical (`funkybooboo/homelab`) + optional on-cluster forgejo mirror | Never self-hosted-only: the repo must survive the cluster it controls |

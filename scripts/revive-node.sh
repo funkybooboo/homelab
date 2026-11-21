@@ -3,7 +3,7 @@
 # the new 192.168.1.0/24 LAN, without reinstalling anything (issues.md
 # item 8, revised 2026-11-21). Driven FROM DEBBIE over ssh; the
 # operator's per-node console step is only dropping
-# infra/keys/admin.ed25519.pub into root's authorized_keys (and reading
+# files/keys/admin.ed25519.pub into root's authorized_keys (and reading
 # back the node's temporary DHCP address).
 #
 # Usage (on debbie):
@@ -22,11 +22,11 @@
 #   6. starts settle; error states -> docs/ha-recovery.md dance
 #
 # The renumber dance per node (all edits backed up to /root/*.pre-revive):
-#   - static IP from ips.yaml onto vmbr0 (replaces the DHCP stanza)
+#   - static IP from host_vars onto vmbr0 (replaces the DHCP stanza)
 #   - fleet /etc/hosts block
 #   - `pvecm expected 1` (pmxcfs becomes writable when inquorate)
 #   - corosync.conf: every nodelist entry's ring0_addr replaced with
-#     the ips.yaml IP for that nodelist NAME (self-verifying -- the
+#     the host_vars IP for that nodelist NAME (self-verifying -- the
 #     name->addr map comes from the live config, no guessed old IPs)
 #   - detached: ifreload -a + corosync restart (the ssh session dies;
 #     reconnect at the new static IP and --verify)
@@ -35,20 +35,18 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-IPS="$REPO/infra/network/ips.yaml"
+HOSTVARS="$REPO/ansible/inventory/host_vars"
 
 MODE="${1:---usage}"
 arg() { echo "${2:?missing arg}"; }
 
-node_ip() { # name -> ip from ips.yaml
-  awk -v n="$1" '$0 ~ "^  "n":" {found=1} found && /ip:/ {print $2; exit}' "$IPS"
-}
+node_ip() { awk '/^ansible_host:/ {print $2}' "$HOSTVARS/$1.yml"; }
 
-hosts_block() { # "ip name" lines for every host in ips.yaml
-  awk '
-    /^  [a-z][a-z0-9-]*:$/ { name=$1; gsub(":","",name); inhost=1; next }
-    inhost && /ip:/ { print $2, name; inhost=0 }
-  ' "$IPS" | grep -v '^tbd'
+hosts_block() { # "ip name" lines for every machine
+  local f
+  for f in "$HOSTVARS"/*.yml; do
+    echo "$(awk '/^ansible_host:/ {print $2}' "$f") $(basename "$f" .yml)"
+  done
 }
 
 sshn() { ssh -o BatchMode=yes -o ConnectTimeout=8 "$@"; }

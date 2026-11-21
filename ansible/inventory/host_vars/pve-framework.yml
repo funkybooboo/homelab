@@ -1,0 +1,12 @@
+# pve-framework -- Zhaoxin desktop; the flaky-USB-NIC box
+ansible_host: 192.168.1.4
+arch: amd64
+role: pve-node
+mac: 9c:bf:0d:01:4c:d6              # carried from the old fleet
+hardware: Zhaoxin desktop; USB 2.5GbE NIC (flaky -- vanished 2026-09-27)
+constraints:
+  - revive ONLY after the USB-NIC fix (powered hub or PCIe NIC) + a
+    stability soak; plans/issues.md item 2
+glue:
+  - renew-pve-tls.sh + cron
+  - pve-shared-nfs-remount helper

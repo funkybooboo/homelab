@@ -2,11 +2,11 @@
 # bootstrap.sh -- OPS-5: enroll a fresh PVE 9.2 ISO install as a fleet
 # node, driven FROM DEBBIE over ssh (the operator does the physical +
 # console part: power, ISO install with the ips.yaml static IP + a root
-# password, and drops infra/keys/admin.ed25519.pub into root's
+# password, and drops files/keys/admin.ed25519.pub into root's
 # authorized_keys; the agent takes over from there).
 #
 # Usage (on debbie):  scripts/bootstrap.sh <node-name> [--join <peer-ip>]
-#   <node-name>  must exist in infra/nodes/<name>.yaml + ips.yaml
+#   <node-name>  must exist in ansible/inventory/host_vars/<name>.yml
 #   --join       cluster join via agent-forwarded `pvecm add` (run me
 #                with the debbie key agent loaded; -A forwarding is set)
 #
@@ -35,27 +35,25 @@ while [ $# -gt 0 ]; do
 done
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-IPS="$REPO/infra/network/ips.yaml"
-FACTS="$REPO/infra/nodes/$NODE.yaml"
-PUBKEY_FILE="$REPO/infra/keys/admin.ed25519.pub"
-[ -f "$FACTS" ] || { echo "no infra/nodes/$NODE.yaml" >&2; exit 1; }
-[ -f "$PUBKEY_FILE" ] || { echo "no infra/keys/admin.ed25519.pub" >&2; exit 1; }
+HOSTVARS="$REPO/ansible/inventory/host_vars"
+FACTS="$HOSTVARS/$NODE.yml"
+PUBKEY_FILE="$REPO/files/keys/admin.ed25519.pub"
+[ -f "$FACTS" ] || { echo "no host_vars/$NODE.yml" >&2; exit 1; }
+[ -f "$PUBKEY_FILE" ] || { echo "no files/keys/admin.ed25519.pub" >&2; exit 1; }
 
-IP=$(awk "/^  $NODE:/{found=1} found && /ip:/ {print \$2; exit}" "$IPS")
-[ -n "$IP" ] || { echo "no ip for $NODE in ips.yaml" >&2; exit 1; }
+IP=$(awk '/^ansible_host:/ {print $2}' "$FACTS")
+[ -n "$IP" ] || { echo "no ansible_host for $NODE" >&2; exit 1; }
 PUBKEY="$(cat "$PUBKEY_FILE")"
 
-# /etc/hosts block: every host in ips.yaml (2-space-indented `name:`
-# followed by an ip line) -> "ip name"
-HOSTS_BLOCK=$(awk '
-  /^  [a-z][a-z0-9-]*:$/ { name=$1; gsub(":","",name); inhost=1; next }
-  inhost && /ip:/ { print $2, name; inhost=0 }
-' "$IPS" | sed 's/#.*//' | awk '{print $1, $2}')
-[ -n "$HOSTS_BLOCK" ] || { echo "no hosts parsed from ips.yaml" >&2; exit 1; }
+# /etc/hosts block: "ip name" for every machine in host_vars/
+HOSTS_BLOCK=$(for f in "$HOSTVARS"/*.yml; do
+  echo "$(awk '/^ansible_host:/ {print $2}' "$f") $(basename "$f" .yml)"
+done)
+[ -n "$HOSTS_BLOCK" ] || { echo "no hosts parsed from host_vars/" >&2; exit 1; }
 
 ssh_test() { ssh -o BatchMode=yes -o ConnectTimeout=5 "root@$IP" true 2>/dev/null; }
 ssh_test || { echo "cannot ssh root@$IP with the admin key" >&2
-  echo "operator console step still needed: put infra/keys/admin.ed25519.pub" >&2
+  echo "operator console step still needed: put files/keys/admin.ed25519.pub" >&2
   echo "into root@$IP:/root/.ssh/authorized_keys" >&2; exit 1; }
 
 say() { echo "== $*"; }

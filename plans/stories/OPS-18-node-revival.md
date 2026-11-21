@@ -1,7 +1,7 @@
 # OPS-18: Node revival
 
 As the operator, I want the 3 healthy old PVE nodes revived in place
-on the new LAN -- static IP from `ips.yaml`, renumbered corosync,
+on the new LAN -- static IP from its host_vars, renumbered corosync,
 storage + DNS refs fixed -- so that the entire existing service fleet
 comes back without reinstalling anything.
 
@@ -15,7 +15,7 @@ item 8, revised 2026-11-21)
       BEFORE any change (read-only state dump: pveversion, corosync
       nodelist, interfaces, storage.cfg)
 - [ ] Per node, driven over ssh after the operator's console key-drop:
-      static IP applied from `ips.yaml`, fleet `/etc/hosts`, `pvecm
+      static IP applied from `host_vars`, fleet `/etc/hosts`, `pvecm
       expected 1` + corosync.conf ring0_addr swap (name->new-ip map
       from the nodelist itself, self-verifying), detached ifreload +
       corosync restart; operator reconnects at the new IP

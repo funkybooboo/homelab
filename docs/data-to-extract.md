@@ -1,7 +1,10 @@
-# Data to extract (the whole point of OPS-1)
+# Data to extract (OPS-1's live deliverable)
 
-What must come off the old pve-shared rootfs disks before the
-greenfield wipes them, per CT, in priority order. Everything lives in
+What must come off the old pve-shared rootfs disks as a tier-0
+BACKUP SNAPSHOT before anything destructive ever touches them. Under
+the revival path nothing wipes -- this is insurance, not a
+dependency -- and the tier-0 copy must exist OUTSIDE the truenas pool
+(rule 10). Per CT, in priority order. Everything lives in
 `images/vm-<CTID>-disk-0.raw` on the truenas export
 `/mnt/volume1/pve/shared` EXCEPT the two local-lvm CTs (128, 130) --
 for those, the weekly vzdump artifacts in `/mnt/volume1/pve/backups`

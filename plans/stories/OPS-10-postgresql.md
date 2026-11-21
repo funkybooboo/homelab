@@ -16,8 +16,9 @@ can return.
 
 ## Notes
 
-Old CT 108 held it; check `docs/legacy/` (OPS-1) for the database and
-role inventory before creating anything by hand.
+Old CT 108 held it; the July catalog (docs/services.md) lists its
+consumers (freshrss, linkwarden, omnivore) -- verify those DBs are
+reachable once revived.
 
 REVISED 2026-11-21 (revival): postgres revives with the fleet; the
 story becomes verify (all expected DBs reachable) + the backup story

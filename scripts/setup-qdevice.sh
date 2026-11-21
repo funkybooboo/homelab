@@ -50,8 +50,8 @@ case "$MODE" in
 --join)
   NODE="${2:?--join needs the pve node name}"
   REPO="$(cd "$(dirname "$0")/.." && pwd)"
-  IP=$(awk "/^  $NODE:/{found=1} found && /ip:/ {print \$2; exit}" \
-        "$REPO/infra/network/ips.yaml")
+  IP=$(awk '/^ansible_host:/ {print $2}' \
+        "$REPO/ansible/inventory/host_vars/$NODE.yml")
   [ -n "$IP" ] || { echo "no ip for $NODE in ips.yaml" >&2; exit 1; }
   say "pvecm qdevice setup $PI_IP (on $NODE, agent-forwarded)"
   ssh -A -o BatchMode=yes "root@$IP" "pvecm qdevice setup $PI_IP"

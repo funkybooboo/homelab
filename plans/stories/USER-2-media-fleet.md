@@ -13,7 +13,7 @@ audiobooks work again.
       (the only GPU; NVIDIA transcode + UVM devnode handling ported
       from `services/nvidia-uvm-devnodes/`)
 - [ ] Media libraries mounted from truenas NFS (the old dataset
-      layout; see `docs/legacy/`)
+      layout is in docs/storage.md)
 - [ ] Per-service data/metadata extracted from the old rootfs before
       it is archived
 
@@ -24,4 +24,4 @@ story (USER-5) despite living on the same old node.
 
 REVISED 2026-11-21 (revival): the media CTs revive with the fleet on
 thermaltake; the story becomes verify (GPU transcode, the 5 NFS media
-mounts, library counts vs docs/legacy).
+mounts, library counts vs the docs/services.md July catalog).

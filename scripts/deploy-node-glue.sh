@@ -5,7 +5,7 @@
 # admin key in place).
 #
 # Usage: scripts/deploy-node-glue.sh <node-name>
-# Glue per infra/nodes/<name>.yaml + docs/legacy/quirks-and-incidents.md:
+# Glue per ansible/inventory/host_vars/<name>.yml (the glue lists):
 #   ALL nodes:      renew-pve-tls.sh + weekly cron (services/pve-tls/)
 #                   pve-shared-nfs-remount helper
 #   laptops:        no-lid-suspend logind drop-in + screen-off.service
@@ -18,11 +18,11 @@ set -euo pipefail
 [ $# -eq 1 ] || { echo "usage: deploy-node-glue.sh <node-name>" >&2; exit 1; }
 NODE="$1"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-IPS="$REPO/infra/network/ips.yaml"
-FACTS="$REPO/infra/nodes/$NODE.yaml"
-[ -f "$FACTS" ] || { echo "no infra/nodes/$NODE.yaml" >&2; exit 1; }
-IP=$(awk "/^  $NODE:/{found=1} found && /ip:/ {print \$2; exit}" "$IPS")
-[ -n "$IP" ] || { echo "no ip for $NODE in ips.yaml" >&2; exit 1; }
+HOSTVARS="$REPO/ansible/inventory/host_vars"
+FACTS="$HOSTVARS/$NODE.yml"
+[ -f "$FACTS" ] || { echo "no host_vars/$NODE.yml" >&2; exit 1; }
+IP=$(awk '/^ansible_host:/ {print $2}' "$FACTS")
+[ -n "$IP" ] || { echo "no ansible_host for $NODE" >&2; exit 1; }
 
 say() { echo "== $*"; }
 SSH="ssh -o BatchMode=yes root@$IP"

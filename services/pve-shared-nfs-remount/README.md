@@ -1,7 +1,7 @@
 # pve-shared-nfs-remount -- automatic NFS storage recovery on every PVE node
 
 When the TrueNAS NFS export at `192.168.8.100` flaps (network blip,
-TrueNAS reboot, IP change -- see [`services/network/`](../network/)),
+TrueNAS reboot, IP change -- see [`docs/ha-recovery.md`](../../docs/ha-recovery.md)),
 `pvesm status` on every PVE node flips `pve-shared` to `inactive`.
 CTs that were running keep their cached pages; CTs that try to start
 afterwards fail. HA services fall into `error` state (see
@@ -63,5 +63,5 @@ those up too.
 ## See also
 
 - `docs/services.md`  -- the inventory of CTs that depend on pve-shared.
-- `services/network/` -- root-cause prevention (static IPs).
+- `docs/ha-recovery.md` -- recovery runbook when it happens anyway.
 - `docs/ha-recovery.md` -- human-side CT recovery once pve-shared is back.

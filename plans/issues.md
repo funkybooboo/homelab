@@ -39,9 +39,9 @@ OPEN).
    remains the interim baseline until OPS-14's restore drill passes.
    *Unblocks OPS-14.*
 6. **Service list** -- ANSWERED 2026-11-06: **curated** (~12-15).
-   The per-CT "curate" verdicts in docs/legacy/guest-catalog.md are
-   the working list; final yes/no per service happens in USER-3 with
-   the extracted data in hand. *Unblocks USER-2/USER-3 scope.*
+   The working list = the revived cluster's CT list itself; final
+   yes/no per service happens in USER-3 with the running services in
+   front of us. *Unblocks USER-2/USER-3 scope.*
 7. **Defaults** -- CONFIRMED 2026-11-06 as written: GitHub stays the
    canonical remote with an on-cluster forgejo mirror; guest IPs
    static at pct level; no PDM; no VLANs.

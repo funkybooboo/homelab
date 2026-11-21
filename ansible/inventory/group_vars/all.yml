@@ -1,0 +1,24 @@
+# group_vars/all.yml -- fleet-wide settings. THE address registry lives
+# in host_vars/*.yml (one ansible_host per machine); this file holds
+# the LAN-level plan. Consumers: scripts/bootstrap.sh, revive-node.sh,
+# deploy-node-glue.sh, setup-qdevice.sh (bash parsers -- keep the
+# top-level key format stable) + the v2 ansible skeleton (OPS-7).
+#
+# Old-fleet lesson (docs/legacy/network.md): no host is ever
+# DHCP-pinned again -- infra hosts are static at the OS, guests static
+# at pct level (plans/issues.md item 7), only true clients live in
+# the pool.
+
+lan:
+  subnet: 192.168.1.0/24
+  gateway: 192.168.1.1              # the OPNsense VM on pve-router (OPS-3)
+  dns: [192.168.1.1, 1.1.1.1]
+  dhcp_pool: [192.168.1.100, 192.168.1.249]   # clients only, never infra
+
+guest_range: [192.168.1.50, 192.168.1.99]     # static guests (v2 manifests)
+spare_range: [192.168.1.250, 192.168.1.254]   # printers, bench gear, debug
+
+# reserved future infra guests (assigned in guest manifests when built)
+reserved:
+  pbs: 192.168.1.12                 # OPS-14 PBS VM
+  subnetrouter: 192.168.1.13        # OPS-7 tailscale subnet router

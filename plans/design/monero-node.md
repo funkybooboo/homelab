@@ -423,8 +423,8 @@ alternative and we note them so the tradeoff is explicit, not implicit.
   https://monero-docs.lza.dev/running-node/
 - Existing homelab related docs:
   [`../../docs/https.md`](../../docs/https.md), [`../../docs/cluster.md`](../../docs/cluster.md),
-  [`../../docs/storage.md`](../../docs/storage.md), [`../../docs/observability-build-plan.md`](../../docs/observability-build-plan.md)
-  (Loki CT 130 local-lvm precedent), [`./proxmox-iac.md`](./proxmox-iac.md).
+  [`../../docs/storage.md`](../../docs/storage.md), the old observability build plan (git history; the
+  Loki CT 130 local-lvm precedent), [`./proxmox-iac.md`](./proxmox-iac.md).
 
 ---
 

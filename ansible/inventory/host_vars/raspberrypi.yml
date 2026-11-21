@@ -1,0 +1,9 @@
+# raspberrypi -- the arm64 box; QDevice ONLY (plans/issues.md item 2)
+ansible_host: 192.168.1.11
+arch: arm64
+role: qdevice
+mac: d8:3a:dd:45:d3:7e              # carried from the old fleet
+hardware: Raspberry Pi
+constraints:
+  - NEVER hosts guests; never revives as a PVE node
+  - provides corosync quorum via qnetd (v5, OPS-17); today it stays OFF

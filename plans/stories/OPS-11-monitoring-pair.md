@@ -17,8 +17,7 @@ rebuilt, not only after.
 ## Notes
 
 The old stack is described in `docs/observability.md` (as-built at
-2026-08-30) + `docs/observability-build-plan.md` (the old-cluster build
-plan; treat as input, not spec -- the fleet it planned for is gone).
+2026-08-30) + the old build plan (in git history; treat as input,
 Loki/centralized logging is deliberately out of scope here; revisit
 after v4.
 

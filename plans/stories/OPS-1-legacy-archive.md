@@ -36,3 +36,10 @@ found (all recorded in `docs/legacy/README.md`):
 
 The script RUNS at the first hardware touch (after OPS-4's truenas
 move); its tier-0 report gate feeds USER-1's vaultwarden restore.
+
+REVISED 2026-11-21 (operator call: git history is the archive): the
+pure-history archive files (guest catalog, old LAN, quirks +
+incidents, the old observability plan, the index) were retired to
+git history; `docs/data-to-extract.md` survives in `docs/` as the
+LIVE extraction inventory, and the knowledge corrections are
+recorded in [../history.md](../history.md) (v0 record).

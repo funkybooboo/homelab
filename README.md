@@ -1,118 +1,44 @@
 # Homelab
 
-Documentation for the current homelab: a 5-node Proxmox cluster on a
-[Tailscale](https://tailscale.com) tailnet, backed by a TrueNAS storage box.
-All web surfaces are HTTPS over the tailnet -- nothing is exposed to the
-public internet.
+The declaratively managed self-hosted service fleet: Proxmox nodes +
+a TrueNAS storage box on a flat 192.168.1.0/24 LAN behind OPNsense,
+every service tailnet-only, and this repo as the source of truth --
+`git push` + (from v2) `make converge` *is* the deploy.
 
-> This is the live, Proxmox-based homelab (post-2026-07). It supersedes the
-> older Docker-on-Pi service configs that used to live in this repo.
+> State (2026-11-21): the old fleet is powered down (staged wind-down
+> 2026-09 through 2026-10 after the router died and the LAN renumbered).
+> The plan is REVIVAL, not rebuild: the 3 healthy nodes come back in
+> place on the new LAN, everything scripted in `scripts/`, the router
+> stays untouched for now. See [`plans/roadmap.md`](plans/roadmap.md).
 
-## Start here
+## Repo layout
 
-Docs (`docs/`):
+| Path | What it is |
+|------|------------|
+| [`plans/`](plans/) | The erledigen-style planning system: identity (constitution), roadmap (arcs v0-v5 + someday), stories (one file per work item), design records, history, issues. Start at [`plans/roadmap.md`](plans/roadmap.md). |
+| [`ansible/`](ansible/) | The v2 IaC skeleton home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`. Playbooks + roles land with OPS-7. |
+| [`scripts/`](scripts/) | The operator/agent toolbelt -- bring-up + fleet tools, driven from debbie over ssh. See each header for usage. |
+| [`docs/`](docs/) | All documentation, indexed by tier (current / old-fleet as-built) in [`docs/README.md`](docs/README.md). The wind-down-era archive lives in git history, not the tree. |
+| [`services/`](services/) | Old-fleet shipped artifacts (TLS renewals, auto-update, observability configs + dashboards, ntfy bridge, remount helpers) -- revived with the fleet, then converged into ansible. |
+| [`files/keys/`](files/keys/) | Public keys (the admin ssh key the bootstrap/revival flows install). |
+| [`local/`](local/) | Gitignored credentials (e.g. the router API keypair). Only `*.example` templates are tracked. |
+| `Makefile` | `make help` / `converge` / `verify` (converge + verify are honest stubs until the v2 skeleton lands). |
 
-* [`overview.md`](docs/overview.md) -- nodes, tailnet, services, doc map.
-* [`services.md`](docs/services.md) -- every running CT + VM template, with vmid / node / tailnet IP / port / URL / HA / notes.
-* [`nodes.md`](docs/nodes.md) -- per-node detail (hardware role, what runs where, per-node admin commands).
-* [`https.md`](docs/https.md) -- the three TLS cert mechanisms + the MagicDNS
-  renewal time bomb + the `accept-dns=false` fix.
-* [`cluster.md`](docs/cluster.md) -- 5-node PVE cluster, HA, the
-  quorum-witness Pi rule (never host HA CTs there).
-* [`backups.md`](docs/backups.md) -- vzdump, TrueNAS snapshots, the
-  cloud-sync B2 task, the single-box DR hole.
-* [`storage.md`](docs/storage.md) -- NFS / `pve-shared` / `pve-backups`, +
-  the jellyfin multi-mount + boot-race fix.
-* [`laptop-nodes.md`](docs/laptop-nodes.md) -- lid-ignored + screen-off on
-  the two laptop PVE nodes.
-* [`notifications.md`](docs/notifications.md) -- ntfy push pipeline for
-  TrueNAS + homelab-wide alerts.
-* [`ntfy-flow.md`](docs/ntfy-flow.md) -- ASCII diagram of request flow
-  through the ntfy CT.
-* [`nextjs-behind-tls-proxy.md`](docs/nextjs-behind-tls-proxy.md) -- the
-  cronmaster `INTERNAL_API_URL` bug; reusable gotcha for Next.js behind
-  tailscale serve (audit linkwarden + excalidraw).
-* [`ha-recovery.md`](docs/ha-recovery.md) -- clearing an `error` state on
-  a stopped CT after an NFS / host-blip: the `ha-manager set ct:N
-  --state disabled -> pct start -> ha-manager set ct:N --state started`
-  dance, plus the `emergency_ro` rootfs case.
-* [`observability.md`](docs/observability.md) -- the monitoring/alerting/
-  logging stack as deployed today (probed live 2026-08-30): prometheus scrape
-  config, grafana datasource state, ntfy publishers, journald-remote status,
-  per-CT agent audit, router/truenas/dotfiles state. The build plan for what
-  to add on top of this is in
-  [`docs/observability-build-plan.md`](docs/observability-build-plan.md).
+## Working mode
 
-Service configs (`services/`):
-
-* [`services/ntfy/`](services/ntfy/) -- self-hosted ntfy + a Slack-to-ntfy
-  bridge so TrueNAS's native Slack alert type publishes to ntfy. Includes
-  reproducible deploy steps + the (scrubbed) bridge source.
-* [`services/pve-tls/`](services/pve-tls/) -- `renew-pve-tls.sh` weekly cron
-  that keeps the native PVE `pveproxy-ssl.pem` (-backend `:8006`) LE cert
-  fresh.
-* [`services/truenas-tls/`](services/truenas-tls/) -- `renew-truenas-tls.py`
-  weekly TrueNAS cron that re-imports a fresh LE cert into the TrueNAS UI
-  cert store.
-* [`services/freshrss/`](services/freshrss/) -- `feeds.opml`, the canonical
-  214-feed developer firehose (languages, devops, security, AI, databases,
-  GitHub releases + trending) imported into the FreshRSS instance on CT 104.
-* [`services/network/`](services/network/) -- TrueNAS static `.100` + the
-  6 DHCP reservations on the GL-MT2500 (TrueNAS + 5 PVE nodes pinned to
-  their current LAN IPs). Includes `set-reservations.sh` idempotent
-  reproducible script (router has no sftp-server; pipe via ssh stdin).
-* [`services/pve-shared-nfs-remount/`](services/pve-shared-nfs-remount/) --
-  cron + script that auto-remount `pve-shared` + `pve-backups` NFS storages
-  on every PVE node if `pvesm status` shows them inactive. Prevents the
-  CT-stop-then-HA-error cascade at source.
-* [`services/observability/`](services/observability/) -- the full
-  observability stack: prometheus config + alert rules, alertmanager
-  template, blackbox_exporter, node_exporter install script, Loki config,
-  promtail install script + receiver config, ntfy-publish helper, 11
-  Grafana dashboard manifests, and all the silent-cron ntfy wrappers
-  (renew-tls, vzdump, HA-watch, pve-shared-remount).
-
-Plans (`plans/`) -- how work is queued, tracked, and shipped
-(erledigen-style: identity, roadmap, stories, design records, history,
-issues):
-
-* [`plans/roadmap.md`](plans/roadmap.md) +
-  [`plans/stories/`](plans/stories/) -- the greenfield rebuild queue
-  (v0 legacy archive -> v1 foundations -> v2 IaC skeleton + core services
-  -> v3 service batches -> v4 automation polish), one story file per work
-  item.
-* [`plans/identity.md`](plans/identity.md) -- the homelab constitution:
-  the declaratively-managed fleet identity + the rules every change obeys.
-* [`plans/design/greenfield-rebuild.md`](plans/design/greenfield-rebuild.md)
-  -- the active arc design record: keep-vs-rebuild, architecture, IP plan,
-  tooling decisions (Ansible-only, PVE 9.2, OPNsense-as-VM), research
-  sources. The former `ideas/proxmox-iac.md` in-place plan is superseded
-  inside it.
-* [`plans/design/auto-update.md`](plans/design/auto-update.md) -- shipped
-  2026-09-27 (the implemented design record behind
-  [`services/auto-update/`](services/auto-update/)).
-* [`plans/design/llama-rpc-inference.md`](plans/design/llama-rpc-inference.md)
-  -- distributed LLM inference with llama.cpp RPC on the cluster.
-* [`plans/design/monero-node.md`](plans/design/monero-node.md) --
-  self-hosted Monero node + private buy/sell + (optional) miner. Separates
-  the three things the request bundled: the node (real win, honest fit),
-  the exchange path (node can't buy you acquisition privacy --
-  Haveno/Bisq vs KYC CEX vs swap-aggregator honesty table), and mining
-  (near-certain negative ROI on this cluster, accepted-loss only).
-* [`plans/design/firefox-sync-server.md`](plans/design/firefox-sync-server.md),
-  [`plans/design/homelab-auto-repair.md`](plans/design/homelab-auto-repair.md)
-  -- more someday design records, each queued as a story in
-  [`plans/stories/`](plans/stories/).
+The operator does physical + console work (power, installers, dropping
+the admin public key); the agent drives everything else over ssh from
+debbie. Cluster-level, storage, and destructive operations stay
+human-gated forever (the constitution, [`plans/identity.md`](plans/identity.md)).
 
 ## Conventions
 
-* No secrets in this repo. Configs that need a secret are committed only as
-  `*.example` templates; the real filled-in files (with tokens/passwords)
-  live on the hosts they run on and are gitignored.
-* Service dirs hold config files, helper scripts, and a per-service `README.md`
-  with deploy notes + revert paths.
-* Renewal scripts (`renew-pve-tls.sh`, `renew-truenas-tls.py`, the ntfy bridge)
-  are version-controlled here (scrubbed of secrets) AND deployed across the
-  PVE nodes / TrueNAS / the ntfy CT; the running copies are the source of
-  truth and the repo is the reproducible backup. See each script's directory
-  README for the install path.
+* **No secrets in this repo.** Secrets live in gitignored files under
+  `local/` or on the hosts; only `*.example` templates are tracked.
+* **The repo is the reproducible backup of state**, not the source of
+  truth for live systems until v2's converge loop lands: renewal
+  scripts + configs here mirror what runs on the boxes (see each
+  service dir README), and the direction flips with OPS-7.
+* Every commit references the story it serves; decisions live in
+  `plans/issues.md` (answered questions + reasoning), demand lives in
+  `plans/stories/`, design rationale lives in `plans/design/`.

@@ -2,7 +2,7 @@
 # extract-legacy.sh -- inventory + pull the old fleet's per-CT data off
 # the truenas pve-shared NFS export, READ-ONLY.
 #
-# OPS-1 artifact. docs/legacy/data-to-extract.md is the human table;
+# OPS-1 artifact. docs/data-to-extract.md is the human table;
 # this is the executable version. Run on debbie AFTER the truenas
 # network move (OPS-4) so truenas answers at 192.168.1.10.
 #
@@ -36,7 +36,7 @@ COPY_TIER=-1          # -1 = inventory only
 DUMP_CTID=""
 
 # Probe table: "ctid:tier:alternates(space-sep):tag"
-# Tiers per docs/legacy/data-to-extract.md.
+# Tiers per docs/data-to-extract.md.
 PROBES=(
   "109:0:/var/lib/vaultwarden:vaultwarden-data"
   "108:0:/var/lib/postgresql:pgdata"

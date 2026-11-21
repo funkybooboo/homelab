@@ -1,12 +1,14 @@
 # pve-thermaltake -- the GPU desktop
-name: pve-thermaltake
+ansible_host: 192.168.1.3
 arch: amd64
 role: pve-node
+mac: 4c:ed:fb:bf:ab:7d              # carried from the old fleet
 hardware: desktop; only node with an NVIDIA GPU
 constraints:
   - jellyfin lives here permanently (GPU transcode)
 glue:
-  - renew-pve-tls.sh + cron (all nodes)
+  - renew-pve-tls.sh + cron (services/pve-tls/)
   - nvidia-uvm-devnodes hook (services/nvidia-uvm-devnodes/)
   - 5-line NFS media fstab (post-truenas-move; /mnt/tnas-media/media/*)
-  - start-jellyfin.service boot-race fix (v3, when jellyfin returns)
+  - start-jellyfin.service boot-race fix (docs/storage.md)
+  - pve-shared-nfs-remount helper
