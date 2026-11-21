@@ -88,6 +88,27 @@ OPEN).
    the API keypair is the credential either way, but the account
    carries the human's name per the convention.
 
+10. **Access layer + cloud model** -- ANSWERED 2026-11-21 by
+   the operator (secure, idiomatic, HTTPS everywhere): (a) TAILSCALE =
+   the recorded item-4 model: ONE subnet router
+   (thermaltake already on the tailnet) advertises 192.168.1.0/24 so
+   the whole LAN is reachable from outside; `tailscale serve` fronts
+   host UIs with LE certs (HTTPS, no HTTP); a Tailscale API token
+   (admin console Settings > Keys -> local/tailscale-api.env) comes
+   with v2's automation (auth keys for new nodes, device/ACL
+   management); the ~28 dead tailnet device entries get purged with
+   the cluster clean-out. (b) BACKBLAZE: no repo key -- B2 is owned by
+   the truenas middleware (the 5 verified snapshot tasks); a repo key
+   only appears if a restic/rclone layer is added at OPS-14. (c) CLOUD
+   BURST (linode/digitalocean): DEFERRED until a concrete load exists
+   -- no accounts/keys "just in case"; the inventory+bootstrap design
+   makes adding a cloud node an hour's work when a real need appears.
+   (d) NAS-on-Proxmox: someday story OPS-19. (e) GUEST MOBILITY: all
+   shared NAS mounts declared once in group_vars and applied to EVERY
+   node at the same path (any guest binds from any node = full
+   migration freedom); jellyfin prefers thermaltake via HA affinity
+   and falls back to CPU decode when /dev/nvidia* is absent.
+
 ## Self-audit notes
 
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only

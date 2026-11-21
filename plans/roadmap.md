@@ -103,6 +103,8 @@ in). Only after v2-v4 keep the running fleet boring.
 
 ## Someday (demand recorded, not queued)
 
+- [OPS-19 NAS re-platform](./stories/OPS-19-nas-replatform.md) -- Proxmox on the NAS hardware, storage as a guest (raised during the revival evening; needs v2 proven first)
+
 - [USER-4 the Monero node](./stories/USER-4-monero-node.md)
   (design: [design/monero-node.md](./design/monero-node.md))
 - [USER-5 Firefox sync](./stories/USER-5-firefox-sync.md)
