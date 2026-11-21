@@ -5,8 +5,8 @@ into a fleet node (hostname, static IP from `ips.yaml`, ssh key,
 tailscale, no-subscription repo, cluster join), so that a node is a
 replaceable part.
 
-**Status**: planned
-**Arc**: v1
+**Status**: superseded 2026-11-21 by [OPS-18 node revival](./OPS-18-node-revival.md)
+**Arc**: n/a (tooling parked for future new/rebuilt nodes)
 
 ## Acceptance criteria
 
@@ -23,9 +23,9 @@ replaceable part.
 
 ## Notes
 
-The only manual step remains the PVE ISO install itself (physical +
-console + the ips.yaml static IP + a root password + the admin pub key
-into authorized_keys); the agent drives everything after via ssh from
-debbie (the recorded bring-up mode, 2026-11-06). SHIPPED ARTIFACTS:
-`scripts/bootstrap.sh` + `scripts/deploy-node-glue.sh` +
-`infra/nodes/*.yaml` + `infra/keys/admin.ed25519.pub`.
+REVISED 2026-11-21: the fresh-install approach was reversed (issues
+item 8, revival); this story is superseded by OPS-18. The shipped
+tooling stays valid and parked: `bootstrap.sh` + `deploy-node-glue.sh`
++ `infra/nodes/` serve any FUTURE fresh install (a rebuilt node, a
+new machine) and the framework's eventual enrollment if it is
+rebuilt instead of revived.

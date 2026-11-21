@@ -19,3 +19,7 @@ GitHub or the internet is not.
 No git push flows through the mirror in v1 -- it is a read mirror; the
 push-to-apply runner comes later (OPS-12) and points at the canonical
 remote.
+
+REVISED 2026-11-21 (revival): the mirror CT revives and resumes
+pulling on its old schedule; the story becomes verify + converge into
+the manifest format.

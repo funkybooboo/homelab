@@ -22,3 +22,7 @@ everyday workflows return.
 The deliberately-not-resurrected get a one-line reason each in
 `docs/legacy/` -- "unused", "superseded by X", or "resurrect on
 demand"; that list is what makes lazy resurrection cheap later.
+
+REVISED 2026-11-21 (revival): everything revives first, so this story
+becomes the CURATION PASS -- decide the stop-list (issues item 6,
+~12-15 keepers), stop + disable the rest, document each one-liner.

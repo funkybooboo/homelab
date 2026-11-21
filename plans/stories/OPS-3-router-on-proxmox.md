@@ -4,8 +4,8 @@ As the operator, I want OPNsense re-platformed as a VM on a new PVE
 node (`pve-router`), so that the router is a guest like everything else
 and its box joins the fleet.
 
-**Status**: planned
-**Arc**: v1
+**Status**: deferred 2026-11-21 (the V1210 keeps routing bare-metal)
+**Arc**: v5 (folded into [OPS-17](./OPS-17-pve9-rolling-upgrade.md))
 
 ## Acceptance criteria
 

@@ -18,3 +18,7 @@ can return.
 
 Old CT 108 held it; check `docs/legacy/` (OPS-1) for the database and
 role inventory before creating anything by hand.
+
+REVISED 2026-11-21 (revival): postgres revives with the fleet; the
+story becomes verify (all expected DBs reachable) + the backup story
+connection (OPS-14).

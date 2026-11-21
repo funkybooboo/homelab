@@ -19,3 +19,8 @@ restored, so that the passwords are available again.
 Priority order within v2: this story is why the core batch exists.
 Nothing wipes old CT rootfs until this and every later data extraction
 completes (rule 10).
+
+REVISED 2026-11-21 (revival): vaultwarden comes back ALIVE with the
+fleet on revival night (OPS-18). This story becomes: verify alive
+(unlock + one known credential from phone + laptop) + the tier-0
+backup extraction runs as insurance, not as a dependency.

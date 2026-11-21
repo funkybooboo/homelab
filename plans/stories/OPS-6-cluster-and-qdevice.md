@@ -4,8 +4,8 @@ As the operator, I want the greenfield cluster formed natively on
 192.168.1.x with the Pi as a QDevice (not a PVE node), so that quorum
 exists without ever hosting guests on arm64.
 
-**Status**: planned
-**Arc**: v1
+**Status**: deferred 2026-11-21 (Pi never revives as a PVE node)
+**Arc**: v5 (folded into [OPS-17](./OPS-17-pve9-rolling-upgrade.md))
 
 ## Acceptance criteria
 
@@ -22,7 +22,9 @@ the QDevice role and PVE 9.2's HA arm/disarm exist to prevent. The old
 `pve-balance` is not rebuilt: the native Dynamic Load Balancer replaces
 it (and only manages HA-managed guests -- decided, issues item 3).
 
-SHIPPED ARTIFACT: `scripts/setup-qdevice.sh` (--prepare-pi on the Pi:
-installs corosync-qnetd + root key-ssh for pvecm; --join <node> from
-debbie: runs `pvecm qdevice setup 192.168.1.11` per node, the
-supported Proxmox path).
+REVISED 2026-11-21: under the revival path the Pi stays OFF -- the
+3 revived nodes carry quorum (3 of 5) -- and it never comes back as a
+PVE node. At v5 (OPS-17) it is removed from the cluster config and
+returns as a QDevice. The fleet HA + arm/disarm decisions (issues
+item 3) stay exactly as decided; the native balancer arrives with the
+v5 platform refresh.

@@ -14,16 +14,16 @@ constitution is [identity.md](./identity.md); the shipped record is
   truenas + its data + B2, re-platform OPNsense as a VM on Proxmox.
   Research done 2026-11-05; the arc-level design record is
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md).
-- **Nothing is built yet, but v1 is FULLY UNBLOCKED and scripted**: all
-  open questions answered 2026-11-06 ([issues.md](./issues.md) items
-  1-7, item 8 settled 2026-11-06: fresh installs, truenas kept in
-  place). Shipped so far: `infra/network/ips.yaml` + `infra/nodes/` +
-  `scripts/{truenas-network-move,bootstrap,deploy-node-glue,setup-qdevice}.sh`.
-  Remaining code: the OPS-3 router VM creation script. Then the
-  hardware evening: truenas move (no console needed) -> tier-0
-  extraction -> 4 compute-node installs (operator at console for the
-  ISO step only; the agent drives over ssh) -> cluster + QDevice ->
-  router re-platform last.
+- **All questions answered; the plan was REVISED 2026-11-21 to
+  REVIVE-IN-PLACE** (issues.md item 8): the 3 healthy nodes are
+  renumbered onto the new LAN without reinstalling (the router stays
+  untouched; framework + Pi stay off), so the entire 28-CT service
+  fleet comes back the same evening. The platform goals (PVE 9, the
+  QDevice re-role, the router re-platform) move to v5; the IaC goals
+  converge the RUNNING fleet in v2-v4. Shipped: `docs/legacy/` +
+  `infra/` (ips.yaml, node facts, admin key) +
+  `scripts/{truenas-network-move,extract-legacy,bootstrap,deploy-node-glue,setup-qdevice}.sh`
+  (the last three parked as future-tooling) + `revive-node.sh`.
 
 ## v0: Legacy archive -- SHIPPED 2026-11-06
 
@@ -32,18 +32,32 @@ done: `docs/legacy/` (guest catalog, old LAN, quirks + incidents,
 data-to-extract inventory) + `scripts/extract-legacy.sh`. The script
 RUNS at the first hardware touch, after the truenas move (OPS-4).
 
-## v1: Foundations
+## v1: Revival -- SHIPPED-PREP as of 2026-11-21
 
-[OPS-2 the network plan](./stories/OPS-2-network-plan.md),
-[OPS-3 router on Proxmox](./stories/OPS-3-router-on-proxmox.md),
+[OPS-2 the network plan](./stories/OPS-2-network-plan.md) (done),
 [OPS-4 the truenas network move](./stories/OPS-4-truenas-network-move.md),
-[OPS-5 node bootstrap](./stories/OPS-5-node-bootstrap.md),
-[OPS-6 the cluster + QDevice](./stories/OPS-6-cluster-and-qdevice.md).
+[OPS-18 node revival](./stories/OPS-18-node-revival.md) (new;
+supersedes OPS-5). OPS-3 (router) + OPS-6 (QDevice) deferred to v5
+per operator -- the V1210 keeps routing bare-metal, the Pi stays off
+(3 revived nodes = 3-of-5 quorum).
 
-Ends with: router, storage, and cluster alive -- and every step that
-made them is a script or playbook in the repo.
+Evening order: truenas move (remote, no console) -> boot 3 nodes ->
+operator drops the admin key at each console -> `revive-node.sh
+--renumber` per node -> 3rd node = quorum -> `--post-quorum` fixes
+(storage.cfg, fstab, CT nameservers) -> HA auto-start + the
+documented error-state dance -> `extract-legacy.sh` as a tier-0
+backup snapshot.
 
-## v2: IaC skeleton + core services
+Ends with: the whole old fleet running on the new LAN, nothing
+reinstalled, and every step that did it is a script in the repo.
+
+## v2: IaC skeleton over the RUNNING fleet
+
+REVISED 2026-11-21 (revival): the core services come back alive on
+revival night, so these stories become *converge + verify* rather than
+*restore*. The skeleton (OPS-7) builds the manifests + roles and
+converges what is already running; drift disappears in the first
+passes.
 
 [OPS-7 the IaC skeleton](./stories/OPS-7-iac-skeleton.md),
 [OPS-8 ntfy alerting](./stories/OPS-8-ntfy-alerting.md),
@@ -52,16 +66,20 @@ made them is a script or playbook in the repo.
 [OPS-11 the monitoring pair](./stories/OPS-11-monitoring-pair.md),
 [USER-1 vaultwarden restore](./stories/USER-1-vaultwarden-restore.md).
 
-Ends with: one new service = one YAML + one role, and the critical five
-live (vaultwarden data restored first -- it is the passwords).
+Ends with: one service = one YAML + one role, the revived fleet
+converged under it, and the critical five verified live.
 
-## v3: Service batches
+## v3: Curation + media verification
+
+REVISED 2026-11-21 (revival): everything revived, curation now happens
+by STOPPING the non-curated CTs (stopping is easy; resurrecting was
+the hard direction) and verifying the media fleet on its GPU node.
 
 [USER-2 the media fleet](./stories/USER-2-media-fleet.md),
 [USER-3 daily tools](./stories/USER-3-daily-tools.md).
 
-Ends with: the curated service list live and the old rootfs safe to
-archive.
+Ends with: the curated list enforced (stopped + documented), the rest
+still archived in `docs/legacy/`.
 
 ## v4: Automation polish
 
@@ -71,6 +89,13 @@ archive.
 [OPS-15 drift detection](./stories/OPS-15-drift-detection.md).
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
+
+## v5: Platform refresh
+
+[OPS-17 PVE 9 rolling upgrade + platform refresh](./stories/OPS-17-pve9-rolling-upgrade.md)
+-- the rolling 8->9 dist-upgrade, the Pi's QDevice re-role, native
+balancer, and the deferred router re-platform (OPS-3, OPS-6 folded
+in). Only after v2-v4 keep the running fleet boring.
 
 ## Someday (demand recorded, not queued)
 

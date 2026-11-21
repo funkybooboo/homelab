@@ -21,3 +21,7 @@ audiobooks work again.
 
 Firefox sync (syncstorage-rs) is deliberately NOT here -- it is its own
 story (USER-5) despite living on the same old node.
+
+REVISED 2026-11-21 (revival): the media CTs revive with the fleet on
+thermaltake; the story becomes verify (GPU transcode, the 5 NFS media
+mounts, library counts vs docs/legacy).

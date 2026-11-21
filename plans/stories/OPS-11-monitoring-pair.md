@@ -21,3 +21,7 @@ The old stack is described in `docs/observability.md` (as-built at
 plan; treat as input, not spec -- the fleet it planned for is gone).
 Loki/centralized logging is deliberately out of scope here; revisit
 after v4.
+
+REVISED 2026-11-21 (revival): the pair revives with the fleet; the
+story becomes verify scrape targets + dashboards for the revived
+nodes/CTs, and re-wire the truenas alert bridge.

@@ -19,3 +19,6 @@ it narrates its own failures to the phone.
 The old CT also hosted the Slack-to-ntfy bridge for truenas alerts --
 re-adding that bridge is part of OPS-11 scope, not this story.
 Design context: `services/ntfy/` (old deploy notes).
+
+REVISED 2026-11-21 (revival): ntfy revives with the fleet; the story
+becomes verify + codify the alert-helper role for the stories after.

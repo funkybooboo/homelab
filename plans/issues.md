@@ -46,15 +46,23 @@ OPEN).
    canonical remote with an on-cluster forgejo mirror; guest IPs
    static at pct level; no PDM; no VLANs.
 8. **Renumber the old PVE installs in place vs fresh reinstall** --
-   OPEN (raised by the operator 2026-11-06). Recommendation: fresh
-   install. In-place from a DARK cluster means: temporarily recreate
-   the 192.168.8.x LAN (OPNsense alias) + boot the whole old cluster
-   alive + a live 5-node corosync renumber + a bookworm->trixie
-   PVE8->9 dist-upgrade per node -- and it carries the drift the
-   greenfield verdict exists to delete, while saving only ~30 min of
-   USB-stick time per node. Nothing irreplaceable lives on the nodes
-   (rootfs on truenas, tier-0 extracted, ntfy/loki via vzdump).
-   Awaiting the operator's call.
+   ANSWERED, twice, and the second answer stands. 2026-11-06: fresh
+   install (the dark-cluster corosync dance looked expensive).
+   REVISED 2026-11-21 per operator + the router deferral: **REVIVE IN
+   PLACE.** The re-analysis: (a) the dark-cluster renumber needs no
+   old-subnet recreation -- `pvecm expected 1` per node + a
+   corosync.conf swap; the third node up forms real 3-of-5 quorum;
+   (b) all 28 CTs revive intact on pve-shared the same night
+   (vaultwarden, media, everything) -- the per-service v2/v3 restore
+   work drops out entirely; (c) rule 1 does not need fresh installs --
+   the v2 ansible skeleton CONVERGES a running fleet, drift included.
+   Costs accepted: PVE 8 stays until the v5 rolling 8->9 upgrade
+   (own story, OPS-17); framework + Pi stay OFF until their fixes
+   (3 nodes = quorum); curation happens by STOPPING unwanted CTs
+   after revival. Fresh-install tooling (bootstrap.sh,
+   deploy-node-glue.sh, setup-qdevice.sh) stays in the repo for future
+   new/rebuilt nodes and the Pi re-role. Router stays untouched
+   (V1210 keeps routing bare-metal; re-platform = OPS-3 in v5).
 
 ## Self-audit notes
 
