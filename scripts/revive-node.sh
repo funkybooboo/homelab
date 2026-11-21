@@ -124,8 +124,10 @@ if "iface vmbr0 inet static" not in out:   # no auto-line form; append instead
 open("/etc/network/interfaces", "w").write(out)
 PYEOF
 ip -br addr show vmbr0; sed -n "/vmbr0/,/^$/p" /etc/network/interfaces
+echo "-- LRM watchdog disarm (HA self-reboot guard while inquorate)"
+systemctl stop pve-ha-lrm 2>/dev/null || echo "  (pve-ha-lrm not running)"
 echo "-- pmxcfs writable (expected 1 if inquorate)"
-pvecm status | grep -q "Quorate:          Yes" || pvecm expected 1
+pvecm status | grep -qE 'Quorate: *Yes|Flags:.*Quorate' || pvecm expected 1
 echo "-- corosync.conf ring0_addr swap (names -> host_vars map)"
 HOSTS="$HOSTS" python3 - <<'PYEOF'
 import re, os
@@ -172,7 +174,7 @@ REMOTE
   say "storage.cfg: 192.168.8.100 -> 192.168.1.10"
   sshn "$SSH_USER@$QIP" sudo bash -s <<'REMOTE'
     set -e
-    pvecm status | grep -q "Quorate:          Yes" || { echo "not quorate yet -- run me on the 3rd node up" >&2; exit 1; }
+    pvecm status | grep -qE 'Quorate: *Yes|Flags:.*Quorate' || { echo "not quorate yet -- run me on the 3rd node up" >&2; exit 1; }
     grep -n "192.168.8.100" /etc/pve/storage.cfg && sed -i "s/192.168\.8\.100/192.168.1.10/g" /etc/pve/storage.cfg
     grep -A1 "pve-shared\|pve-backups" /etc/pve/storage.cfg | grep -E "server|path"
     pvesm status | grep -E "pve-shared|pve-backups" || echo "  (storage still activating; re-check with pvesm status)"
@@ -196,6 +198,9 @@ REMOTE
   cat <<'EOF'
   jellyfin:  ssh nate@pve-thermaltake 'sudo systemctl start start-jellyfin'
   ntfy:      ssh nate@<its node> 'sudo pct start 128'
+  re-arm HA (watchdogs back on, now quorate):
+    for n in pve-thermaltake pve-aspires pve-aspiree15; do
+      ssh nate@$n 'sudo systemctl start pve-ha-lrm'; done
   any HA error states -> the documented dance in docs/ha-recovery.md:
     ha-manager set ct:N --state disabled; sleep 15; pct start N;
     ha-manager set ct:N --state started
