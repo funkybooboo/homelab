@@ -22,3 +22,21 @@ spare_range: [192.168.1.250, 192.168.1.254]   # printers, bench gear, debug
 reserved:
   pbs: 192.168.1.12                 # OPS-14 PBS VM
   subnetrouter: 192.168.1.13        # OPS-7 tailscale subnet router
+
+# --- ansible connection model (v2 skeleton, OPS-7) ---
+# Humans operate; assistants help under the same identity. NO root
+# login anywhere: ansible connects as the operator's key-only
+# account (nate) and escalates via passwordless sudo. The
+# truenas/opnsense appliances are API-driven (no ssh escalation) --
+# see their host_vars.
+ansible_user: nate
+ansible_become: true
+ansible_become_method: sudo
+
+# PVE API (community.proxmox guest lifecycle): the operator's PVE
+# user + a revocable token. The token SECRET lives in
+# local/pve-api.env (gitignored); created post-quorum by
+# scripts/setup-pve-access.sh. Token id format: <user>!<name>
+pve_api_host: pve-thermaltake      # any node serves the API
+pve_api_user: nate@pam
+pve_api_token_id: nate@pam!homelab-ops

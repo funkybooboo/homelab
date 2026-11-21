@@ -9,3 +9,8 @@ constraints:
   - agent operates it via the RESTCONF API as the dedicated 'agent'
     user (scripts/opnsense.sh; credentials in local/opnsense-api.env)
   - oxlorg release must match the OPNsense version (issues item 1)
+ansible_become: false             # appliance: API-driven, no ssh
+access_model: >-
+  RESTCONF API as nate (keypair live in local/opnsense-api.env,
+  scripts/opnsense.sh is the helper); oxlorg.opnsense rides the same
+  credential at v5. No ssh needed for anything.

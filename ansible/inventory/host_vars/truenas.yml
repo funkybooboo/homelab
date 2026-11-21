@@ -8,3 +8,10 @@ hardware: TrueNAS 25.10 appliance; root ssh enabled, nate (uid 3000)
 constraints:
   - boots FIRST on the UPS (boot-order law, identity rule 7)
   - never reinstalled; B2 cloud-sync never stops (identity rule 10)
+  - no root ssh ever; root work happens at the physical console
+ansible_become: false             # appliance: no ssh escalation
+access_model: >-
+  ssh as nate (key-only) for READS (midclt query calls, zpool, logs);
+  config WRITES via the TrueNAS REST API with nate's API key
+  (Credentials > API Keys in the web UI -> local/truenas-api.env);
+  the console is root's only door.
