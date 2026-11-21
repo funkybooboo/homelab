@@ -151,8 +151,17 @@ cat <<EOF
   - on debbie:  sudo ip addr del 192.168.8.99/24 dev enp0s13f0u2u4
   - web UI:     https://192.168.1.10
   - if the console shows a shell, verify with:  ip -br addr show $IFACE
+  IMPORTANT -- TRUENAS FAIL-SAFE (learned live 2026-11-21): interface
+  changes STAGE and REVERT to the last-good config unless confirmed.
+  If the web UI shows a "save network changes" prompt, CLICK SAVE --
+  without it the move rolls back after a grace window.
 EOF
 sleep 3
 setsid sh -c 'midclt call interface.commit' >/dev/null 2>&1 &
 sleep 2
+# try the API-side confirmation of the same fail-safe (non-fatal if
+# this version lacks the method; the UI Save prompt is the fallback)
+if probe interface.checkin; then
+  midclt call interface.checkin >/dev/null 2>&1 || true
+fi
 say "commit sent. verify from debbie: ping 192.168.1.10"
