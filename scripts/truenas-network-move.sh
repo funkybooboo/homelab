@@ -1,83 +1,103 @@
 #!/bin/sh
 # truenas-network-move.sh -- OPS-4: move truenas from the dead
-# 192.168.8.x LAN to the greenfield 192.168.1.x LAN, IN PLACE.
-# TrueNAS is kept exactly as it is (datasets, NFS, B2 sync, TLS cron);
-# only its address moves. No reinstall, ever (plans/issues.md item 8).
+# 192.168.8.x LAN to the greenfield 192.168.1.x LAN, IN PLACE, at its
+# PHYSICAL console (no root ssh ever). Self-diagnosing: TrueNAS moved
+# several middleware method names between versions, so this script
+# probes the read-only methods first and adapts to whatever THIS
+# box answers. If something is missing it says so plainly instead of
+# guessing.
 #
-# Run ON TRUENAS at its PHYSICAL console as root -- NO root ssh ever
-# (operator rule 2026-11-21: least privilege always, good ssh first).
-# Fetch it over the LAN from debbie's temp alias (plain HTTP one-shot,
-# not ssh):
-#   debbie#  sudo ip addr add 192.168.8.99/24 dev enp0s13f0u2u4    # temp alias (wired nic)
-#   debbie#  python3 -m http.server 8000 &                       # from the repo root
-#   truenas console# curl -fsSL http://192.168.8.99:8000/scripts/truenas-network-move.sh -o /tmp/move.sh
-#                     (fallback: wget or fetch if no curl)
-#   truenas console# sh /tmp/move.sh --check
-#   truenas console# sh /tmp/move.sh --apply
-#   debbie#  sudo ip addr del 192.168.8.99/24 dev enp0s13f0u2u4   # + stop the http server
-# THEN the good-ssh pass on truenas via its web UI (as the admin
-# user, not root ssh): System > Services > SSH -- disable the root
-# login + password auth options (or stop the SSH service entirely
-# until nate-key-only is needed).
+# Run ON TRUENAS as root AT THE CONSOLE. Fetch from debbie, then:
+#   sh /tmp/move.sh --check      (read-only: current state + the plan)
+#   sh /tmp/move.sh --apply      (execute; the old IP drops at commit)
 #
-# Target state (ansible/inventory/host_vars/truenas.yml): 192.168.1.10/24, gw
-# 192.168.1.1, dns [192.168.1.1, 1.1.1.1], NFS exports on
-# 192.168.1.0/24. --check prints current state + the planned changes;
-# --apply executes them. Method names verified against 24.10+/25.x
-# middleware (interface/general/dnsmanager/nfs); --apply fails loudly
-# rather than guessing if the check can't find what it expects.
-#
-# WARNING: --apply changes the IP live. An ssh session from the old
-# subnet DIES at commit. The script prints where to reconnect before
-# it commits.
+# Target state: 192.168.1.10/24, gw 192.168.1.1, dns
+# [192.168.1.1, 1.1.1.1], NFS exports on 192.168.1.0/24.
+# --apply is safe to re-run: steps that already match are skipped.
 
 set -eu
 
 NEW_IP=192.168.1.10
 NEW_GW=192.168.1.1
-NEW_MASK=24
 NEW_SUBNET=192.168.1.0/24
 OLD_IP=192.168.8.100
 MODE="${1:---check}"
 
-say()  { echo "== $*"; }
-die()  { echo "ERROR: $*" >&2; exit 1; }
+say() { echo "== $*"; }
+die() { echo "ERROR: $*" >&2; exit 1; }
+probe() { midclt call "$1" >/dev/null 2>&1; }
+first_ok() {
+  for m in "$@"; do
+    if probe "$m"; then echo "$m"; return 0; fi
+  done
+  return 1
+}
 
-jqget() { jq -r "$1"; }
+# ---- discovery: what does THIS TrueNAS answer? (read-only) ----
+say "probing middleware methods (read-only)"
 
-# ---- state discovery ------------------------------------------------
+M_IFACE=$(first_ok interface.query || true)
+if [ -z "$M_IFACE" ]; then
+  say "  interface.query: MISSING; services containing 'interface':"
+  midclt call core.get_services 2>/dev/null | tr ',' '\n' | grep -i interface || true
+  die "need interface.query to proceed"
+fi
+say "  $M_IFACE: OK"
+IFACE_JSON=$(midclt call "$M_IFACE")
 
-iface_json=$(midclt call interface.query)
-IFACE=$(echo "$iface_json" | jqget '
-  [.[] | select(.state.alias4 // [] | map(.address) | index("'"$OLD_IP"'"))][0]
-  | .properties.name? // empty')
+M_GEN=$(first_ok system.general.get_config general.get_config || true)
+[ -n "$M_GEN" ] && say "  $M_GEN: OK" || say "  no general-config method (gateway/dns may live elsewhere)"
+
+M_DNS=$(first_ok dnsmanager.query dnsmanager.get_config || true)
+[ -n "$M_DNS" ] && say "  $M_DNS: OK" || say "  no dnsmanager method"
+
+M_NFS=$(first_ok sharing.nfs.query nfs.query nfs.get_config || true)
+[ -n "$M_NFS" ] && say "  $M_NFS: OK" || say "  no nfs query method (exports would need the UI)"
+
+# ---- state ----
+IFACE=$(echo "$IFACE_JSON" | jq -r --arg ip "$OLD_IP" \
+  '[.[] | select((tostring) | contains($ip))] | .[0] | (.id // .properties.name // empty)' 2>/dev/null || true)
 [ -n "$IFACE" ] || IFACE=enp1s0
 
-gen_json=$(midclt call general.get_config)
-cur_gw=$(echo "$gen_json" | jqget '.gateway // empty')
+cur_gw=""; cur_dns=""; DNS_OWNER=""
+if [ -n "$M_GEN" ]; then
+  GEN_JSON=$(midclt call "$M_GEN")
+  cur_gw=$(echo "$GEN_JSON" | jq -r '.gateway // empty' 2>/dev/null || true)
+  cur_dns=$(echo "$GEN_JSON" | jq -r '.nameservers // [] | join(", ")' 2>/dev/null || true)
+  [ -n "$cur_dns" ] && DNS_OWNER="$M_GEN"
+fi
+if [ -z "$DNS_OWNER" ] && [ -n "$M_DNS" ]; then
+  DNS_JSON=$(midclt call "$M_DNS")
+  mgr_dns=$(echo "$DNS_JSON" | jq -r '.nameservers // [] | join(", ")' 2>/dev/null || true)
+  [ -n "$mgr_dns" ] && { cur_dns="$mgr_dns"; DNS_OWNER="$M_DNS"; }
+fi
 
-dns_json=$(midclt call dnsmanager.get_config 2>/dev/null || echo '{}')
-cur_dns=$(echo "$dns_json" | jqget '.nameservers // [] | join(", ")')
-
-nfs_json=$(midclt call nfs.get_config)
-cur_nfs=$(echo "$nfs_json" | jqget '
-  [.services[] | {id, paths, networks: (.networks // [])}]
-  | map(select(.paths[] | test("/mnt/volume1/pve"))) | .[] | "\(.id): \(.paths|join(",")) nets=\(.networks|join(","))"' | tr '\n' ';')
+NFS_ROWS=""
+if [ -n "$M_NFS" ]; then
+  NFS_JSON=$(midclt call "$M_NFS")
+  NFS_ROWS=$(echo "$NFS_JSON" | jq -r '
+    (if type == "array" then . else (.services // []) end)
+    | .[] | select(((.paths // []) | join(",")) | test("/mnt/volume1/pve"))
+    | "\(.id) | paths=\((.paths // []) | join(",")) | networks=\((.networks // []) | join(","))"' 2>/dev/null || true)
+fi
 
 case "$MODE" in
 --check)
   say "interface holding $OLD_IP: $IFACE"
-  echo "$iface_json" | jq -r ".[] | select(.properties.name == \"$IFACE\") |
-    \"  dhcp=\(.state.dhcp4) aliases=\([.state.alias4[]?.address] | join(\",\"))\""
+  echo "$IFACE_JSON" | jq -r --arg ifn "$IFACE" \
+    '.[] | select(.id == $ifn or .properties.name == $ifn)
+     | {d: (.state.dhcp4 // "?"), a: ([.state.alias4[]?.address] | join(","))}
+     | "  dhcp=\(.d)  aliases=\(.a)"' 2>/dev/null || true
   say "gateway: ${cur_gw:-<unset>}"
-  say "dns: ${cur_dns:-<unset>}"
-  say "nfs exports (pve only): ${cur_nfs:-none}"
-  say "PLANNED by --apply:"
-  echo "  interface.update $IFACE -> static $NEW_IP/$NEW_MASK (dhcp off)"
-  echo "  general.update   -> gateway $NEW_GW"
-  echo "  dnsmanager.update -> nameservers [192.168.1.1, 1.1.1.1]"
-  echo "  nfs.update        -> networks [$NEW_SUBNET] on every pve export"
-  echo "  interface.commit  (live; ssh from the old subnet will DROP)"
+  say "dns (owner: ${DNS_OWNER:-none}): ${cur_dns:-<unset>}"
+  say "nfs exports (pve only):"
+  echo "$NFS_ROWS" | sed 's/^/  /' || echo "  (none found)"
+  say "PLANNED by --apply (already-matching steps skip):"
+  echo "  1. interface.update $IFACE -> static $NEW_IP/24 (dhcp off)"
+  echo "  2. gateway -> $NEW_GW"
+  echo "  3. nameservers -> [192.168.1.1, 1.1.1.1]"
+  echo "  4. nfs export networks -> [$NEW_SUBNET] (every pve export)"
+  echo "  5. interface.commit (live; the old IP drops here)"
   exit 0
   ;;
 --apply)
@@ -85,44 +105,54 @@ case "$MODE" in
 *) die "usage: truenas-network-move.sh --check|--apply" ;;
 esac
 
-# ---- preflight ------------------------------------------------------
-
-if ! echo "$iface_json" | grep -q "$OLD_IP"; then
-  die "$OLD_IP not found on any interface -- is this the pre-move truenas? Run --check."
+# ---- apply (idempotent; skips what already matches) ----
+if echo "$IFACE_JSON" | grep -q "$NEW_IP"; then
+  say "interface already holds $NEW_IP -- skipping the IP change"
+else
+  echo "$IFACE_JSON" | grep -q "$OLD_IP" \
+    || die "$OLD_IP not found on any interface -- run --check first"
+  say "1/5 interface.update $IFACE -> $NEW_IP/24 (dhcp off)"
+  midclt call interface.update "$IFACE" \
+    "{\"ipv4_dhcp\": false, \"aliases\": [{\"address\": \"$NEW_IP\", \"netmask\": 24}]}"
 fi
-echo "$gen_json" | jq -e '.gateway' >/dev/null 2>&1 \
-  || die "general.get_config has no gateway field -- middleware shape differs; inspect --check output and adjust."
-echo "$dns_json" | jq -e '.nameservers' >/dev/null 2>&1 \
-  || die "dnsmanager has no nameservers field -- inspect --check output and adjust."
-echo "$nfs_json" | jq -e '.services' >/dev/null 2>&1 \
-  || die "nfs.get_config has no services list -- inspect --check output and adjust."
 
-say "applying: interface $IFACE -> $NEW_IP/$NEW_MASK (dhcp off)"
-midclt call interface.update "$IFACE" \
-  '{"ipv4_dhcp": false, "aliases": [{"address": "'"$NEW_IP"'", "netmask": '"$NEW_MASK"'}]}'
+if [ -n "$M_GEN" ] && [ "$cur_gw" != "$NEW_GW" ]; then
+  say "2/5 gateway -> $NEW_GW (via ${M_GEN%.get_config}.update)"
+  midclt call "${M_GEN%.get_config}.update" "{\"gateway\": \"$NEW_GW\"}"
+else
+  say "2/5 gateway already $NEW_GW -- skipping"
+fi
 
-say "applying: gateway -> $NEW_GW"
-midclt call general.update '{"gateway": "'"$NEW_GW"'"}'
+if [ -n "$DNS_OWNER" ]; then
+  say "3/5 nameservers -> [192.168.1.1, 1.1.1.1] (via ${DNS_OWNER%.*}.update)"
+  midclt call "${DNS_OWNER%.*}.update" '{"nameservers": ["192.168.1.1", "1.1.1.1"]}'
+else
+  say "3/5 no dns method discovered -- set DNS in the web UI after"
+fi
 
-say "applying: nameservers (hosts preserved)"
-echo "$dns_json" | jq '.nameservers = ["192.168.1.1", "1.1.1.1"]' \
-  | midclt call dnsmanager.update "$(cat)"
+if [ -n "$M_NFS" ]; then
+  say "4/5 nfs export networks -> $NEW_SUBNET"
+  echo "$NFS_JSON" | jq -r '
+    (if type == "array" then . else (.services // []) end)
+    | .[] | select(((.paths // []) | join(",")) | test("/mnt/volume1/pve"))
+    | .id' | while read -r nid; do
+      [ -n "$nid" ] || continue
+      echo "  ${M_NFS%.*}.update $nid"
+      midclt call "${M_NFS%.*}.update" "$nid" "{\"networks\": [\"$NEW_SUBNET\"]}"
+    done
+else
+  say "4/5 no nfs method discovered -- fix export networks in the web UI after"
+fi
 
-say "applying: nfs export networks -> $NEW_SUBNET"
-for id in $(echo "$nfs_json" | jq -r '.services[]
-      | select(.paths[] | test("/mnt/volume1/pve")) | .id'); do
-  echo "  nfs.update $id"
-  midclt call nfs.update "$id" '{"networks": ["'"$NEW_SUBNET"'"]}'
-done
-midclt call service.restart '{"service": "nfs", "ha_enable": false}' \
-  || say "nfs service restart skipped (non-fatal; verify from debbie with showmount)"
+say "5/5 committing interface change in 3s -- the old IP drops NOW"
+cat <<EOF
 
-say "RECONNECT INSTRUCTIONS (your ssh session is about to drop):"
-echo "  on debbie: sudo ip addr del 192.168.8.99/24 dev <debbie-lan-nic>"
-echo "  then:      ssh root@192.168.1.10"
-say "committing interface change in 3s (live)..."
+  AFTER THIS:
+  - on debbie:  sudo ip addr del 192.168.8.99/24 dev enp0s13f0u2u4
+  - web UI:     https://192.168.1.10
+  - if the console shows a shell, verify with:  ip -br addr show $IFACE
+EOF
 sleep 3
 setsid sh -c 'midclt call interface.commit' >/dev/null 2>&1 &
 sleep 2
-say "committed. if you can read this, the session survived; verify:"
-echo "  ip -br addr show $IFACE ; ip route"
+say "commit sent. verify from debbie: ping 192.168.1.10"
