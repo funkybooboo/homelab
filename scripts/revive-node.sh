@@ -165,7 +165,7 @@ pkill -f "pmxcfs -l" 2>/dev/null || true
 echo "-- detached apply in 3s: ifreload + pve-cluster + corosync (node moves to $NEWIP)"
 echo "   (your session will drop; reconnect at $NEWIP)"
 sleep 3
-setsid sh -c 'nohup sh -c "ifreload -a; systemctl restart pve-cluster; sleep 3; systemctl restart corosync" >/root/revive-apply.log 2>&1"' &
+setsid sh -c 'nohup sh -c "ifreload -a; systemctl restart pve-cluster; sleep 3; systemctl restart corosync" >/root/revive-apply.log 2>&1' &
 exit 0
 REMOTE
   say "done pushing. reconnect: ssh $SSH_USER@$NEWIP then: revive-node.sh --verify $NODE"
