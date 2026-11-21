@@ -75,7 +75,8 @@ case "$MODE" in
 REMOTE
   ;;
 --renumber)
-  NODE=$(arg node "$2"); TEMP=$(arg at "$3")
+  NODE=$(arg node "$2")
+  if [ "${3:-}" = "--at" ]; then TEMP=$(arg ip "$4"); else TEMP=$(arg ip "${3:-}"); fi
   NEWIP=$(node_ip "$NODE")
   [ -n "$NEWIP" ] || { echo "no host_vars/$NODE.yml (or no ansible_host)" >&2; exit 1; }
   say() { echo "== $*"; }
@@ -126,8 +127,21 @@ PYEOF
 ip -br addr show vmbr0; sed -n "/vmbr0/,/^$/p" /etc/network/interfaces
 echo "-- LRM watchdog disarm (HA self-reboot guard while inquorate)"
 systemctl stop pve-ha-lrm 2>/dev/null || echo "  (pve-ha-lrm not running)"
-echo "-- pmxcfs writable (expected 1 if inquorate)"
-pvecm status | grep -qE 'Quorate: *Yes|Flags:.*Quorate' || pvecm expected 1
+if pvecm status | grep -qE 'Quorate: *Yes|Flags:.*Quorate'; then
+  echo "-- quorate: pmxcfs writable, straight edit"
+else
+  echo "-- inquorate: expected-1 first, pmxcfs local mode as fallback"
+  pvecm expected 1 2>/dev/null || true
+  if pvecm status | grep -qE 'Quorate: *Yes|Flags:.*Quorate'; then
+    echo "   expected-1 took effect"
+  else
+    echo "   expected-1 refused (PVE 9 nodelist quorum) -- pmxcfs LOCAL MODE"
+    systemctl stop pve-cluster corosync
+    setsid nohup pmxcfs -l >/dev/null 2>&1 &
+    sleep 2
+    echo "   pmxcfs -l running; /etc/pve writable"
+  fi
+fi
 echo "-- corosync.conf ring0_addr swap (names -> host_vars map)"
 HOSTS="$HOSTS" python3 - <<'PYEOF'
 import re, os
@@ -146,10 +160,12 @@ open(cf_path, "w").write(out)
 for line in out.splitlines():
     if "name:" in line or "ring0_addr" in line: print(line)
 PYEOF
-echo "-- detached apply in 3s: ifreload -a + corosync restart"
+echo "-- stop local-mode pmxcfs (edit phase complete)"
+pkill -f "pmxcfs -l" 2>/dev/null || true
+echo "-- detached apply in 3s: ifreload + pve-cluster + corosync (node moves to $NEWIP)"
 echo "   (your session will drop; reconnect at $NEWIP)"
 sleep 3
-setsid sh -c 'nohup sh -c "ifreload -a; systemctl restart corosync; systemctl restart pve-cluster" >/root/revive-apply.log 2>&1' &
+setsid sh -c 'nohup sh -c "ifreload -a; systemctl restart pve-cluster; sleep 3; systemctl restart corosync" >/root/revive-apply.log 2>&1"' &
 exit 0
 REMOTE
   say "done pushing. reconnect: ssh $SSH_USER@$NEWIP then: revive-node.sh --verify $NODE"
