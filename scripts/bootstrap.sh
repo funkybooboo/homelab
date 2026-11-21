@@ -3,11 +3,11 @@
 # node, driven FROM DEBBIE over ssh (the operator does the physical +
 # console part: power, ISO install with the ips.yaml static IP + a root
 # password, and drops files/keys/admin.ed25519.pub into root's
-# authorized_keys; the agent takes over from there).
+# authorized_keys; operations continue from there).
 #
 # Usage (on debbie):  scripts/bootstrap.sh <node-name> [--join <peer-ip>]
 #   <node-name>  must exist in ansible/inventory/host_vars/<name>.yml
-#   --join       cluster join via agent-forwarded `pvecm add` (run me
+#   --join       cluster join via ssh-agent-forwarded `pvecm add` (run me
 #                with the debbie key agent loaded; -A forwarding is set)
 #
 # What it does on the node (idempotent; safe to re-run):
@@ -21,6 +21,12 @@
 #   7. tailscale up (TS_AUTH_KEY env if set, else prints the login URL)
 #   8. optional cluster join
 # Follow with: scripts/deploy-node-glue.sh <node-name>
+#
+# NOTE (2026-11-21): this script predates the operations-identity model and
+# still logs in as root over ssh (fresh installs begin with a root
+# password from the ISO). For any FUTURE use, run
+# scripts/console-setup-operator.sh at the node's console first and pass
+# SSH_USER=nate -- do not re-introduce root ssh.
 
 set -euo pipefail
 
@@ -125,7 +131,7 @@ else
 fi
 
 if [ -n "$JOIN" ]; then
-  say "cluster join: pvecm add $JOIN (agent-forwarded)"
+  say "cluster join: pvecm add $JOIN (ssh-agent-forwarded)"
   $SSHCMD "pvecm add $JOIN" \
     || { echo "join failed -- if it is the ssh fingerprint/password prompt," \
               "run it interactively: ssh -A root@$IP pvecm add $JOIN" >&2; }

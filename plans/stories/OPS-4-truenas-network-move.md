@@ -28,4 +28,5 @@ root ssh is enabled, so the flow is debbie-side temp alias
 root@192.168.8.100 -> `sh -s < scripts/truenas-network-move.sh
 --apply` (the session drops at commit; reconnect at .10) ->
 `sudo ip addr del ...` -> verify from debbie. The operator runs the
-two debbie sudo commands; the agent drives the rest.
+two debbie sudo commands; the rest is script-driven (by you or a
+directed assistant).

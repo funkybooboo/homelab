@@ -64,6 +64,30 @@ OPEN).
    new/rebuilt nodes and the Pi re-role. Router stays untouched
    (V1210 keeps routing bare-metal; re-platform = OPS-3 in v5).
 
+9. **Operations identity (least privilege, no root ssh)** --
+   ANSWERED 2026-11-21 by the operator, recorded as the standing
+   rule. HUMANS OPERATE; assistants help (never a separate
+   privileged "agent" caste): (a) PVE nodes = the (A) model as a
+   GENERAL OPERATIONS account: the operator's own `nate` account, key-only ssh (the
+   operator's key), `sudo NOPASSWD: ALL` -- created by pasting
+   scripts/console-setup-operator.sh at each node's PHYSICAL console;
+   the operator uses it directly AND an AI assistant runs the same
+   commands under it when directed -- one identity, one audit
+   trail; (b) TRUENAS = **no root ssh ever** -- the network move
+   runs at its console (script fetched via one-shot HTTP from
+   debbie's temp alias), then the SSH service gets the good-ssh
+   pass (root login + password auth off); (c) nodes: after
+   revival, scripts/harden-ssh.sh kills password ssh everywhere --
+   root ssh stays KEY-ONLY because PVE itself uses root ssh
+   between nodes for migration/cluster operations (the
+   load-bearing nuance; the physical console is the break-glass
+   path). v2 moves ongoing management to scoped PVE API tokens.
+   (d) ROUTER: the already-created `agent` web-UI user gets the
+   same treatment -- recreate as `nate` (new keypair,
+   scripts/opnsense.sh --import, then delete the `agent` user);
+   the API keypair is the credential either way, but the account
+   carries the human's name per the convention.
+
 ## Self-audit notes
 
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only

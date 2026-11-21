@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# opnsense.sh -- thin CLI over the OPNsense RESTCONF API, so the agent
+# opnsense.sh -- thin CLI over the OPNsense RESTCONF API, so the operator (or a directed assistant)
 # (and later the oxlorg.opnsense collection at v5) can operate the
 # router from debbie without touching the web UI.
 #
 # Credentials live in local/opnsense-api.env (gitignored, chmod 600).
 # OPNsense 25.7 keypair creation (verified against the 25.7 source):
-#   System > Access > Users -> the per-row command icon on the agent
+#   System > Access > Users -> the per-row command icon on the nate
 #   row ("Create and download API key for this user", ticket-style)
 #   -> confirm -> downloads <hostname>_<user>_apikey.txt (key=... /
 #   secret=... lines). Then:

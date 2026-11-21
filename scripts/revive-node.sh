@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # revive-node.sh -- OPS-18: revive an existing PVE 8 node in place on
 # the new 192.168.1.0/24 LAN, without reinstalling anything (issues.md
-# item 8, revised 2026-11-21). Driven FROM DEBBIE over ssh; the
-# operator's per-node console step is only dropping
-# files/keys/admin.ed25519.pub into root's authorized_keys (and reading
-# back the node's temporary DHCP address).
+# item 8, revised 2026-11-21). Run FROM DEBBIE over ssh AS THE
+# OPERATIONS USER `nate` (least privilege, no root ssh; humans operate
+# -- an AI assistant may run these steps on the operator's behalf).
+# The operator ran scripts/console-setup-operator.sh at the node's physical
+# console first; every remote privileged step goes through sudo, so
+# the audit trail shows the single operations identity.
 #
 # Usage (on debbie):
 #   scripts/revive-node.sh --survey <temp-ip>            # read-only state dump
@@ -13,13 +15,15 @@
 #   scripts/revive-node.sh --post-quorum <node-name>     # after 3rd node; on any quorate member
 #
 # Order on the evening:
-#   1. truenas move FIRST (OPS-4) -- NFS must be right before LRM starts CTs
+#   1. truenas move FIRST (OPS-4, at ITS console -- no root ssh ever);
+#      NFS must be right before LRM starts CTs
 #   2. boot thermaltake, aspires, aspiree15 (they DHCP into the pool)
 #   3. --survey each (sanity: expected old cluster state)
 #   4. --renumber pve-thermaltake -> pve-aspires -> pve-aspiree15
 #      (3rd up = real 3-of-5 quorum; framework + Pi stay OFF)
 #   5. --post-quorum pve-thermaltake
 #   6. starts settle; error states -> docs/ha-recovery.md dance
+#   7. scripts/harden-ssh.sh per node (good-ssh pass)
 #
 # The renumber dance per node (all edits backed up to /root/*.pre-revive):
 #   - static IP from host_vars onto vmbr0 (replaces the DHCP stanza)
@@ -36,6 +40,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 HOSTVARS="$REPO/ansible/inventory/host_vars"
+SSH_USER="${SSH_USER:-nate}"
 
 MODE="${1:---usage}"
 arg() { echo "${2:?missing arg}"; }
@@ -50,13 +55,15 @@ hosts_block() { # "ip name" lines for every machine
 }
 
 sshn() { ssh -o BatchMode=yes -o ConnectTimeout=8 "$@"; }
+# every remote privileged block runs through: sshn nate@ip sudo bash -s
+# (stdin heredoc) -- no nested quoting, auditable as the nate identity.
 
 case "$MODE" in
 --survey)
   IP=$(arg survey "$2")
   say() { echo "== $*"; }
-  say "survey $IP"
-  sshn "root@$IP" '
+  say "survey $IP (as $SSH_USER)"
+  sshn "$SSH_USER@$IP" sudo bash -s <<'REMOTE'
     echo "hostname: $(hostname)"; pveversion | head -1
     echo "uptime: $(uptime -p)"
     ip -br addr | grep -v "^lo"
@@ -65,28 +72,28 @@ case "$MODE" in
     echo "--- interfaces vmbr0 ---"; sed -n "/auto vmbr0/,/^$/p" /etc/network/interfaces
     echo "--- quorum ---"; pvecm status 2>/dev/null | tail -12
     echo "--- pct list ---"; pct list 2>/dev/null | head -32
-  '
+REMOTE
   ;;
 --renumber)
   NODE=$(arg node "$2"); TEMP=$(arg at "$3")
   NEWIP=$(node_ip "$NODE")
-  [ -n "$NEWIP" ] || { echo "no ip for $NODE in ips.yaml" >&2; exit 1; }
+  [ -n "$NEWIP" ] || { echo "no host_vars/$NODE.yml (or no ansible_host)" >&2; exit 1; }
   say() { echo "== $*"; }
-  say "renumber $NODE: $TEMP -> $NEWIP"
+  say "renumber $NODE: $TEMP -> $NEWIP (as $SSH_USER, sudo)"
   HOSTS=$(hosts_block | tr '\n' ';')
   say "gathering live corosync nodelist"
-  sshn "root@$TEMP" true || { echo "cannot ssh root@$TEMP (key dropped at console?)" >&2; exit 1; }
+  sshn "$SSH_USER@$TEMP" true || { echo "cannot ssh $SSH_USER@$TEMP -- run scripts/console-setup-operator.sh at its console first" >&2; exit 1; }
   say "applying: static IP + hosts + expected-1 + corosync.conf swap"
-  sshn "root@$TEMP" "NODE='$NODE' NEWIP='$NEWIP' HOSTS='$HOSTS' bash -s" <<'REMOTE'
+  sshn "$SSH_USER@$TEMP" "sudo env NODE='$NODE' NEWIP='$NEWIP' HOSTS='$HOSTS' bash -s" <<'REMOTE'
 set -euo pipefail
 echo "-- backups"
 cp -a /etc/network/interfaces /root/interfaces.pre-revive
 cp -a /etc/pve/corosync.conf /root/corosync.conf.pre-revive 2>/dev/null \
   || cp -a /etc/corosync/corosync.conf /root/corosync.conf.pre-revive
 echo "-- /etc/hosts"
-python3 - <<'PYEOF'
-import re
-want = [h.split() for h in __import__("os").environ["HOSTS"].strip().rstrip(";").split(";")]
+HOSTS="$HOSTS" python3 - <<'PYEOF'
+import re, os
+want = [h.split() for h in os.environ["HOSTS"].strip().rstrip(";").split(";")]
 hosts = open("/etc/hosts").read().splitlines()
 for ip, name in want:
     pat = re.compile(r"^\S+\s+" + re.escape(name) + r"(\s|$)")
@@ -94,7 +101,7 @@ for ip, name in want:
 open("/etc/hosts", "w").write("\n".join(hosts) + "\n")
 PYEOF
 echo "-- vmbr0 -> static $NEWIP"
-python3 - <<'PYEOF'
+NEWIP="$NEWIP" python3 - <<'PYEOF'
 import re, os
 newip = os.environ["NEWIP"]
 d = open("/etc/network/interfaces").read()
@@ -119,11 +126,9 @@ PYEOF
 ip -br addr show vmbr0; sed -n "/vmbr0/,/^$/p" /etc/network/interfaces
 echo "-- pmxcfs writable (expected 1 if inquorate)"
 pvecm status | grep -q "Quorate:          Yes" || pvecm expected 1
-echo "-- corosync.conf ring0_addr swap (names -> ips.yaml map)"
-NEWIP="$NEWIP" python3 - <<'PYEOF'
-import re, os, subprocess
-new = os.environ["NEWIP"]
-# ips map shipped from debbie: NAME IP pairs on one line each via env HOSTS
+echo "-- corosync.conf ring0_addr swap (names -> host_vars map)"
+HOSTS="$HOSTS" python3 - <<'PYEOF'
+import re, os
 pairs = [p.split() for p in os.environ["HOSTS"].strip().rstrip(";").split(";")]
 ipmap = {name: ip for ip, name in pairs}
 cf_path = "/etc/pve/corosync.conf"
@@ -145,58 +150,60 @@ sleep 3
 setsid sh -c 'nohup sh -c "ifreload -a; systemctl restart corosync; systemctl restart pve-cluster" >/root/revive-apply.log 2>&1' &
 exit 0
 REMOTE
-  say "done pushing. reconnect: ssh root@$NEWIP then: revive-node.sh --verify $NODE"
+  say "done pushing. reconnect: ssh $SSH_USER@$NEWIP then: revive-node.sh --verify $NODE"
   ;;
 --verify)
   NODE=$(arg node "$2"); NEWIP=$(node_ip "$NODE")
   say() { echo "== $*"; }
-  say "verify $NODE at $NEWIP"
-  sshn "root@$NEWIP" '
+  say "verify $NODE at $NEWIP (as $SSH_USER)"
+  sshn "$SSH_USER@$NEWIP" sudo bash -s <<'REMOTE'
     hostname; ip -br addr show vmbr0
     grep -E "ring0_addr" /etc/pve/corosync.conf
     pvecm status | grep -E "Quorate|Expected|Total|Name" | head -6
     corosync-cfgtool -s 2>/dev/null | head -8 || true
     pvesm status | grep -E "pve-shared|pve-backups" || true
-  '
+REMOTE
   ;;
 --post-quorum)
   NODE=$(arg node "$2"); QIP=$(node_ip "$NODE")
   say() { echo "== $*"; }
-  say "post-quorum fixes via $NODE ($QIP)"
-  sshn "root@$QIP" true || { echo "cannot ssh root@$QIP" >&2; exit 1; }
+  say "post-quorum fixes via $NODE ($QIP) (as $SSH_USER, sudo)"
+  sshn "$SSH_USER@$QIP" true || { echo "cannot ssh $SSH_USER@$QIP" >&2; exit 1; }
   say "storage.cfg: 192.168.8.100 -> 192.168.1.10"
-  sshn "root@$QIP" '
+  sshn "$SSH_USER@$QIP" sudo bash -s <<'REMOTE'
     set -e
     pvecm status | grep -q "Quorate:          Yes" || { echo "not quorate yet -- run me on the 3rd node up" >&2; exit 1; }
     grep -n "192.168.8.100" /etc/pve/storage.cfg && sed -i "s/192.168\.8\.100/192.168.1.10/g" /etc/pve/storage.cfg
     grep -A1 "pve-shared\|pve-backups" /etc/pve/storage.cfg | grep -E "server|path"
     pvesm status | grep -E "pve-shared|pve-backups" || echo "  (storage still activating; re-check with pvesm status)"
-  '
+REMOTE
   say "thermaltake fstab: .100 -> .10 + remount"
-  sshn "root@$(node_ip pve-thermaltake)" '
+  sshn "$SSH_USER@$(node_ip pve-thermaltake)" sudo bash -s <<'REMOTE' \
+    || echo "  (thermaltake not reachable yet -- re-run after it is up)"
     grep -q "192.168.8.100" /etc/fstab && { cp -a /etc/fstab /root/fstab.pre-revive
       sed -i "s/192.168\.8\.100/192.168.1.10/g" /etc/fstab; }
     mount -a 2>/dev/null || true
     df -h | grep tnas-media || echo "  (media mounts pending)"
-  ' || echo "  (thermaltake not reachable yet -- re-run after it is up)"
+REMOTE
   say "CT nameservers: every CT -> 192.168.1.1"
-  sshn "root@$QIP" '
+  sshn "$SSH_USER@$QIP" sudo bash -s <<'REMOTE'
     for id in $(pct list 2>/dev/null | awk "NR>1 {print \$1}"); do
       pct set "$id" --nameserver 192.168.1.1 2>/dev/null && echo "  ct $id nameserver set" \
         || echo "  ct $id SKIP (template or error)"
     done
-  '
+REMOTE
   say "starts: HA auto-starts its CTs; then:"
   cat <<'EOF'
-  jellyfin:  ssh root@pve-thermaltake 'systemctl start start-jellyfin'
-  ntfy:      ssh root@<its node> 'pct start 128'
+  jellyfin:  ssh nate@pve-thermaltake 'sudo systemctl start start-jellyfin'
+  ntfy:      ssh nate@<its node> 'sudo pct start 128'
   any HA error states -> the documented dance in docs/ha-recovery.md:
     ha-manager set ct:N --state disabled; sleep 15; pct start N;
     ha-manager set ct:N --state started
   watch settle: ha-manager status; pct list; tailscale status on debbie
   then: sudo ./scripts/extract-legacy.sh --copy 1   (tier-0 backup snapshot)
+  finally: scripts/harden-ssh.sh <node> (good-ssh pass, per node)
 EOF
   ;;
 *)
-  sed -n '2,25p' "$0"; exit 1 ;;
+  sed -n '2,30p' "$0"; exit 1 ;;
 esac

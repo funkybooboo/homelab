@@ -10,7 +10,7 @@ replaceable part.
 
 ## Acceptance criteria
 
-- [ ] `scripts/bootstrap.sh` idempotent; cluster join via agent-forwarded
+- [ ] `scripts/bootstrap.sh` idempotent; cluster join via ssh-agent-forwarded
       `pvecm add` at bring-up (folded into the community.proxmox
       `proxmox_cluster` module when OPS-7's ansible skeleton lands)
 - [ ] Per-node glue codified from the inventory in

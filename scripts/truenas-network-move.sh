@@ -4,13 +4,21 @@
 # TrueNAS is kept exactly as it is (datasets, NFS, B2 sync, TLS cron);
 # only its address moves. No reinstall, ever (plans/issues.md item 8).
 #
-# Run ON TRUENAS as root -- either at the console, or over ssh:
-#   debbie#  sudo ip addr add 192.168.8.99/24 dev <debbie-lan-nic>   # temp alias
-#   debbie#  ssh root@192.168.8.100 'sh -s' < scripts/truenas-network-move.sh --check
-#   debbie#  ssh root@192.168.8.100 'sh -s' < scripts/truenas-network-move.sh --apply
-#   debbie#  sudo ip addr del 192.168.8.99/24 dev <debbie-lan-nic>
-# (no console needed: root ssh is enabled on truenas and the alias
-# trick reaches it on the old subnet across the shared L2)
+# Run ON TRUENAS at its PHYSICAL console as root -- NO root ssh ever
+# (operator rule 2026-11-21: least privilege always, good ssh first).
+# Fetch it over the LAN from debbie's temp alias (plain HTTP one-shot,
+# not ssh):
+#   debbie#  sudo ip addr add 192.168.8.99/24 dev enp0s13f0u2u4    # temp alias (wired nic)
+#   debbie#  python3 -m http.server 8000 &                       # from the repo root
+#   truenas console# curl -fsSL http://192.168.8.99:8000/scripts/truenas-network-move.sh -o /tmp/move.sh
+#                     (fallback: wget or fetch if no curl)
+#   truenas console# sh /tmp/move.sh --check
+#   truenas console# sh /tmp/move.sh --apply
+#   debbie#  sudo ip addr del 192.168.8.99/24 dev enp0s13f0u2u4   # + stop the http server
+# THEN the good-ssh pass on truenas via its web UI (as the admin
+# user, not root ssh): System > Services > SSH -- disable the root
+# login + password auth options (or stop the SSH service entirely
+# until nate-key-only is needed).
 #
 # Target state (ansible/inventory/host_vars/truenas.yml): 192.168.1.10/24, gw
 # 192.168.1.1, dns [192.168.1.1, 1.1.1.1], NFS exports on

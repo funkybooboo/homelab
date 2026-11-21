@@ -25,14 +25,15 @@ IP=$(awk '/^ansible_host:/ {print $2}' "$FACTS")
 [ -n "$IP" ] || { echo "no ansible_host for $NODE" >&2; exit 1; }
 
 say() { echo "== $*"; }
-SSH="ssh -o BatchMode=yes root@$IP"
+SSH_USER="${SSH_USER:-nate}"
+SSH="ssh -o BatchMode=yes $SSH_USER@$IP"
 scp_to() { scp -q "$@"; }
 
-ssh "$IP" true 2>/dev/null || { echo "cannot ssh root@$IP" >&2; exit 1; }
+ssh "$IP" true 2>/dev/null || { echo "cannot ssh $SSH_USER@$IP" >&2; exit 1; }
 
 say "ALL nodes: renew-pve-tls.sh + cron"
-scp_to "$REPO/services/pve-tls/renew-pve-tls.sh" "root@$IP:/usr/local/sbin/renew-pve-tls.sh"
-$SSH 'chmod 700 /usr/local/sbin/renew-pve-tls.sh
+scp_to "$REPO/services/pve-tls/renew-pve-tls.sh" "$SSH_USER@$IP:/tmp/renew-pve-tls.sh"
+$SSH 'sudo install -m 700 /tmp/renew-pve-tls.sh /usr/local/sbin/renew-pve-tls.sh
       cat > /etc/cron.d/renew-pve-tls <<"EOF2"
 # weekly Sunday 04:30 -- re-issue native pveproxy LE cert if <30d validity
 30 4 * * 0 root /usr/local/sbin/renew-pve-tls.sh >/var/log/renew-pve-tls.log 2>&1
@@ -68,7 +69,7 @@ fi
 
 if [ "$NODE" = "pve-thermaltake" ]; then
   say "thermaltake glue: nvidia hook + media fstab (needs truenas .10)"
-  scp_to "$REPO/services/nvidia-uvm-devnodes/"* "root@$IP:/root/glue-nvidia/" 2>/dev/null \
+  scp_to "$REPO/services/nvidia-uvm-devnodes/"* "$SSH_USER@$IP:/tmp/glue-nvidia/" 2>/dev/null \
     || { echo "  (no nvidia-uvm-devnodes dir? check services/)" >&2; }
   $SSH 'if ping -c1 -W2 192.168.1.10 >/dev/null 2>&1; then
           grep -q tnas-media /etc/fstab || cat >> /etc/fstab <<"EOF2"

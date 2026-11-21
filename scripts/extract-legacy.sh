@@ -6,7 +6,8 @@
 # this is the executable version. Run on debbie AFTER the truenas
 # network move (OPS-4) so truenas answers at 192.168.1.10.
 #
-# Usage (needs root for mounts; run it yourself, agent sudo is denied):
+# Usage (needs root for mounts; the OPERATOR runs it on debbie --
+# the pi harness cannot sudo there):
 #   ./scripts/extract-legacy.sh                     # inventory report only
 #   ./scripts/extract-legacy.sh --copy 0            # + copy tiers <= 0
 #   ./scripts/extract-legacy.sh --copy 1            # + copy tiers <= 1
