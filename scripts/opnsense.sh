@@ -9,7 +9,7 @@
 #   create keypair, then copy key + secret into the env file.
 #
 # Usage:
-#   scripts/opnsense.sh --import ~/Downloads/apikey_agent_*.txt
+#   scripts/opnsense.sh --import ~/Downloads/<hostname>_agent_apikey.txt
 #                                   # parse OPNsense's downloaded keypair
 #                                   # txt into local/opnsense-api.env
 #                                   # (chmod 600) and sanity-check it
