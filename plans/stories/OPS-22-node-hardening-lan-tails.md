@@ -5,7 +5,8 @@ and the revival evening's temporary addresses and rules cleaned up,
 so that the platform's access surface is exactly the designed model
 and nothing stale from the renumbering survives into v2.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-22 -- every criterion closed;
+      root@pam TOTP added by the operator same day)
 **Arc**: v1.5 (clean-out + access layer; issues item 9c, the
 identity convention's standing rule)
 
@@ -40,10 +41,18 @@ identity convention's standing rule)
 - [x] thermaltake: the stale 192.168.8.98 alias removed from vmbr0
       (2026-11-22; it was live-only, added ad-hoc during the
       revival, so it does not return)
-- [ ] framework: USB autosuspend hardening applied + a journal watch
-      for the NIC (the no-fix revival's insurance)
-- [ ] Verify: `sshd -T` on each node shows the expected state; the
-      192.168.8.x addresses answer nowhere on the LAN
+- [x] framework: USB autosuspend hardening applied + a journal watch
+      for the NIC (the no-fix revival's insurance) -- DONE 2026-11-22:
+      the RTL8156 (0bda:8156) already ran power/control=on (r8152
+      driver holds the device awake); pinned persistently via
+      /etc/udev/rules.d/71-usb-nic-keepawake.rules + verified.
+      Journal watch (run if the NIC ever drops):
+      journalctl -k | grep -iE 'r8152|usb 2-4|nic0'
+- [x] Verify: `sshd -T` on each node shows the expected state; the
+      192.168.8.x addresses answer nowhere on the LAN -- verified:
+      all 5 nodes report permitrootlogin without-password,
+      passwordauthentication no, kbdinteractiveauthentication no,
+      loglevel VERBOSE; .8.1/.8.117/.8.98 ping dead (correct)
 
 ## Notes
 

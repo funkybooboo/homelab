@@ -19,10 +19,15 @@ constitution is [identity.md](./identity.md); the shipped record is
   recorded as issues item 8's second revision): the old CTs are
   cleaned out, NOT revived -- curation happens at build time (v2/v3)
   on a bare cluster.
-- v1.5 is queued NOW: clean-out + access layer + hardening
-  (OPS-20/21/22 below), gated by the tier-0 extraction
-  (`scripts/extract-legacy.sh --copy 1` on debbie). The router
-  stays untouched (V1210 bare-metal) until v5.
+- v1.5 SHIPPED 2026-11-22: the clean-out + access layer + hardening
+  (OPS-20/21/22) -- the cluster is BARE and verified, the tailnet is
+  THE access layer (subnet router + serve fronts + API token),
+  good-ssh everywhere, TOTP on both PVE UI identities, and the
+  tier-0 extraction insurance sits on debbie. See
+  [history.md](./history.md).
+- NEXT: v2 -- the IaC skeleton builds the critical five fresh on
+  the bare cluster ([OPS-7](./stories/OPS-7-iac-skeleton.md)). The
+  router stays untouched (V1210 bare-metal) until v5.
 - Standing tooling: `docs/` (the live data-to-extract inventory),
   `ansible/inventory/` (LAN plan, host facts),
   `scripts/revive-node.sh` + the parked future-node tooling
@@ -59,22 +64,23 @@ and every step that did it is a script in the repo. The old CTs do
 NOT come back (the plan shift) -- their remains are v1.5's first
 story.
 
-## v1.5: Clean-out + access layer -- QUEUED (the current arc)
+## v1.5: Clean-out + access layer -- SHIPPED 2026-11-22
 
 The plan shift made the close-out its own arc: the old fleet's
-remains go, the access layer finishes, the hardening lands -- all
-BEFORE anything is built, so v2 starts on a truthful platform.
+remains went, the access layer finished, the hardening landed -- all
+BEFORE anything was built, so v2 starts on a truthful platform.
 
 [OPS-20 the cluster clean-out](./stories/OPS-20-cluster-clean-out.md)
 (done -- gated by the tier-0 extraction landing outside the truenas
 pool),
 [OPS-21 the tailnet access layer](./stories/OPS-21-tailnet-access-layer.md)
 (done -- subnet router + LE-cert serve fronts + API token),
-[OPS-22 node hardening + LAN tails](./stories/OPS-22-node-hardening-lan-tails.md).
+[OPS-22 node hardening + LAN tails](./stories/OPS-22-node-hardening-lan-tails.md)
+(done).
 
-Ends with: a bare cluster (zero guests, zero orphans, zero stale
-addresses), HTTPS-everywhere access from the tailnet, and the
-good-ssh state on every node.
+Ended with: a bare cluster (zero guests, zero orphans, zero stale
+addresses), HTTPS-everywhere access from the tailnet, the good-ssh
+state on every node, and second factors on both PVE UI identities.
 
 ## v2: IaC skeleton -- BUILD FRESH on the bare cluster
 

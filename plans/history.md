@@ -104,8 +104,45 @@ As built:
   ~24 config-less HA orphan resources, ~28 dead tailnet devices,
   the .8.x temporary aliases, node ssh hardening.
 
+## v1.5: Clean-out + access layer (shipped 2026-11-22)
+
+The era flip: the old fleet's remains went, the access layer landed,
+the hardening closed -- v2 builds on a bare, truthful platform.
+
+As built:
+
+- OPS-20 clean-out: the tier-0 extraction landed first (whole-CT
+  Nov-21 vzdumps extracted to debbie with a sha256 manifest --
+  vaultwarden's vault at /opt/vaultwarden/data, n8n at /.n8n,
+  PGDATA 17; the loop-mount path proved unreliable on NFS and the
+  dumps are the durable archive, untouched on pve-backups + B2).
+  Then the cluster went bare: 5 CTs + 4 VM templates destroyed (the
+  NFS chattr holdouts finished by hand), 24 HA resources
+  deregistered before destruction, pve-shared images swept empty,
+  and the FOSSIL per-node guest configs under
+  /etc/pve/nodes/*/lxc/ (the invisible "24 orphans" feeding the
+  resource index) discovered + swept. API-verified: zero guests,
+  5/5 quorate, LRM armed (framework's found inactive since boot and
+  started). The tailnet graveyard (30 devices) purged via the
+  console; 9 live devices remain, jellyfin/navidrome hostnames
+  freed for v2.
+- OPS-21 tailnet access layer: thermaltake = the one subnet router
+  (192.168.1.0/24 advertised, operator-approved, forwarding
+  persisted); the serve front live with LE certs
+  (https://pve-thermaltake.tail54538d.ts.net); tailscale API token
+  in local/ for v2 automation. Verified from the operator's phone,
+  off-LAN.
+- OPS-22 hardening: good-ssh state on all 5 nodes (password auth
+  dead, root key-only, VERBOSE audit logging); TOTP on nate@pam AND
+  root@pam; truenas found ALREADY compliant (its stale
+  "pending hardening" note corrected); debbie swept (four stale
+  port-8000 rules gone; the live-only .8.99 alias died with the
+  reboot); thermaltake's .8.98 removed; framework's USB NIC
+  (RTL8156) keep-awake pinned via udev rule on top of the r8152
+  driver behavior. The dead 192.168.8.x subnet verified silent.
+
 ## Greenfield arcs (to be written as they ship)
 
-v1.5 clean-out + access layer, v2 IaC skeleton + the critical
-five, v3 curated services + media, v4 automation polish, v5
-platform refresh -- each appended above as its stories flip done.
+v2 IaC skeleton + the critical five, v3 curated services + media,
+v4 automation polish, v5 platform refresh -- each appended above
+as its stories flip done.
