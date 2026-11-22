@@ -1,0 +1,50 @@
+# guest_common -- applied inside every guest by guests.yml play 3.
+# The standing identity + hardening contract (issues item 9, OPS-22):
+# the operator's nate account, passwordless sudo, the operator's key,
+# good-ssh (password auth dead, root ssh dead -- the CT's console
+# channel is pct exec on the node).
+- name: Base packages
+  ansible.builtin.apt:
+    name: [curl]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: The operator account exists
+  ansible.builtin.user:
+    name: nate
+    shell: /bin/bash
+    groups: [sudo]
+    append: true
+
+- name: The operator's key installed
+  ansible.posix.authorized_key:
+    user: nate
+    key: "{{ lookup('ansible.builtin.file', playbook_dir + '/files/keys/admin.ed25519.pub') }}"
+    state: present
+    exclusive: false
+
+- name: Passwordless sudo for the operator
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/nate
+    content: "nate ALL=(ALL) NOPASSWD: ALL\n"
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: sshd hardening drop-in (the good-ssh contract)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/50-homelab.conf
+    content: |
+      # managed by make converge (guest_common)
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+    mode: "0644"
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify: reload sshd
+
+- name: sshd running + enabled
+  ansible.builtin.service:
+    name: ssh
+    state: started
+    enabled: true

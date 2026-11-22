@@ -1,0 +1,10 @@
+# templates.yml -- ensure the Debian CT template exists on shared
+# storage (one download, every node sees it: pve-shared carries
+# vztmpl). Cluster-level, idempotent; runs on the API host.
+- name: Ensure the Debian CT template on pve-shared
+  hosts: pve-thermaltake
+  gather_facts: false
+  tasks:
+    - name: Debian 13 standard template present
+      ansible.builtin.include_role:
+        name: pve_template

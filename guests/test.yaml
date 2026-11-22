@@ -1,0 +1,16 @@
+# test.yaml -- the OPS-7 end-to-end proof guest: manifest -> running
+# service (nginx serving a proof page) via `make converge`.
+name: test
+vmid: 299
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 4
+ip: 192.168.1.50
+role: test_service
+mounts: []
+features: []

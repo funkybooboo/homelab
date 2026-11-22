@@ -1,0 +1,149 @@
+# guests.yml -- the OPS-7 core: guest lifecycle driven by the
+# guests/*.yaml manifests.
+#
+# Play 1: load manifests (localhost, repo access).
+# Play 2: on the API host -- create missing CTs via the PVE API
+#         (homelab-ops token), bootstrap the operator account inside
+#         each new CT via `pct exec`/`pct push` (the console channel:
+#         no root ssh ever), then register guests for play 3.
+# Play 3: inside each guest over ssh as the operator -- guest_common
+#         (good-ssh, sudo, packages) + the manifest's role.
+#
+# Identity model (issues item 9): the API acts as the operator's
+# token; CTs get the operator's nate account; root ssh stays dead
+# everywhere (pct exec is the console-equivalent channel).
+- name: Load guest manifests
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Read guests/*.yaml
+      ansible.builtin.set_fact:
+        guests: "{{ guests | default([]) + [lookup('ansible.builtin.file', item) | from_yaml] }}"
+      loop: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/../../guests/*.yaml', wantlist=true) }}"
+      loop_control:
+        label: "{{ item | basename }}"
+
+- name: Converge guests on the cluster
+  hosts: pve-thermaltake
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Destroy guests whose manifest says absent
+      when: item.state | default('present') == 'absent'
+      community.proxmox.proxmox:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        vmid: "{{ item.vmid }}"
+        node: "{{ item.node }}"
+        state: absent
+        force: true   # stop-then-destroy; absents are manifest-reviewed
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create / start guests (PVE API, idempotent)
+      when: item.state | default('present') == 'present'
+      community.proxmox.proxmox:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        vmid: "{{ item.vmid }}"
+        hostname: "{{ item.name }}"
+        node: "{{ item.node }}"
+        ostemplate: "{{ item.storage }}:vztmpl/{{ item.template }}"
+        storage: "{{ item.storage }}"
+        disk: "{{ item.disk }}"
+        cores: "{{ item.cores }}"
+        memory: "{{ item.memory }}"
+        swap: "{{ item.swap }}"
+        netif:
+          net0: "name=eth0,bridge=vmbr0,ip={{ item.ip }}/24,gw={{ lan.gateway }}"
+        nameserver: "{{ lan.dns | join(' ') }}"
+        unprivileged: true
+        onboot: true
+        state: started
+        description: "managed by make converge (guests/{{ item.name }}.yaml)"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Probe bootstrap state inside each guest
+      when: item.state | default('present') == 'present'
+      ansible.builtin.command:
+        argv:
+          - pct
+          - exec
+          - "{{ item.vmid }}"
+          - --
+          - /bin/sh
+          - -c
+          - >-
+            getent passwd nate >/dev/null 2>&1 && test -f /etc/sudoers.d/nate
+            && dpkg -s sudo openssh-server python3 >/dev/null 2>&1 && echo BOOTSTRAPPED
+      register: _bs_state
+      changed_when: false
+      failed_when: _bs_state.rc not in [0, 1]
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Bootstrap the operator account (console channel, no root ssh)
+      when:
+        - item.state | default('present') == 'present'
+        - "'BOOTSTRAPPED' not in _bs_state.results[idx].stdout"
+      ansible.builtin.shell: |
+        set -eu
+        C={{ item.vmid }}
+        # packages: sudo (the group), sshd, python3 (ansible)
+        pct exec $C -- /usr/bin/env DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get update -qq
+        pct exec $C -- /usr/bin/env DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install -y -qq sudo openssh-server python3
+        # the operator's account (getent guard: idempotent)
+        if ! pct exec $C -- /usr/bin/getent passwd nate >/dev/null 2>&1; then
+          pct exec $C -- /usr/sbin/useradd --create-home --shell /bin/bash nate
+          echo CREATED
+        fi
+        pct exec $C -- /usr/sbin/usermod --append --groups sudo nate
+        # the operator's key (canonical copy: playbooks/files/keys/)
+        pct push $C {{ playbook_dir }}/files/keys/admin.ed25519.pub /home/nate/.ssh/authorized_keys --mkdir
+        pct exec $C -- /bin/chown -R nate:nate /home/nate/.ssh
+        pct exec $C -- /bin/chmod 0700 /home/nate/.ssh
+        pct exec $C -- /bin/chmod 0600 /home/nate/.ssh/authorized_keys
+        # passwordless sudo (the node model, issues item 9a)
+        pct exec $C -- /bin/sh -c 'printf "nate ALL=(ALL) NOPASSWD: ALL\n" > /etc/sudoers.d/nate'
+        pct exec $C -- /bin/chmod 0440 /etc/sudoers.d/nate
+        pct exec $C -- /usr/bin/systemctl enable --now ssh
+      register: _bootstrap
+      changed_when: "'CREATED' in _bootstrap.stdout or 'BOOTSTRAP' in _bootstrap.stderr"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item.name }}"
+
+    - name: Register guests for in-guest configuration
+      when: item.state | default('present') == 'present'
+      ansible.builtin.add_host:
+        name: "{{ item.name }}"
+        groups: homelab_guests
+        ansible_host: "{{ item.ip }}"
+        ansible_user: nate
+        guest_role: "{{ item.role | default(omit) }}"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+- name: Apply common + service roles inside guests
+  hosts: homelab_guests
+  gather_facts: true
+  tasks:
+    - name: guest_common (packages, good-ssh, operator account)
+      ansible.builtin.include_role:
+        name: guest_common
+
+    - name: The manifest's role ({{ guest_role | default('none') }})
+      when: guest_role is defined
+      ansible.builtin.include_role:
+        name: "{{ guest_role }}"

@@ -6,6 +6,7 @@ collections:
   - name: community.proxmox    # full PVE lifecycle incl. proxmox_cluster,
                               # LXC/VM, storage, HA rules, inventory
   - name: community.general   # misc (packages, files, cron)
+  - name: ansible.posix       # authorized_key + sysctl for guest_common
   - name: oxlorg.opnsense
     # TRAP (2026-11-05 research): each oxlorg release is pinned to ONE
     # OPNsense version; the router runs 25.7. Verify the matching

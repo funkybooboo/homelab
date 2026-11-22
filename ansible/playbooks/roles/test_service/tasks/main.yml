@@ -1,0 +1,23 @@
+# test_service -- the OPS-7 end-to-end proof: a guest defined only
+# by its manifest, converged to a RUNNING SERVICE reachable over
+# HTTP. Deliberately trivial; the point is the pipeline, not the app.
+- name: nginx installed
+  ansible.builtin.apt:
+    name: [nginx]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify: restart nginx
+
+- name: Proof page served
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    mode: "0644"
+  notify: restart nginx
+
+- name: nginx running + enabled
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

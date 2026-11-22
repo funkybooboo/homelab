@@ -1,0 +1,12 @@
+# pve_template -- ensure the base Debian CT template exists on
+# SHARED storage (pve-shared:vztmpl), so every node can create
+# guests from it. Cluster-level: one download, all nodes see it.
+- name: Debian 13 standard template present on pve-shared
+  community.proxmox.proxmox_template:
+    api_host: "{{ pve_api_host }}"
+    api_user: "{{ pve_api_user }}"
+    api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+    api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+    storage: pve-shared
+    template: debian-13-standard_13.6-1_amd64.tar.zst
+    state: present

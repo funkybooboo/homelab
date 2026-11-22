@@ -1,0 +1,5 @@
+# site.yml -- the converge entrypoint (`make converge`).
+# Cluster-level template ensure, then the guest fleet from
+# guests/*.yaml. Node-level plays join here as the skeleton grows.
+- import_playbook: templates.yml
+- import_playbook: guests.yml
