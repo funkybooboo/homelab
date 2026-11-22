@@ -19,6 +19,12 @@
 # sha256 manifest. Tier-0 data counts as "landed" only when the copy
 # exists OUTSIDE the truenas pool (rule 10: extract before wipe).
 #
+# Depends: nfs-utils on the runner (mount.nfs). util-linux 2.41+
+# tries a native NFS mount path when mount.nfs is absent and the
+# kernel rejects it ("fsconfig() failed: NFS: mount program didn't
+# pass remote address") -- debbie hit exactly this 2026-11-22
+# (dotfiles migration 000588 installs nfs-utils).
+#
 # Env overrides: TRUENAS (default 192.168.1.10), OUT (default
 # ./legacy-extraction), TIER_MAX implicit from --copy.
 
@@ -77,6 +83,9 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 if [ "$(id -u)" -ne 0 ]; then
   die "needs root (mounts) -- run with sudo yourself"
 fi
+
+command -v mount.nfs >/dev/null 2>&1 \
+  || die "mount.nfs missing -- install nfs-utils (util-linux 2.41+ tries a native NFS mount path when it is absent, and the kernel rejects it: 'mount program didn't pass remote address')"
 
 while [ $# -gt 0 ]; do
   case "$1" in
