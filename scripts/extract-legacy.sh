@@ -158,9 +158,17 @@ mount_ct() { # mount_ct <ctid> -> echo mountpoint or empty; mounts raw or uses s
 
 fmt_bytes() { du -sh "$1" 2>/dev/null | cut -f1; }
 
-copy_one() { # copy_one <ctid> <mnt> <path> <tag>
+copy_one() { # copy_one <ctid> <mnt> <path> <tag> -- non-fatal by design
   local id="$1" mnt="$2" path="$3" tag="$4" tarball="$OUT/${id}-${tag}.tar.gz"
-  tar -C "$mnt" -czf "$tarball" "$path" 2>/dev/null
+  # tar failures are WARNINGS, not aborts (set -e would otherwise kill the
+  # whole walk); stderr goes to a log so the reason is never hidden again
+  # (2026-11-22: a silent 45-byte empty gzip + instant abort taught this).
+  if ! tar -C "$mnt" -czf "$tarball" "$path" 2>>"$OUT/tar-errors.log"; then
+    rm -f "$tarball"
+    echo "    copy FAILED: $path (reason in $OUT/tar-errors.log)" | tee -a "$REPORT"
+    printf '%s\t%s\t%s\tFAILED\t-\n' "$id" "$tag" "$path" >> "$MANIFEST"
+    return 0
+  fi
   local sum
   sum="$(sha256sum "$tarball" | cut -d' ' -f1)"
   printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$tag" "$path" "$(du -sh "$tarball" | cut -f1)" "$sum" >> "$MANIFEST"
@@ -176,7 +184,9 @@ if [ -n "$DUMP_CTID" ]; then
   dest="$OUT/from-dump-${DUMP_CTID}"
   mkdir -p "$dest"
   echo "== extracting $dump -> $dest ==" | tee -a "$REPORT"
-  tar -I zstd -xf "$dump" -C "$dest" 2>/dev/null || tar -xf "$dump" -C "$dest"
+  if ! { tar -I zstd -xf "$dump" -C "$dest" 2>>"$OUT/tar-errors.log" || tar -xf "$dump" -C "$dest" 2>>"$OUT/tar-errors.log"; }; then
+    die "dump extract failed for CT $DUMP_CTID (reason in $OUT/tar-errors.log)"
+  fi
   printf '%s\tfrom-dump\t%s\t%s\t%s\n' "$DUMP_CTID" "$dump" "$(du -sh "$dest" | cut -f1)" \
     "$(find "$dest" -type f -exec sha256sum {} + | sha256sum | cut -d' ' -f1)" >> "$MANIFEST"
   exit 0
