@@ -1,8 +1,9 @@
 # Documentation index
 
 Two tiers of truth here: what describes the fleet as it will be, and
-what describes the old fleet as it was (mostly true again once the
-revival lands). The historical archive of the wind-down era lives in
+what describes the old fleet as it was (the old CTs are cleaned out,
+not revived -- that tier is the as-was reference for the v2 rebuild).
+The historical archive of the wind-down era lives in
 git history, not the tree.
 
 ## Current (describe what exists / what we run against)
@@ -25,8 +26,8 @@ git history, not the tree.
 - [`nextjs-behind-tls-proxy.md`](./nextjs-behind-tls-proxy.md) -- the
   INTERNAL_API_URL app trap
 
-## Old-fleet as-built (mostly true again once the revival lands; IPs
-## were 192.168.8.x then)
+## Old-fleet as-built (as-was reference for the v2 rebuild; IPs were
+## 192.168.8.x then)
 
 - [`cluster.md`](./cluster.md) -- cluster + HA + the Pi rule
 - [`nodes.md`](./nodes.md) -- the 5 nodes + truenas (pre-shutdown

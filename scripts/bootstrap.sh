@@ -2,8 +2,8 @@
 # bootstrap.sh -- OPS-5: enroll a fresh PVE 9.2 ISO install as a fleet
 # node, driven FROM DEBBIE over ssh (the operator does the physical +
 # console part: power, ISO install with the ips.yaml static IP + a root
-# password, and drops files/keys/admin.ed25519.pub into root's
-# authorized_keys; operations continue from there).
+# password, and drops ansible/playbooks/files/keys/admin.ed25519.pub
+# into root's authorized_keys; operations continue from there).
 #
 # Usage (on debbie):  scripts/bootstrap.sh <node-name> [--join <peer-ip>]
 #   <node-name>  must exist in ansible/inventory/host_vars/<name>.yml
@@ -43,9 +43,9 @@ done
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 HOSTVARS="$REPO/ansible/inventory/host_vars"
 FACTS="$HOSTVARS/$NODE.yml"
-PUBKEY_FILE="$REPO/files/keys/admin.ed25519.pub"
+PUBKEY_FILE="$REPO/ansible/playbooks/files/keys/admin.ed25519.pub"
 [ -f "$FACTS" ] || { echo "no host_vars/$NODE.yml" >&2; exit 1; }
-[ -f "$PUBKEY_FILE" ] || { echo "no files/keys/admin.ed25519.pub" >&2; exit 1; }
+[ -f "$PUBKEY_FILE" ] || { echo "no ansible/playbooks/files/keys/admin.ed25519.pub" >&2; exit 1; }
 
 IP=$(awk '/^ansible_host:/ {print $2}' "$FACTS")
 [ -n "$IP" ] || { echo "no ansible_host for $NODE" >&2; exit 1; }
@@ -59,7 +59,7 @@ done)
 
 ssh_test() { ssh -o BatchMode=yes -o ConnectTimeout=5 "root@$IP" true 2>/dev/null; }
 ssh_test || { echo "cannot ssh root@$IP with the admin key" >&2
-  echo "operator console step still needed: put files/keys/admin.ed25519.pub" >&2
+  echo "operator console step still needed: put ansible/playbooks/files/keys/admin.ed25519.pub" >&2
   echo "into root@$IP:/root/.ssh/authorized_keys" >&2; exit 1; }
 
 say() { echo "== $*"; }

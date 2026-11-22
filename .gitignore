@@ -27,3 +27,7 @@ __pycache__/
 # systems, e.g. opnsense-api.env (OPNSENSE_KEY/OPNSENSE_SECRET)
 local/*
 !local/*.example
+
+# Extraction output (contains old-fleet secrets; tier-0 insurance copy
+# must never be committed)
+legacy-extraction/

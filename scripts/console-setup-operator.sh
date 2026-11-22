@@ -13,6 +13,10 @@
 # commands under the same identity on the operator's behalf when
 # directed. One identity, one audit trail, human-controlled.
 #
+# The key in the paste line is the same material as
+# ansible/playbooks/files/keys/admin.ed25519.pub (inlined because a
+# console paste cannot read the repo) -- rotate BOTH together.
+#
 # Paste ONE LINE (as root at the console):
 useradd -m -s /bin/bash nate && mkdir -p /home/nate/.ssh && echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFd52mRENjyFAQC5oCVE6aBEhhbr0zEcwzMwKlKhlh+x nate.stott@pm.me' > /home/nate/.ssh/authorized_keys && chmod 700 /home/nate/.ssh && chmod 600 /home/nate/.ssh/authorized_keys && chown -R nate:nate /home/nate/.ssh && echo 'nate ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/nate && chmod 440 /etc/sudoers.d/nate && visudo -c && echo OPERATOR-READY && ip -4 addr show vmbr0 | grep inet
 #

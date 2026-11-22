@@ -5,22 +5,21 @@ a TrueNAS storage box on a flat 192.168.1.0/24 LAN behind OPNsense,
 every service tailnet-only, and this repo as the source of truth --
 `git push` + (from v2) `make converge` *is* the deploy.
 
-> State (2026-11-21): the old fleet is powered down (staged wind-down
-> 2026-09 through 2026-10 after the router died and the LAN renumbered).
-> The plan is REVIVAL, not rebuild: the 3 healthy nodes come back in
-> place on the new LAN, everything scripted in `scripts/`, the router
-> stays untouched for now. See [`plans/roadmap.md`](plans/roadmap.md).
+> State (2026-11-22): revival shipped -- all 5 nodes + truenas live
+> on the new LAN, 5/5 quorate. The old CTs are cleaned out, not
+> revived; the fleet is then rebuilt as code (v2) on the bare
+> cluster. The router stays untouched for now. See
+> [`plans/roadmap.md`](plans/roadmap.md).
 
 ## Repo layout
 
 | Path | What it is |
 |------|------------|
 | [`plans/`](plans/) | The erledigen-style planning system: identity (constitution), roadmap (arcs v0-v5 + someday), stories (one file per work item), design records, history, issues. Start at [`plans/roadmap.md`](plans/roadmap.md). |
-| [`ansible/`](ansible/) | The v2 IaC skeleton home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`. Playbooks + roles land with OPS-7. |
+| [`ansible/`](ansible/) | The v2 IaC skeleton home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`, playbook static files (`playbooks/files/keys/` = the admin pubkey the bootstrap flow installs). Playbooks + roles land with OPS-7. |
 | [`scripts/`](scripts/) | The operator's toolbelt -- bring-up + fleet tools, run from debbie over ssh (by you, or by a directed assistant acting as you). See each header for usage. |
 | [`docs/`](docs/) | All documentation, indexed by tier (current / old-fleet as-built) in [`docs/README.md`](docs/README.md). The wind-down-era archive lives in git history, not the tree. |
-| [`services/`](services/) | Old-fleet shipped artifacts (TLS renewals, auto-update, observability configs + dashboards, ntfy bridge, remount helpers) -- revived with the fleet, then converged into ansible. |
-| [`files/keys/`](files/keys/) | Public keys (the admin ssh key the bootstrap/revival flows install). |
+| [`services/`](services/) | Old-fleet shipped artifacts (TLS renewals, auto-update, observability configs + dashboards, ntfy bridge, remount helpers) -- the as-shipped reference for the v2 rebuild: each piece becomes an ansible role (e.g. OPS-13 auto-update) once the clean-out leaves the cluster bare. |
 | [`local/`](local/) | Gitignored credentials (e.g. the router API keypair). Only `*.example` templates are tracked. |
 | `Makefile` | `make help` / `converge` / `verify` (converge + verify are honest stubs until the v2 skeleton lands). |
 
