@@ -15,6 +15,9 @@ identity convention's standing rule)
       auth off; root ssh stays KEY-ONLY (PVE's inter-node root ssh
       is load-bearing for migration/cluster operations); the
       physical console is the break-glass path
+- [ ] PVE web-UI second factor: TOTP enabled on nate@pam (QR
+      scanned into vaultwarden) -- operator action in the UI
+      (issues item 13, decided 2026-11-22)
 - [ ] truenas SSH service good-ssh pass in the web UI (root login +
       password auth off) -- operator, 2 clicks
 - [ ] debbie: the stale 192.168.8.99 alias removed from
