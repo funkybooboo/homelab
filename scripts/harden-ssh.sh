@@ -40,15 +40,18 @@ ssh -o BatchMode=yes "$SSH_USER@$IP" sudo bash -s <<'REMOTE'
   mkdir -p /etc/ssh/sshd_config.d
   cat > /etc/ssh/sshd_config.d/50-harden.conf <<'EOF'
 # good-ssh pass 2026-11-21: passwords die everywhere; root ssh is
-# key-only (PVE inter-node ops need it -- see scripts/harden-ssh.sh)
+# key-only (PVE inter-node ops need it -- see scripts/harden-ssh.sh).
+# LogLevel VERBOSE per the Mozilla OpenSSH guidelines: logs key
+# fingerprints on login -- the audit trail for the one-identity model.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password
+LogLevel VERBOSE
 EOF
   sshd -t && echo "sshd config valid"
   systemctl reload sshd || systemctl reload ssh
   echo "-- effective values:"
-  sshd -T | grep -iE "^passwordauthentication|^permitrootlogin|^kbdinteractiveauthentication"
+  sshd -T | grep -iE "^passwordauthentication|^permitrootlogin|^kbdinteractiveauthentication|^loglevel"
 REMOTE
 echo "== done. nate + inter-node key auth still work; verify from debbie:"
 echo "   ssh $SSH_USER@$IP true && echo ok"

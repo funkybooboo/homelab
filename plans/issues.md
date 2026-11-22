@@ -109,6 +109,40 @@ OPEN).
    migration freedom); jellyfin prefers thermaltake via HA affinity
    and falls back to CPU decode when /dev/nvidia* is absent.
 
+11. **Secrets: encrypted-in-git (SOPS/age) vs gitignored `local/`** --
+   OPEN (raised 2026-11-22, the ecosystem survey:
+   [design/ecosystem-survey-2026-11-22.md](./design/ecosystem-survey-2026-11-22.md)).
+   The ecosystem standard puts secrets IN the repo, encrypted with
+   SOPS+age; ours keeps them entirely out via `local/`. Trade-off:
+   ours means a bare-metal rebuild re-enters secrets by hand (the
+   repo alone never rebuilds the world unattended); SOPS makes the
+   repo complete but adds key management + a new failure mode (age
+   key loss = secrets loss). Recommendation: keep `local/` for v2
+   (few secrets, operator-owned; B2 offsite + vaultwarden already
+   cover recovery); revisit when secret count grows past what the
+   operator comfortably re-enters, or when unattended full rebuild
+   becomes a real demand.
+12. **Guest lifecycle: ansible-only vs +terraform** -- OPEN (same
+   source). bpg/terraform-provider-proxmox (2.3k stars, active) is
+   the ecosystem favorite for provisioning guests; the alternative
+   is ansible's community.proxmox modules doing the same job
+   through the same API token. Terraform adds a second toolchain +
+   a state file for a 12-15-service fleet. Recommendation:
+   ansible-only (one toolchain; the converge loop is already the
+   design); revisit if guest churn grows or cloud-burst nodes
+   become real.
+13. **PVE web-UI 2FA (TOTP)** -- OPEN. PVE supports TOTP natively;
+   the UI is LAN + tailnet only, which lowers but does not
+   eliminate the value (a stolen laptop on the tailnet = UI
+   access). Recommendation: enable on nate@pam (QR into
+   vaultwarden) as part of OPS-22; cheap, no new moving parts.
+14. **SSO/identity layer (authelia/authentik)** -- OPEN. The
+   awesome-homelab layer-08 pattern for many household web UIs.
+   Our fleet is one operator + household; per-service accounts +
+   vaultwarden suffice. Recommendation: DEFER (someday) -- record
+   as demand; revisit when household multi-user web access
+   becomes real.
+
 ## Self-audit notes
 
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
