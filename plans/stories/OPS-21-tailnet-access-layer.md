@@ -16,10 +16,13 @@ the house over HTTPS with no public exposure anywhere.
       192.168.1.0/24 via `--advertise-routes`; the operator approves
       the route in the admin console; LAN hosts reachable from a
       tailnet client
-- [ ] Host UIs fronted with LE certs: PVE 9.2's native tailscale
+- [x] Host UIs fronted with LE certs: PVE 9.2's native tailscale
       integration for the node UIs (thermaltake first, other nodes
       as needed) + `tailscale serve` for service UIs; no plain-HTTP
-      path remains the documented way in
+      path remains the documented way in -- thermaltake's front
+      verified live 2026-11-22: https://pve-thermaltake.tail54538d.ts.net
+      -> :8006, HTTP 200, LE cert valid; other nodes = as needed
+      (none yet)
 - [ ] Tailscale API token created (admin console Settings > Keys)
       -> `local/tailscale-api.env` (chmod 600; `.example` tracked)
 - [ ] Verified from outside the LAN: the UI answers on its tailnet
