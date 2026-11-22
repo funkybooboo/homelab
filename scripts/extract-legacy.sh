@@ -128,7 +128,12 @@ fi
 
 ct_volume() { # echo the volume path for a ctid (raw image or subvol dir), or empty
   local id="$1" cand
-  for cand in "$SHARED_MNT/images/vm-${id}-disk-0.raw" \
+  # Live layout (discovered on the first real run 2026-11-22): volumes
+  # nest under per-CTID dirs, images/<id>/vm-<id>-disk-0.raw; the flat
+  # candidates stay for anything created the usual PVE way.
+  for cand in "$SHARED_MNT/images/${id}/vm-${id}-disk-0.raw" \
+              "$SHARED_MNT/images/${id}/vm-${id}-disk-0" \
+              "$SHARED_MNT/images/vm-${id}-disk-0.raw" \
               "$SHARED_MNT/images/vm-${id}-disk-0"; do
     [ -e "$cand" ] && { echo "$cand"; return; }
   done
