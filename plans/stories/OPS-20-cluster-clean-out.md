@@ -23,9 +23,20 @@ evening 2026-11-21; issues item 8's second revision)
       `ha/resources.cfg` (~24 entries) via `ha-manager remove`
 - [ ] Old `.raw` images on pve-shared deleted (human-gated storage
       op; the extraction tarballs + B2 are the surviving copies)
-- [ ] Tailnet graveyard purged: ~28 dead device entries (the old
-      per-CT tailscale nodes) via the admin console -- the API token
-      for automated cleanup arrives with OPS-21
+- [ ] Tailnet graveyard purged: 30 dead device entries via the admin
+      console. PROBE-VERIFIED 2026-11-22: this tailnet's API exposes
+      the device LIST but no per-device endpoints -- the DELETE route
+      does not exist, so the console (Machines page) is the only
+      mechanism. Mechanical list: 25 CT-era entries at 33d + jellyfin
+      + navidrome at 52d + syncstorage-rs at 110d. Operator-eyeball
+      list: kenny (81d) and Pixel 6a (73d) -- retired devices?
+      KEEP the 9 live devices: the 5 pve nodes, truenas, debbie,
+      kelsey-laptop, MacBook Air. Bonus: purging jellyfin/navidrome
+      frees those hostnames for the fresh v2 CTs. Keys already clean
+      (exactly one API token, zero stale auth keys); ACL stays
+      default allow-all -- household devices reaching the LAN via
+      the route is the same trust as being on the LAN (considered
+      accept; gate later only if the household trust model changes)
 - [ ] pve-ha-lrm verified armed + watchdog active on all 5 nodes
 - [ ] Cluster verifies BARE: 5/5 quorate, zero guests, zero HA
       resources, zero templates; the API inventory (`/cluster/
