@@ -3,6 +3,22 @@
 What's backed up, how, where it goes, and the single-box risk that still
 needs an off-box target.
 
+```mermaid
+flowchart LR
+    GUESTS["guests<br/>(CT rootfs on NFS)"] -- "live disks" --> SHARED["truenas volume1/pve/shared"]
+    NODES["PVE nodes"] -- "vzdump weekly Sat 21:00" --> BACKUPS["truenas volume1/pve/backups"]
+    SHARED -- "snapshot daily 00:00" --> B2(("Backblaze B2<br/>cloud-sync Sunday 00:00<br/>5 tasks"))
+    BACKUPS -- "snapshot daily 00:00" --> B2
+    HOME["volume1/home/nate<br/>volume1/media"] -- "snapshot daily 00:00" --> B2
+    EXTRACT["legacy-extraction/ on debbie<br/>(tier-0 insurance, one-shot)"]:::one
+    classDef one stroke-dasharray: 5
+```
+
+Snapshots are crash-consistent (live disks captured mid-write); vzdump
+artifacts are app-consistent. Current verified state: all 5 B2
+cloud-sync tasks SUCCESS at the first post-wind-down schedule
+(2026-11-22 00:00).
+
 ## vzdump (PVE guest backups)
 
 A single cluster-wide `vzdump` job: weekly Saturday 21:00, all guests,

@@ -10,6 +10,8 @@ git history, not the tree.
 
 - [`overview.md`](./overview.md) -- the one-page picture (node table
   predates the wind-down; re-anchored during v2)
+- [`network.md`](./network.md) -- the LAN + tailnet as mermaid diagrams:
+  now vs planned topologies, the access model, boot-order law
 - [`data-to-extract.md`](./data-to-extract.md) -- the LIVE tiered
   extraction inventory (`scripts/extract-legacy.sh` walks it); tier-0
   copy must exist outside the truenas pool before anything
