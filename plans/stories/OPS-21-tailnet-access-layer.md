@@ -6,16 +6,20 @@ LE-cert serve fronts for the host UIs, and a Tailscale API token for
 the v2 automation -- so that every system is reachable from outside
 the house over HTTPS with no public exposure anywhere.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-22: the serve front pre-existed
+from the old era and verified live; the subnet router + token
+landed today; the operator verified off-LAN reachability)
 **Arc**: v1.5 (clean-out + access layer; issues item 10a, decided
 2026-11-21: secure, idiomatic, HTTPS everywhere)
 
 ## Acceptance criteria
 
-- [ ] thermaltake (the tailnet's anchor node) advertises
+- [x] thermaltake (the tailnet's anchor node) advertises
       192.168.1.0/24 via `--advertise-routes`; the operator approves
       the route in the admin console; LAN hosts reachable from a
-      tailnet client
+      tailnet client -- applied via `tailscale set` + persisted
+      forwarding 2026-11-22; operator approved + verified from
+      off-LAN
 - [x] Host UIs fronted with LE certs: PVE 9.2's native tailscale
       integration for the node UIs (thermaltake first, other nodes
       as needed) + `tailscale serve` for service UIs; no plain-HTTP
@@ -23,12 +27,14 @@ the house over HTTPS with no public exposure anywhere.
       verified live 2026-11-22: https://pve-thermaltake.tail54538d.ts.net
       -> :8006, HTTP 200, LE cert valid; other nodes = as needed
       (none yet)
-- [ ] Tailscale API token created (admin console Settings > Keys)
+- [x] Tailscale API token created (admin console Settings > Keys)
       -> `local/tailscale-api.env` (chmod 600; `.example` tracked)
-- [ ] Verified from outside the LAN: the UI answers on its tailnet
+      -- verified live against api.tailscale.com 2026-11-22
+- [x] Verified from outside the LAN: the UI answers on its tailnet
       HTTPS name with a valid cert; the direct `:8006` path still
       works on-LAN (thermaltake .3 stays the canonical entry until
-      the fronts exist)
+      the fronts exist) -- operator verified from phone, off-LAN,
+      2026-11-22
 
 ## Notes
 

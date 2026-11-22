@@ -68,7 +68,7 @@ BEFORE anything is built, so v2 starts on a truthful platform.
 [OPS-20 the cluster clean-out](./stories/OPS-20-cluster-clean-out.md)
 (gated by the tier-0 extraction landing outside the truenas pool),
 [OPS-21 the tailnet access layer](./stories/OPS-21-tailnet-access-layer.md)
-(subnet router + LE-cert serve fronts + API token),
+(done -- subnet router + LE-cert serve fronts + API token),
 [OPS-22 node hardening + LAN tails](./stories/OPS-22-node-hardening-lan-tails.md).
 
 Ends with: a bare cluster (zero guests, zero orphans, zero stale
