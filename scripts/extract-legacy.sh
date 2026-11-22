@@ -98,8 +98,13 @@ done
 mkdir -p "$OUT"
 MANIFEST="$OUT/manifest.txt"
 REPORT="$OUT/inventory.txt"
-: > "$MANIFEST"
-: > "$REPORT"
+# The walk rewrites report+manifest fresh each run; --copy-from-dump runs
+# are per-CT appends -- truncating there wiped earlier dumps' evidence
+# (2026-11-22: three sequential dump runs kept only the last line).
+if [ -z "$DUMP_CTID" ]; then
+  : > "$MANIFEST"
+  : > "$REPORT"
+fi
 
 echo "== extract-legacy: truenas=$TRUENAS out=$OUT tier_max=$COPY_TIER =="
 ping -c1 -W2 "$TRUENAS" >/dev/null 2>&1 || die "truenas ($TRUENAS) not reachable (run OPS-4 network move first, or TRUENAS=<ip>)"
