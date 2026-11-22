@@ -8,7 +8,13 @@ re-platforms onto Proxmox -- so the fleet reaches the modern platform
 the original greenfield plan targeted, without ever stopping the
 services.
 
-**Status**: planned
+**Status**: superseded 2026-11-22 -- the rolling 8->9 upgrade
+EVAPORATED at the revival: the cluster already ran PVE 9.2
+(discovered while landing thermaltake; no dist-upgrade was ever
+needed). The surviving pieces -- the Pi QDevice re-role, pve-balance's
+replacement by the native Dynamic Load Balancer, the router
+re-platform (OPS-3/OPS-6), framework's stability check -- continue
+as the v5 arc per this file's criteria.
 **Arc**: v5 (after the running fleet is converged by v2-v4)
 
 ## Acceptance criteria

@@ -66,7 +66,46 @@ themselves were retired to git history 2026-11-21 per the operator's
 git-is-the-archive call; `docs/data-to-extract.md` survives as the
 live extraction inventory).
 
+## v1: Revival (shipped 2026-11-21/22)
+
+Revived in place, nothing reinstalled. The revival evening's plan
+shift (operator directive, issues item 8's second revision) reshaped
+what "revival" meant mid-arc: the PLATFORM came back, not the old
+CT fleet -- the CTs are cleaned out (v1.5), then the services are
+rebuilt as code (v2/v3).
+
+As built:
+
+- OPS-4 truenas: moved to 192.168.1.10 stable (the interface
+  fail-safe + staged-revert trap documented in the script); NFS
+  exports re-scoped to 192.168.1.0/24; API write channel live as
+  nate; B2 verified (all 5 cloud-sync snapshot tasks SUCCESS at the
+  first post-wind-down schedule, 2026-11-22 00:00).
+- OPS-18 nodes: all 5 renumbered in place -- thermaltake .3,
+  framework .4 (no hardware fix; a cold boot + USB autosuspend
+  hardening queued as insurance), aspiree15 .5, aspires .6, Pi .11
+  (rejoined as 5th member + witness per operator directive;
+  QDevice re-role stays optional at v5). Mechanism per node: the
+  console key-drop (console-setup-operator.sh), then
+  revive-node.sh as nate -- pvecm expected 1, pmxcfs local-mode
+  corosync.conf swap, detached ifreload + corosync restart, LRM
+  disarm/re-arm around the ring change. 5/5 quorate. Storage
+  (.100 -> .10) + host DNS (dead router -> .1 + 1.1.1.1) fixed on
+  all nodes.
+- GPU live on thermaltake: GTX 1060 6GB, dkms nvidia 580.142 built
+  for kernel 7.0.14-20-pve, uvm devnodes + boot persistence.
+- Access model completed 2026-11-22: PVE user nate@pam
+  (Administrator on /) + the homelab-ops API token (privsep 0,
+  verified live); router + truenas operated as nate; one token on
+  the cluster, nothing root-adjacent. The web UI signs in as
+  nate@pam.
+- Left for v1.5: the 5 surviving CTs (101 running as an HA
+  auto-start artifact, 102/110/116/132 stopped) + 4 VM templates,
+  ~24 config-less HA orphan resources, ~28 dead tailnet devices,
+  the .8.x temporary aliases, node ssh hardening.
+
 ## Greenfield arcs (to be written as they ship)
 
-v1 foundations, v2 IaC skeleton + core services, v3 service batches,
-v4 automation polish -- each appended above as its stories flip done.
+v1.5 clean-out + access layer, v2 IaC skeleton + the critical
+five, v3 curated services + media, v4 automation polish, v5
+platform refresh -- each appended above as its stories flip done.

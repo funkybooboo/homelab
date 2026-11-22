@@ -5,7 +5,13 @@ on the new LAN -- static IP from its host_vars, renumbered corosync,
 storage + DNS refs fixed -- so that the entire existing service fleet
 comes back without reinstalling anything.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-21/22 -- see history.md v1; ALL 5
+nodes revived: framework needed no hardware fix (a cold boot;
+USB autosuspend hardening queued as insurance), Pi rejoined as a
+5th member + witness per operator directive. The CT-side steps
+(nameservers, HA auto-start, error-state dance) were MOOTED by the
+same evening's plan shift: the old CTs clean out via OPS-20 and
+never revive)
 **Arc**: v1 (revival; supersedes the fresh-install approach -- issues
 item 8, revised 2026-11-21)
 

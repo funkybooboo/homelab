@@ -4,7 +4,9 @@ As the operator, I want truenas moved to the new subnet (static
 192.168.1.10, gateway 192.168.1.1) with NFS re-exported and B2 sync
 continuing, so that the data layer survives the router swap unchanged.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-21/22; see history.md v1 -- truenas
+stable at .10, NFS re-scoped, API write channel live as nate, B2
+verified)
 **Arc**: v1
 
 ## Acceptance criteria
