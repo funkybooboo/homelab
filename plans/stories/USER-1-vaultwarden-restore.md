@@ -20,7 +20,11 @@ Priority order within v2: this story is why the core batch exists.
 Nothing wipes old CT rootfs until this and every later data extraction
 completes (rule 10).
 
-REVISED 2026-11-21 (revival): vaultwarden comes back ALIVE with the
-fleet on revival night (OPS-18). This story becomes: verify alive
-(unlock + one known credential from phone + laptop) + the tier-0
-backup extraction runs as insurance, not as a dependency.
+REVISED 2026-11-22 (plan shift final form): the old CT was cleaned
+out (OPS-20), so this story is BUILD-FRESH + RESTORE: vaultwarden
+deployed from a guest manifest (OPS-7 skeleton), db.sqlite3 restored
+from the extraction
+(legacy-extraction/from-dump-109/opt/vaultwarden/data/db.sqlite3 on
+debbie; systemd unit + /opt/vaultwarden layout recorded there),
+HTTPS via the tailnet serve-front model (issues item 4a). Dumps on
+pve-backups + B2 remain the deeper fallback.
