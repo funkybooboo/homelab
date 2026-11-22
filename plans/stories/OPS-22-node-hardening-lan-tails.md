@@ -24,8 +24,13 @@ identity convention's standing rule)
       the API TFA registry
 - [ ] truenas SSH service good-ssh pass in the web UI (root login +
       password auth off) -- operator, 2 clicks
-- [ ] debbie: the stale 192.168.8.99 alias removed from
-      enp0s13f0u2u4 + the 8000 ufw allow for 192.168.8.100 deleted
+- [x] debbie: the stale 192.168.8.99 alias removed from
+      enp0s13f0u2u4 + the stale port-8000 allows deleted -- DONE
+      2026-11-22: the alias died with the reboot (live-only); the
+      real archaeology was FOUR 8000 rules (revival-fetch scoped to
+      192.168.1.0/24 + three old-era .8.117/.8.102/.8.103), all
+      deleted; the numbered sweep shows only deliberate rules
+      (libvirt auto-NAT + LocalSend 53317 from dotfiles 000582)
 - [x] thermaltake: the stale 192.168.8.98 alias removed from vmbr0
       (2026-11-22; it was live-only, added ad-hoc during the
       revival, so it does not return)
