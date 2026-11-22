@@ -22,8 +22,14 @@ identity convention's standing rule)
       scanned into vaultwarden) -- operator action in the UI
       (issues item 13, decided 2026-11-22) -- DONE + verified via
       the API TFA registry
-- [ ] truenas SSH service good-ssh pass in the web UI (root login +
-      password auth off) -- operator, 2 clicks
+- [x] truenas SSH service good-ssh pass in the web UI (root login +
+      password auth off) -- RESOLVED 2026-11-22: NO ACTION NEEDED; the
+      "pending hardening" note was stale old-fleet info. Verified via
+      API (GET /api/v2.0/ssh: passwordauth false, no rootlogin toggle
+      in the 25.x service model) + the effective sshd_config
+      (PasswordAuthentication no, PermitRootLogin without-password)
+      -- identical posture to the PVE nodes; the console remains
+      root's only door
 - [x] debbie: the stale 192.168.8.99 alias removed from
       enp0s13f0u2u4 + the stale port-8000 allows deleted -- DONE
       2026-11-22: the alias died with the reboot (live-only); the
