@@ -18,13 +18,15 @@ evening 2026-11-21; issues item 8's second revision)
       the 2026-11-21 whole-CT dumps (2026-11-22; vault at
       /opt/vaultwarden/data, n8n at /.n8n with HOME=/, PGDATA 17).
       The operator's "clean it out" is the remaining go signal
-- [ ] Guests destroyed: CTs 101 (running, stop first), 102, 110,
-      116, 132 + VM templates 100, 114, 115, 117 (`pct`/`qm
-      destroy`)
-- [ ] HA orphans removed: every config-less resource in
-      `ha/resources.cfg` (~24 entries) via `ha-manager remove`
-- [ ] Old `.raw` images on pve-shared deleted (human-gated storage
-      op; the extraction tarballs + B2 are the surviving copies)
+- [x] Guests destroyed: CTs 101 (running, stop first), 102, 110, 116,
+      132 + VM templates 100, 114, 115, 117 (2026-11-22: the two
+      template CTs + all four VM templates needed manual config
+      removal -- their destroy stalled on `chattr -i` over NFS;
+      disks were swept first so the configs came out by hand)
+- [x] HA orphans removed: all 24 resources deregistered from
+      ha/resources.cfg BEFORE destruction (no CRM fights)
+- [x] Old `.raw` images on pve-shared deleted (the whole
+      images/ tree swept; dumps on pve-backups untouched)
 - [ ] Tailnet graveyard purged: 30 dead device entries via the admin
       console. PROBE-VERIFIED 2026-11-22: this tailnet's API exposes
       the device LIST but no per-device endpoints -- the DELETE route
@@ -39,10 +41,16 @@ evening 2026-11-21; issues item 8's second revision)
       default allow-all -- household devices reaching the LAN via
       the route is the same trust as being on the LAN (considered
       accept; gate later only if the household trust model changes)
-- [ ] pve-ha-lrm verified armed + watchdog active on all 5 nodes
-- [ ] Cluster verifies BARE: 5/5 quorate, zero guests, zero HA
-      resources, zero templates; the API inventory (`/cluster/
-      resources`) matches
+- [x] pve-ha-lrm verified armed on the 4 real nodes (Pi = witness,
+      no LRM by design); framework's LRM was found INACTIVE SINCE
+      BOOT and started -- it is enabled, so it survives reboots
+- [x] Cluster verifies BARE: 5/5 quorate, zero guests, zero HA
+      resources, zero templates; API inventory = 5 nodes + 19
+      storage + 5 network, nothing else. THE DISCOVERY: the "24 HA
+      orphans" were ALSO registered as FOSSIL guest configs under
+      /etc/pve/nodes/<node>/lxc/*.conf (invisible to pct/qm, fed
+      straight into the resource index) -- swept per-node, plus a
+      canary test proved the mechanism first
 
 ## Notes
 

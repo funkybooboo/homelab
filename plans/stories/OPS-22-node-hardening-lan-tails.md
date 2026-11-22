@@ -11,18 +11,24 @@ identity convention's standing rule)
 
 ## Acceptance criteria
 
-- [ ] `scripts/harden-ssh.sh` applied on all 5 PVE nodes: password
+- [x] `scripts/harden-ssh.sh` applied on all 5 PVE nodes: password
       auth off; root ssh stays KEY-ONLY (PVE's inter-node root ssh
       is load-bearing for migration/cluster operations); the
-      physical console is the break-glass path
-- [ ] PVE web-UI second factor: TOTP enabled on nate@pam (QR
+      physical console is the break-glass path -- DONE 2026-11-22:
+      all five report permitrootlogin without-password,
+      passwordauthentication no, kbdinteractiveauthentication no,
+      loglevel VERBOSE
+- [x] PVE web-UI second factor: TOTP enabled on nate@pam (QR
       scanned into vaultwarden) -- operator action in the UI
-      (issues item 13, decided 2026-11-22)
+      (issues item 13, decided 2026-11-22) -- DONE + verified via
+      the API TFA registry
 - [ ] truenas SSH service good-ssh pass in the web UI (root login +
       password auth off) -- operator, 2 clicks
 - [ ] debbie: the stale 192.168.8.99 alias removed from
       enp0s13f0u2u4 + the 8000 ufw allow for 192.168.8.100 deleted
-- [ ] thermaltake: the stale 192.168.8.98 alias removed from vmbr0
+- [x] thermaltake: the stale 192.168.8.98 alias removed from vmbr0
+      (2026-11-22; it was live-only, added ad-hoc during the
+      revival, so it does not return)
 - [ ] framework: USB autosuspend hardening applied + a journal watch
       for the NIC (the no-fix revival's insurance)
 - [ ] Verify: `sshd -T` on each node shows the expected state; the
