@@ -66,7 +66,8 @@ remains go, the access layer finishes, the hardening lands -- all
 BEFORE anything is built, so v2 starts on a truthful platform.
 
 [OPS-20 the cluster clean-out](./stories/OPS-20-cluster-clean-out.md)
-(gated by the tier-0 extraction landing outside the truenas pool),
+(done -- gated by the tier-0 extraction landing outside the truenas
+pool),
 [OPS-21 the tailnet access layer](./stories/OPS-21-tailnet-access-layer.md)
 (done -- subnet router + LE-cert serve fronts + API token),
 [OPS-22 node hardening + LAN tails](./stories/OPS-22-node-hardening-lan-tails.md).

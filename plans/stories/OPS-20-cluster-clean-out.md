@@ -5,7 +5,9 @@ the templates, the HA orphan resources, and the tailnet's dead device
 entries -- removed so that v2 builds on a bare, truthful platform
 with nothing stale left for the IaC to drift against.
 
-**Status**: planned
+**Status**: done (shipped 2026-11-22 -- the bare-cluster era flip:
+guests, HA, images, fossil configs, and the tailnet graveyard all
+swept; verified via the PVE API)
 **Arc**: v1.5 (clean-out + access layer; the plan-shift story: old
 CTs are cleaned out, NOT revived -- operator directive, revival
 evening 2026-11-21; issues item 8's second revision)
@@ -27,20 +29,16 @@ evening 2026-11-21; issues item 8's second revision)
       ha/resources.cfg BEFORE destruction (no CRM fights)
 - [x] Old `.raw` images on pve-shared deleted (the whole
       images/ tree swept; dumps on pve-backups untouched)
-- [ ] Tailnet graveyard purged: 30 dead device entries via the admin
-      console. PROBE-VERIFIED 2026-11-22: this tailnet's API exposes
-      the device LIST but no per-device endpoints -- the DELETE route
-      does not exist, so the console (Machines page) is the only
-      mechanism. Mechanical list: 25 CT-era entries at 33d + jellyfin
-      + navidrome at 52d + syncstorage-rs at 110d. Operator-eyeball
-      list: kenny (81d) and Pixel 6a (73d) -- retired devices?
-      KEEP the 9 live devices: the 5 pve nodes, truenas, debbie,
-      kelsey-laptop, MacBook Air. Bonus: purging jellyfin/navidrome
-      frees those hostnames for the fresh v2 CTs. Keys already clean
-      (exactly one API token, zero stale auth keys); ACL stays
-      default allow-all -- household devices reaching the LAN via
-      the route is the same trust as being on the LAN (considered
-      accept; gate later only if the household trust model changes)
+- [x] Tailnet graveyard purged: 30 dead device entries via the admin
+      console. PROBE-VERIFIED: this tailnet's API exposes the device
+      LIST but no per-device endpoints -- the DELETE route does not
+      exist, so the console (Machines page) was the only mechanism.
+      DONE 2026-11-22 (operator, incl. the kenny + Pixel 6a eyeballs);
+      API verification: 9 devices remain (5 pve nodes, truenas,
+      debbie, kelsey-laptop, MacBook Air), serve front still 200.
+      Keys already clean (exactly one API token); ACL stays
+      default allow-all (considered accept). Bonus delivered:
+      jellyfin/navidrome hostnames freed for the fresh v2 CTs
 - [x] pve-ha-lrm verified armed on the 4 real nodes (Pi = witness,
       no LRM by design); framework's LRM was found INACTIVE SINCE
       BOOT and started -- it is enabled, so it survives reboots
