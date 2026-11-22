@@ -148,9 +148,13 @@ mount_ct() { # mount_ct <ctid> -> echo mountpoint or empty; mounts raw or uses s
     mount --bind "$vol" "$mnt" && mount -o remount,ro,bind "$mnt"
     MOUNTED+=("$mnt")
   else
-    mount -o loop,ro "$vol" "$mnt" 2>/dev/null \
+    # Dirty-journal tolerance FIRST: the fleet died mid-write on 2026-10-19,
+    # so every ext4 image carries an unrecovered journal; a plain -o ro
+    # loop mount "succeeds" but reads of journal-affected paths misbehave
+    # (2026-11-22: probes listed dirs fine, tar got ENOENT on children).
+    mount -o loop,ro,norecovery "$vol" "$mnt" 2>/dev/null \
+      || mount -o loop,ro "$vol" "$mnt" 2>/dev/null \
       || mount -o loop,ro,offset=1048576 "$vol" "$mnt" 2>/dev/null \
-      || mount -o loop,ro,norecovery "$vol" "$mnt" \
       || { rmdir "$mnt" 2>/dev/null || true; return 1; }
     MOUNTED+=("$mnt")
   fi
@@ -179,7 +183,9 @@ copy_one() { # copy_one <ctid> <mnt> <path> <tag> -- non-fatal by design
 
 if [ -n "$DUMP_CTID" ]; then
   # local-lvm CT path: pull the newest vzdump of this CT wholesale
-  dump="$(ls -1t "$BACKUPS_MNT/dump/vzdump-lxc-${DUMP_CTID}-"*.tar.* 2>/dev/null | head -1 || true)"
+  # newest non-.notes dump (the *.tar.* glob also matches the .notes
+  # sidecar files, which are not archives -- 2026-11-22 lesson)
+  dump="$(ls -1t "$BACKUPS_MNT/dump/vzdump-lxc-${DUMP_CTID}-"*.tar.* 2>/dev/null | grep -v '\.notes$' | head -1 || true)"
   [ -n "$dump" ] || die "no vzdump for CT $DUMP_CTID in pve-backups/dump/"
   dest="$OUT/from-dump-${DUMP_CTID}"
   mkdir -p "$dest"
