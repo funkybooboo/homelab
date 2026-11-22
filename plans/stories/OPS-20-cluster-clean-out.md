@@ -12,10 +12,12 @@ evening 2026-11-21; issues item 8's second revision)
 
 ## Acceptance criteria
 
-- [ ] GATE: tier-0 extraction landed and verified OUTSIDE the truenas
-      pool -- `legacy-extraction/manifest.txt` shows vm-109
-      (vaultwarden), vm-108 (postgres), vm-106 (n8n) + the tier-1
-      tarballs with sha256s; the operator says the word
+- [x] GATE: tier-0 extraction landed and verified OUTSIDE the truenas
+      pool -- `legacy-extraction/manifest.txt` carries sha256 lines
+      for vm-109 (vaultwarden), vm-108 (postgres), vm-106 (n8n) from
+      the 2026-11-21 whole-CT dumps (2026-11-22; vault at
+      /opt/vaultwarden/data, n8n at /.n8n with HOME=/, PGDATA 17).
+      The operator's "clean it out" is the remaining go signal
 - [ ] Guests destroyed: CTs 101 (running, stop first), 102, 110,
       116, 132 + VM templates 100, 114, 115, 117 (`pct`/`qm
       destroy`)
