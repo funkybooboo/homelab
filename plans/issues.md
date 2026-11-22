@@ -63,6 +63,11 @@ OPEN).
    deploy-node-glue.sh, setup-qdevice.sh) stays in the repo for future
    new/rebuilt nodes and the Pi re-role. Router stays untouched
    (V1210 keeps routing bare-metal; re-platform = OPS-3 in v5).
+   REVISED A THIRD TIME 2026-11-22 (the plan shift, final): the old
+   CTs were cleaned out, NOT revived (OPS-20) -- v2 builds the fleet
+   FRESH from manifests (OPS-7 skeleton shipped), data restores from
+   the tier-0 extraction + dumps. The revive-in-place text above
+   stays as history.
 
 9. **Operations identity (least privilege, no root ssh)** --
    ANSWERED 2026-11-21 by the operator, recorded as the standing

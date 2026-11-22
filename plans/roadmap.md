@@ -25,9 +25,16 @@ constitution is [identity.md](./identity.md); the shipped record is
   good-ssh everywhere, TOTP on both PVE UI identities, and the
   tier-0 extraction insurance sits on debbie. See
   [history.md](./history.md).
-- NEXT: v2 -- the IaC skeleton builds the critical five fresh on
-  the bare cluster ([OPS-7](./stories/OPS-7-iac-skeleton.md)). The
-  router stays untouched (V1210 bare-metal) until v5.
+- OPS-7 SHIPPED same day (the skeleton): manifest -> CT -> running
+  service proven, idempotent, `make converge`/`make verify` real.
+  A post-skeleton readiness pass swept the last old-fleet residue
+  (55 /tmp debug scripts, 5 stale CT templates, the promtail
+  shipper whose endpoint died with the old loki serve-front) and
+  de-staled six story notes + issues item 8 for the build-fresh
+  reality. Entering the service stories, the cluster carries
+  exactly: 1 manifest-managed test CT, 1 base template, node glue
+  (proxmoxer), and nothing else.
+- NEXT: the critical five, vaultwarden first (USER-1).
 - Standing tooling: `docs/` (the live data-to-extract inventory),
   `ansible/inventory/` (LAN plan, host facts),
   `scripts/revive-node.sh` + the parked future-node tooling

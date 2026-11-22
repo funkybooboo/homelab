@@ -22,3 +22,9 @@ Design context: `services/ntfy/` (old deploy notes).
 
 REVISED 2026-11-21 (revival): ntfy revives with the fleet; the story
 becomes verify + codify the alert-helper role for the stories after.
+
+REVISED 2026-11-22 (plan shift final form): the old CT was cleaned out
+(OPS-20). BUILD FRESH: manifest + role from the skeleton (OPS-7);
+topics re-subscribed on the phone; the truenas alert bridge re-wired
+via the truenas API. No data restore needed -- ntfy state is
+ephemeral by design.

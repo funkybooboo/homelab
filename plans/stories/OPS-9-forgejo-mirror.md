@@ -23,3 +23,8 @@ remote.
 REVISED 2026-11-21 (revival): the mirror CT revives and resumes
 pulling on its old schedule; the story becomes verify + converge into
 the manifest format.
+
+REVISED 2026-11-22 (plan shift final form): the old CT was cleaned out
+(OPS-20). BUILD FRESH: manifest + role. Nothing to restore -- a mirror
+re-pulls from canonical GitHub (the design's survival guarantee); the
+schedule + creds are the only state.

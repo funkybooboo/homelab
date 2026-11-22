@@ -26,3 +26,8 @@ demand"; that list is what makes lazy resurrection cheap later.
 REVISED 2026-11-21 (revival): everything revives first, so this story
 becomes the CURATION PASS -- decide the stop-list (issues item 6,
 ~12-15 keepers), stop + disable the rest, document each one-liner.
+
+REVISED 2026-11-22 (plan shift final form): the fleet was cleaned out
+(OPS-20), so curation = the BUILD LIST: decide which services get
+manifests at all (~12-15 keepers, issues item 6); the legacy archive
+(dumps + docs/) keeps lazy resurrection cheap for anything left off.

@@ -25,3 +25,10 @@ story (USER-5) despite living on the same old node.
 REVISED 2026-11-21 (revival): the media CTs revive with the fleet on
 thermaltake; the story becomes verify (GPU transcode, the 5 NFS media
 mounts, library counts vs the docs/services.md July catalog).
+
+REVISED 2026-11-22 (plan shift final form): the old media CTs were
+cleaned out (OPS-20). BUILD FRESH on thermaltake (the only GPU):
+jellyfin, navidrome, audiobookshelf, syncstorage as manifests +
+roles. The MEDIA DATA never moved (truenas NFS exports, untouched);
+only per-service configs/metadata would restore from dumps if wanted
+(tier-2, decide at story time).
