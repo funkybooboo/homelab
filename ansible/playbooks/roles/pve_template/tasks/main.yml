@@ -5,8 +5,15 @@
   community.proxmox.proxmox_template:
     api_host: "{{ pve_api_host }}"
     api_user: "{{ pve_api_user }}"
-    api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+    # full user!token form: the module parses it natively
+    api_token_id: "{{ pve_api_token_id }}"
     api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+    # PVE node certs are self-signed per-hostname (not valid for the
+    # IP); TLS still encrypts, the token gates access. Trusted certs
+    # (ACME) = later polish.
+    validate_certs: false
+    node: "{{ inventory_hostname }}"   # the downloading node; shared
+                                    # storage makes it cluster-wide
     storage: pve-shared
     template: debian-13-standard_13.6-1_amd64.tar.zst
     state: present

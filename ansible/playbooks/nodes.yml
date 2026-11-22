@@ -1,0 +1,8 @@
+# nodes.yml -- cluster-level node glue: what every live PVE node
+# needs to be ansible-managed. Runs BEFORE the guest lifecycle; the
+# IaC contract is "the nodes converge too", not just the guests.
+- name: Node glue for the IaC skeleton
+  hosts: pve
+  become: true
+  roles:
+    - node_glue

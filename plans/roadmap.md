@@ -91,7 +91,9 @@ each service restores its data from the extraction tarballs + the
 `services/` as-was references. Curated resurrection, one story per
 service; `make converge`/`make verify` become real.
 
-[OPS-7 the IaC skeleton](./stories/OPS-7-iac-skeleton.md),
+[OPS-7 the IaC skeleton](./stories/OPS-7-iac-skeleton.md)
+(done -- shipped 2026-11-22: manifest -> CT -> running service,
+idempotent re-run proven),
 [OPS-8 ntfy alerting](./stories/OPS-8-ntfy-alerting.md),
 [OPS-9 the forgejo mirror](./stories/OPS-9-forgejo-mirror.md),
 [OPS-10 postgresql](./stories/OPS-10-postgresql.md),

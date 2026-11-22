@@ -43,6 +43,16 @@
     validate: "/usr/sbin/sshd -t -f %s"
   notify: reload sshd
 
+- name: Disable socket-activated ssh (the service owns port 22)
+  # Debian 13 preset: ssh.socket holds 22 + spawns per-connection
+  # daemons -- a service reload then SIGHUPs a daemon that cannot
+  # rebind (the socket owns the port) and the unit crashes. The
+  # plain service model reloads cleanly.
+  ansible.builtin.service:
+    name: ssh.socket
+    state: stopped
+    enabled: false
+
 - name: sshd running + enabled
   ansible.builtin.service:
     name: ssh

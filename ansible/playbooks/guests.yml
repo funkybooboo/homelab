@@ -34,8 +34,12 @@
       community.proxmox.proxmox:
         api_host: "{{ pve_api_host }}"
         api_user: "{{ pve_api_user }}"
-        api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+        # full user!token form: the module parses it natively
+        api_token_id: "{{ pve_api_token_id }}"
         api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        # PVE node certs are self-signed per-hostname; TLS still
+        # encrypts, the token gates access. Trusted certs = later.
+        validate_certs: false
         vmid: "{{ item.vmid }}"
         node: "{{ item.node }}"
         state: absent
@@ -44,19 +48,25 @@
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Create / start guests (PVE API, idempotent)
+    - name: Create guests (PVE API, idempotent -- present = create if missing)
       when: item.state | default('present') == 'present'
       community.proxmox.proxmox:
         api_host: "{{ pve_api_host }}"
         api_user: "{{ pve_api_user }}"
-        api_token_id: "{{ pve_api_token_id.split('!')[-1] }}"
+        # full user!token form: the module parses it natively
+        api_token_id: "{{ pve_api_token_id }}"
         api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        # PVE node certs are self-signed per-hostname; TLS still
+        # encrypts, the token gates access. Trusted certs = later.
+        validate_certs: false
         vmid: "{{ item.vmid }}"
         hostname: "{{ item.name }}"
         node: "{{ item.node }}"
         ostemplate: "{{ item.storage }}:vztmpl/{{ item.template }}"
         storage: "{{ item.storage }}"
-        disk: "{{ item.disk }}"
+        disk: "{{ item.storage }}:{{ item.disk }}"   # PVE volid form;
+                                   # a bare size fails the non-root
+                                   # path check (Storage.pm 729)
         cores: "{{ item.cores }}"
         memory: "{{ item.memory }}"
         swap: "{{ item.swap }}"
@@ -65,8 +75,29 @@
         nameserver: "{{ lan.dns | join(' ') }}"
         unprivileged: true
         onboot: true
-        state: started
+        state: present
+        # update defaults TRUE in community.proxmox 2.1.0 (every run
+        # re-applies config + reports changed). We want create-if-
+        # missing with honest idempotence; drift is make verify's
+        # job (OPS-15). To change an existing guest's resources:
+        # one-off run with -e guest_update=true.
+        update: "{{ guest_update | default(false) }}"
         description: "managed by make converge (guests/{{ item.name }}.yaml)"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Ensure guests running
+      when: item.state | default('present') == 'present'
+      community.proxmox.proxmox:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        validate_certs: false
+        vmid: "{{ item.vmid }}"
+        node: "{{ item.node }}"
+        state: started
       loop: "{{ hostvars['localhost']['guests'] }}"
       loop_control:
         label: "{{ item.name }}"
@@ -82,18 +113,31 @@
           - /bin/sh
           - -c
           - >-
-            getent passwd nate >/dev/null 2>&1 && test -f /etc/sudoers.d/nate
-            && dpkg -s sudo openssh-server python3 >/dev/null 2>&1 && echo BOOTSTRAPPED
+            if getent passwd nate >/dev/null 2>&1 && test -f /etc/sudoers.d/nate
+            && dpkg -s sudo openssh-server python3 >/dev/null 2>&1;
+            then echo BOOTSTRAPPED; else exit 1; fi
+            # (getent exits 2 for a missing user -- normalize to 1)
       register: _bs_state
+      until: _bs_state.rc in [0, 1]   # rc=2 while the CT's init is
+      retries: 12                     # still booting; retry until it
+      delay: 5                        # settles into the real answer
       changed_when: false
       failed_when: _bs_state.rc not in [0, 1]
       loop: "{{ hostvars['localhost']['guests'] }}"
       loop_control:
         label: "{{ item.name }}"
 
+    - name: Stage the operator's key on the node (pct push reads it there)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/keys/admin.ed25519.pub"
+        dest: /tmp/homelab-admin.ed25519.pub
+        mode: "0644"
+
     - name: Bootstrap the operator account (console channel, no root ssh)
       when:
         - item.state | default('present') == 'present'
+        - not ansible_check_mode   # shell ignores --check; verify
+                                    # must stay read-only
         - "'BOOTSTRAPPED' not in _bs_state.results[idx].stdout"
       ansible.builtin.shell: |
         set -eu
@@ -108,7 +152,8 @@
         fi
         pct exec $C -- /usr/sbin/usermod --append --groups sudo nate
         # the operator's key (canonical copy: playbooks/files/keys/)
-        pct push $C {{ playbook_dir }}/files/keys/admin.ed25519.pub /home/nate/.ssh/authorized_keys --mkdir
+        pct exec $C -- /bin/mkdir -p /home/nate/.ssh
+        pct push $C /tmp/homelab-admin.ed25519.pub /home/nate/.ssh/authorized_keys
         pct exec $C -- /bin/chown -R nate:nate /home/nate/.ssh
         pct exec $C -- /bin/chmod 0700 /home/nate/.ssh
         pct exec $C -- /bin/chmod 0600 /home/nate/.ssh/authorized_keys
@@ -131,6 +176,7 @@
         ansible_host: "{{ item.ip }}"
         ansible_user: nate
         guest_role: "{{ item.role | default(omit) }}"
+      changed_when: false   # structural runtime inventory, not drift
       loop: "{{ hostvars['localhost']['guests'] }}"
       loop_control:
         label: "{{ item.name }}"

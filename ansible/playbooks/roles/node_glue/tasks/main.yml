@@ -1,0 +1,37 @@
+# node_glue -- what a PVE node needs to be ANSIBLE-MANAGED: the
+# proxmoxer python lib (the community.proxmox modules execute on the
+# node over ssh, so the node needs the API client library).
+#
+# TENSION, recorded: Debian trixie ships proxmoxer 2.2.0, but
+# community.proxmox 2.1.0's token-auth path requires >= 2.3. The apt
+# package pulls the python deps; pip then overlays the newer
+# proxmoxer into /usr/local (import order beats apt's /usr/lib copy).
+# Revisit when trixie ships 2.3+: then the pip step can go.
+- name: proxmoxer via apt (base + python deps)
+  ansible.builtin.apt:
+    name: [python3-proxmoxer, python3-pip]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: proxmoxer >= 2.3 via pip overlay (token-auth requirement)
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/pip3
+      - install
+      - --break-system-packages
+      - proxmoxer>=2.3
+  register: _proxmoxer_pip
+  changed_when: "'Successfully installed' in _proxmoxer_pip.stdout"
+
+- name: Verify the proxmoxer version the modules will import
+  ansible.builtin.command:
+    argv: [/usr/bin/python3, -c, "import proxmoxer; print(proxmoxer.__version__)"]
+  register: _proxmoxer_v
+  changed_when: false
+  check_mode: false   # read-only probe: must run even under --check
+
+- name: Assert proxmoxer >= 2.3
+  ansible.builtin.assert:
+    that: "_proxmoxer_v.stdout is version('2.3', '>=')"
+    fail_msg: "proxmoxer {{ _proxmoxer_v.stdout }} still < 2.3 (pip overlay lost?)"

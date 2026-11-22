@@ -8,8 +8,8 @@ hardware: Framework mainboard in a desktop case; ethernet via the
 history:
   - offline 2026-07-18..26 (cause never diagnosed)
   - vanished 2026-09-27 after a reboot-controller cycle; the old docs
-    blamed the "flaky USB NIC" -- operator correction (2026-11-21): the
-    label was circumstantial; leading suspects are USB power
+    blamed the "flaky USB NIC" -- operator correction (2026-11-21) --
+    the label was circumstantial; leading suspects are USB power
     management sleeping the expansion card, or a warm-reboot power
     state issue. No hardware fix required.
 constraints:
@@ -22,6 +22,6 @@ glue:
   - renew-pve-tls.sh + cron
   - pve-shared-nfs-remount helper
   - USB autosuspend OFF for the ethernet expansion card (create after
-    revival: /etc/udev/rules.d/... "on" for the card's USB device +
-    kernel usbcore.autosuspend=-1 in cmdline if the card was the
-    sleep victim)
+    revival under /etc/udev/rules.d/... setting "on" for the card's
+    USB device + kernel usbcore.autosuspend=-1 in cmdline if the card
+    was the sleep victim)
