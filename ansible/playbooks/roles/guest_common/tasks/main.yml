@@ -143,6 +143,9 @@
       # managed by make converge (guest_common)
       server:
         http_listen_port: 9080
+        grpc_listen_port: 0   # DISABLED: the default 9095 collides with
+                             # loki's own gRPC (found live in the loki
+                             # guest 2026-11-23 -- boot-race crash-loops)
       positions:
         filename: /var/lib/promtail/positions.yaml
       clients:
