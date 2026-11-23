@@ -1,0 +1,7 @@
+vaultwarden_version: "1.37.5"
+vaultwarden_rust: "1.97.1"
+# matched web vault build (bw_web_builds; NOT embedded in the binary)
+vaultwarden_web_vault: "v2026.10.1"
+# controller-side path (debbie): the v0 legacy extraction. Gitignored
+# by design -- the password database never enters git.
+vaultwarden_restore_dir: "{{ playbook_dir }}/../../legacy-extraction/from-dump-109/opt/vaultwarden/data"

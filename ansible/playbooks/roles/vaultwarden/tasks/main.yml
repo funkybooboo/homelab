@@ -1,0 +1,296 @@
+# vaultwarden/tasks/main.yml -- USER-1: build-from-source deploy.
+# Upstream ships NO prebuilt binaries anymore (0 assets on the last
+# 10+ releases; container-or-build is their position) and the fleet
+# deliberately retired container machinery in OPS-20, so this role
+# builds the pinned release in-place with rustup. The binary embeds
+# the web vault (since 1.29) -- one artifact, no vault version
+# pairing. The db restore happens BEFORE first start: vaultwarden
+# migrates the restored schema forward on boot.
+# Version pins live in defaults/main.yml.
+- name: build deps
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - pkg-config
+      - libssl-dev
+      - ca-certificates
+      - curl
+      - xz-utils
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# ---- version gate: everything below builds only when the installed
+# version differs from the pin; converges otherwise skip in seconds.
+- name: installed version marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/vaultwarden-version
+  register: vw_marker
+  failed_when: false
+
+- name: set_fact -- installed version
+  ansible.builtin.set_fact:
+    vw_installed: "{{ (vw_marker.content | default('') | b64decode).strip() }}"
+
+- name: rustup installer present
+  ansible.builtin.get_url:
+    url: https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
+    dest: /usr/local/src/rustup-init
+    mode: "0755"
+
+- name: pinned toolchain installed (vaultwarden 1.37 needs rust 1.97+; trixie's 1.85 cannot)
+  ansible.builtin.command:
+    argv:
+      - /usr/local/src/rustup-init
+      - -y
+      - --profile
+      - minimal
+      - --default-toolchain
+      - "{{ vaultwarden_rust }}"
+      - --no-modify-path
+    creates: /root/.rustup/toolchains/{{ vaultwarden_rust }}-x86_64-unknown-linux-gnu
+
+- name: source tarball downloaded
+  ansible.builtin.get_url:
+    url: https://github.com/dani-garcia/vaultwarden/archive/refs/tags/{{ vaultwarden_version }}.tar.gz
+    dest: /usr/local/src/vaultwarden-{{ vaultwarden_version }}.tar.gz
+    mode: "0644"
+  when: vw_installed != vaultwarden_version
+
+- name: previous build dir swept
+  ansible.builtin.file:
+    path: /usr/local/src/vaultwarden-build
+    state: absent
+  when: vw_installed != vaultwarden_version
+
+- name: build dir present
+  ansible.builtin.file:
+    path: /usr/local/src/vaultwarden-build
+    state: directory
+  when: vw_installed != vaultwarden_version
+
+- name: source extracted
+  ansible.builtin.command:
+    argv:
+      - tar
+      - -xf
+      - /usr/local/src/vaultwarden-{{ vaultwarden_version }}.tar.gz
+      - -C
+      - /usr/local/src/vaultwarden-build
+      - --strip-components=1
+    creates: /usr/local/src/vaultwarden-build/Cargo.toml
+  when: vw_installed != vaultwarden_version
+
+- name: release binary built (sqlite feature; --locked honors the tag's Cargo.lock)
+  ansible.builtin.command:
+    argv:
+      - /root/.cargo/bin/rustup
+      - run
+      - "{{ vaultwarden_rust }}"
+      - cargo
+      - build
+      - --release
+      - --locked
+      - --features
+      - sqlite
+    chdir: /usr/local/src/vaultwarden-build
+  when: vw_installed != vaultwarden_version
+
+- name: binary installed
+  ansible.builtin.copy:
+    src: /usr/local/src/vaultwarden-build/target/release/vaultwarden
+    dest: /usr/local/bin/vaultwarden
+    mode: "0755"
+    remote_src: true
+  when: vw_installed != vaultwarden_version
+  notify: restart vaultwarden
+
+- name: version marker written
+  ansible.builtin.copy:
+    dest: /usr/local/share/vaultwarden-version
+    content: "{{ vaultwarden_version }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: vw_installed != vaultwarden_version
+
+# ---- the web vault: NOT embedded in the binary (the vault client
+# moves faster than the server, so upstream ships them separately:
+# dani-garcia/bw_web_builds carries matched builds; the 1.37.5 notes
+# name 2026.7.1+/2026.9.0+ vault features, so v2026.10.1 satisfies)
+- name: installed web-vault marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/vaultwarden-vault-version
+  register: vwwv_marker
+  failed_when: false
+
+- name: set_fact -- installed web-vault version
+  ansible.builtin.set_fact:
+    vwwv_installed: "{{ (vwwv_marker.content | default('') | b64decode).strip() }}"
+
+- name: web-vault tarball downloaded
+  ansible.builtin.get_url:
+    url: https://github.com/dani-garcia/bw_web_builds/releases/download/{{ vaultwarden_web_vault }}/bw_web_{{ vaultwarden_web_vault }}.tar.gz
+    dest: /usr/local/src/bw_web_{{ vaultwarden_web_vault }}.tar.gz
+    mode: "0644"
+  when: vwwv_installed != vaultwarden_web_vault
+
+- name: web-vault dir swept
+  ansible.builtin.file:
+    path: /usr/local/share/vaultwarden/web-vault
+    state: absent
+  when: vwwv_installed != vaultwarden_web_vault
+
+- name: web-vault dir present
+  ansible.builtin.file:
+    path: /usr/local/share/vaultwarden/web-vault
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+    recurse: false
+
+- name: web-vault extracted
+  ansible.builtin.command:
+    argv:
+      - tar
+      - -xf
+      - /usr/local/src/bw_web_{{ vaultwarden_web_vault }}.tar.gz
+      - -C
+      - /usr/local/share/vaultwarden/web-vault
+      - --strip-components=1
+  when: vwwv_installed != vaultwarden_web_vault
+
+- name: web-vault marker written
+  ansible.builtin.copy:
+    dest: /usr/local/share/vaultwarden-vault-version
+    content: "{{ vaultwarden_web_vault }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: vwwv_installed != vaultwarden_web_vault
+
+# ---- runtime user + data
+- name: vaultwarden user
+  ansible.builtin.user:
+    name: vaultwarden
+    system: true
+    home: /var/lib/vaultwarden
+    shell: /usr/sbin/nologin
+
+- name: data directory
+  ansible.builtin.file:
+    path: /var/lib/vaultwarden
+    state: directory
+    owner: vaultwarden
+    group: vaultwarden
+    mode: "0750"
+
+# ---- the restore (the passwords) -- before the service ever starts,
+# straight from the v0 extraction on the controller (debbie). The -wal
+# file in the extraction is 0 bytes: everything is checkpointed into
+# db.sqlite3, so the single file IS the complete database.
+- name: is the legacy db already in place?
+  ansible.builtin.stat:
+    path: /var/lib/vaultwarden/db.sqlite3
+  register: vw_db_dst
+
+- name: controller holds the legacy extraction (stat on debbie)
+  when: not vw_db_dst.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ vaultwarden_restore_dir }}/db.sqlite3"
+  register: vw_db_src
+  delegate_to: localhost
+
+- name: restore source must exist while the db is still absent (this is the passwords)
+  when: not vw_db_dst.stat.exists
+  ansible.builtin.assert:
+    that: vw_db_src.stat.exists | default(false)
+    fail_msg: >-
+      legacy db not found on the controller at
+      {{ vaultwarden_restore_dir }}/db.sqlite3 -- converge refuses to
+      proceed (an empty vault would be worse than a failed run).
+      The extraction lives on debbie: legacy-extraction/from-dump-109/
+      opt/vaultwarden/data/.
+
+- name: legacy database restored (only while absent -- never clobbers live data)
+  when: not vw_db_dst.stat.exists
+  ansible.builtin.copy:
+    src: "{{ vaultwarden_restore_dir }}/db.sqlite3"
+    dest: /var/lib/vaultwarden/db.sqlite3
+    owner: vaultwarden
+    group: vaultwarden
+    mode: "0600"
+
+- name: legacy rsa key restored (org invite keys; same never-clobber rule)
+  when: not vw_db_dst.stat.exists
+  ansible.builtin.copy:
+    src: "{{ vaultwarden_restore_dir }}/rsa_key.pem"
+    dest: /var/lib/vaultwarden/rsa_key.pem
+    owner: vaultwarden
+    group: vaultwarden
+    mode: "0600"
+
+- name: environment file (DOMAIN must match the serve front exactly)
+  ansible.builtin.copy:
+    dest: /etc/vaultwarden.env
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      DOMAIN=https://vaultwarden.tail54538d.ts.net
+      ROCKET_ADDRESS=0.0.0.0
+      ROCKET_PORT=8222
+      DATA_FOLDER=/var/lib/vaultwarden
+      WEB_VAULT_FOLDER=/usr/local/share/vaultwarden/web-vault
+      WEB_VAULT_ENABLED=true
+      DATABASE_MAX_CONNS=10
+      SIGNUPS_ALLOWED=false
+      ADMIN_TOKEN=''
+  notify: restart vaultwarden
+
+- name: systemd unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/vaultwarden.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Vaultwarden (password vault)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=vaultwarden
+      EnvironmentFile=/etc/vaultwarden.env
+      ExecStart=/usr/local/bin/vaultwarden
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ReadWritePaths=/var/lib/vaultwarden
+      PrivateTmp=true
+      ProtectHome=true
+      RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart vaultwarden
+
+- name: service running + enabled
+  ansible.builtin.systemd:
+    name: vaultwarden
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: verify -- vault answers on its own port (first boot runs db migrations)
+  ansible.builtin.uri:
+    url: http://localhost:8222/
+    status_code: [200, 302]
+  register: vw_check
+  retries: 12
+  delay: 10
+  until: vw_check.status in [200, 302]

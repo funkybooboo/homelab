@@ -1,0 +1,25 @@
+# vaultwarden.yaml -- USER-1: the password vault, restored from the
+# v0 legacy extraction. TIER-0: deliberately SQLite (availability must
+# not depend on the shared postgres cluster), rootfs on NODE-LOCAL
+# storage (must not depend on truenas either), enrolled in the
+# tailnet with the serve front like every guest.
+name: vaultwarden
+vmid: 201
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+# local-lvm = node-local: the vault stays up through a truenas outage.
+# lvmthin cannot host vztmpl, so the template comes from pve-shared
+# (read once at creation; the running CT never touches it).
+storage: local-lvm
+ostemplate: pve-shared:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
+cores: 2
+memory: 2048      # the rust link step peaks ~1.5G
+swap: 2048
+disk: 10          # toolchain + cargo cache + build dir + data
+ip: 192.168.1.51
+role: vaultwarden
+tailnet: true
+tailnet_serve: 8222      # https://vaultwarden.tail54538d.ts.net
+mounts: []
+features: [nesting]

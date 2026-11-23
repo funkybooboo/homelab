@@ -72,7 +72,12 @@
         vmid: "{{ item.vmid }}"
         hostname: "{{ item.name }}"
         node: "{{ item.node }}"
-        ostemplate: "{{ item.storage }}:vztmpl/{{ item.template }}"
+        # default: template from the CT's own storage (pve-shared
+        # carries vztmpl); lvmthin rootfs storages cannot host templates
+        # (content-type limitation) so manifests may override with an
+        # explicit ostemplate volid (vaultwarden does -- local-lvm rootfs
+        # for tier-0 truenas-independence, template read once from pve-shared)
+        ostemplate: "{{ item.ostemplate | default(item.storage ~ ':vztmpl/' ~ item.template) }}"
         storage: "{{ item.storage }}"
         disk: "{{ item.storage }}:{{ item.disk }}"   # PVE volid form;
                                    # a bare size fails the non-root
