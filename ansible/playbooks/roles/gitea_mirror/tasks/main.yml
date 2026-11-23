@@ -69,6 +69,14 @@
     mode: "0755"
     remote_src: true
 
+- name: bunx symlink (the release zip ships ONLY bun; upstream's own
+        installer symlinks bunx to it -- the build scripts call bunx and
+        fail with command-not-found otherwise, found live 2026-11-23)
+  ansible.builtin.file:
+    src: /usr/local/bin/bun
+    dest: /usr/local/bin/bunx
+    state: link
+
 - name: bun version marker written
   when: gm_bun_installed != gitea_mirror_bun_version
   ansible.builtin.copy:
