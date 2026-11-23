@@ -1,7 +1,10 @@
 # managed by make converge (prometheus role): targets generated
-# from guests/*.yaml + the pve inventory group.
+# from guests/*.yaml + the pve inventory group -- PRESENT guests only
+# (state: absent guests are destroyed; scraping them = eternal down).
 # (for-loop form on purpose: regex backrefs like '\1' are octal
 # escapes in Jinja string literals and silently corrupt the render)
+{% set present_guests = fleet_guests | rejectattr('state', 'defined') | list
+                            + fleet_guests | selectattr('state', 'equalto', 'present') | list %}
 global:
   scrape_interval: 15s
 
@@ -12,4 +15,4 @@ scrape_configs:
 
   - job_name: node
     static_configs:
-      - targets: [{% for t in (fleet_nodes + (fleet_guests | map(attribute='ip') | list)) %}'{{ t }}:9100', {% endfor %}]
+      - targets: [{% for t in (fleet_nodes + (present_guests | map(attribute='ip') | list)) %}'{{ t }}:9100', {% endfor %}]

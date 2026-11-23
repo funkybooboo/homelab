@@ -28,3 +28,18 @@ tailscale.
   LAN IP; a tailscale-less TV still reaches `http://<ip>:<port>`.
 - Backups of the cluster of record: `local/` env files (this repo,
   debbie). The `nate` pg password lives in `local/pg-operator.env`.
+
+## MagicDNS names are for YOUR devices, not guest-to-guest
+
+`postgres.tail54538d.ts.net` works from debbie / the laptop / the
+phone (full tailscale, real tun, MagicDNS resolver). It does NOT
+work from inside a guest: userspace-mode tailscaled hooks neither
+the guest's resolver nor outbound routing. Guest-to-guest traffic
+rides the LAN by design (faster, and the data plane survives a
+tailscale outage) -- use the 192.168.1.x addresses inside guests.
+
+## Verifying it all -- docs/verify.md
+
+The kick-the-tires checklist (every check you can run yourself,
+from bookmarks and copy-paste commands) lives in
+[verify.md](./verify.md).
