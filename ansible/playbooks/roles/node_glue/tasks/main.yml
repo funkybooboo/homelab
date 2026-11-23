@@ -41,6 +41,14 @@
     fail_msg: "proxmoxer {{ _proxmoxer_v.stdout }} still < 2.3 (pip overlay lost?)"
 
 # --- observability agents (OPS-11 infra batch) ---
+- name: deb822 prerequisite (the deb822_repository module needs it;
+#  the x86 PVE nodes carry it incidentally, the minimal Pi does not)
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
 - name: Grafana apt repo (promtail lives there)
   ansible.builtin.get_url:
     url: https://apt.grafana.com/gpg.key

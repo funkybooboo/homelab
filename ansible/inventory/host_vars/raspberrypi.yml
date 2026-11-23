@@ -1,9 +1,14 @@
-# raspberrypi -- the arm64 box; QDevice ONLY (plans/issues.md item 2)
+# raspberrypi -- the arm64 box; quorum witness
 ansible_host: 192.168.1.11
 arch: arm64
-role: qdevice
+role: quorum-witness
 mac: d8:3a:dd:45:d3:7e              # carried from the old fleet
 hardware: Raspberry Pi
 constraints:
-  - NEVER hosts guests; never revives as a PVE node
-  - provides corosync quorum via qnetd (v5, OPS-17); today it stays OFF
+  - NEVER hosts guests (zero-guest policy; it exists for quorum)
+  # today it is a FULL PVE member (2026-11-23 reality check): it
+  # runs pve-cluster/pveproxy + mounts pve-shared; the old "stays
+  # OFF / qnetd" note described the v5 OPS-17 TARGET state, not the
+  # live one. node_glue + scraping + the watcher's ping reach it
+  # like any member; its health matters for quorum math (a second
+  # node death after losing the Pi breaks quorum).
