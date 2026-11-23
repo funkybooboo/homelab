@@ -26,6 +26,16 @@ cluster, and the control-plane repo has its on-cluster mirror.
       v3.54.0/bun 1.4.5, bare-metal-Bun per their docs) and the
       operator connects GitHub -> forgejo through its UI; a first
       full sync runs green
+- [ ] The CODEBERG leg returns: the old fleet ran a SECOND
+      gitea-mirror (GitHub -> codeberg, the off-site public
+      mirror). Two paths, in preference order: (1) if the
+      Configuration page accepts a second destination card
+      (Codeberg = Forgejo-type destination, the operator's
+      codeberg token), add it to CT 203 -- one instance, two
+      destinations; (2) if the UI allows only one destination per
+      instance, spin CT 204 with the same role (base-URL
+      parameterized) and keep the old two-instance model.
+      Acceptance: a codeberg repo shows a fresh sync
 
 ## Notes
 
