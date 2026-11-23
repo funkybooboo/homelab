@@ -1,0 +1,86 @@
+# loki -- log store. Promtail on every node ships journald here
+# (node_glue); grafana reads it. Single-node, filesystem, 7d
+# retention (small fleet, keep it boring).
+- name: Grafana apt repo key
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: "0644"
+
+- name: Grafana repo (deb822)
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: [deb]
+    uris: https://apt.grafana.com
+    suites: [stable]
+    components: [main]
+    signed_by: /etc/apt/keyrings/grafana.asc
+    state: present
+
+- name: loki
+  ansible.builtin.apt:
+    name: loki
+    state: present
+    update_cache: true
+
+- name: loki config (minimal single-node, 7d retention)
+  ansible.builtin.copy:
+    dest: /etc/loki/config.yml
+    content: |
+      # managed by make converge (loki role)
+      auth_enabled: false
+      server:
+        http_listen_port: 3100
+      common:
+        path_prefix: /var/lib/loki
+        storage:
+          filesystem:
+            chunks_directory: /var/lib/loki/chunks
+            rules_directory: /var/lib/loki/rules
+        replication_factor: 1
+        ring:
+          kvstore:
+            store: inmemory
+      schema_config:
+        configs:
+          - from: 2024-01-01
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+      limits_config:
+        retention_period: 168h
+      compactor:
+        working_directory: /var/lib/loki/compactor
+        retention_enabled: true
+        delete_request_store: filesystem
+    mode: "0644"
+  notify: restart loki
+
+- name: loki data dirs (the package does not create them; the unit
+        runs as user loki whose primary group is nogroup)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: loki
+    group: nogroup
+    mode: "0755"
+  loop: [/var/lib/loki, /var/lib/loki/chunks, /var/lib/loki/rules, /var/lib/loki/compactor]
+
+- name: loki running + enabled
+  ansible.builtin.service:
+    name: loki
+    state: started
+    enabled: true
+
+- name: verify -- ready endpoint
+  ansible.builtin.uri:
+    url: http://localhost:3100/ready
+    status_code: 200
+  changed_when: false
+  retries: 6
+  delay: 5
+  register: _loki_ready
+  until: _loki_ready.status == 200

@@ -1,0 +1,39 @@
+# prometheus -- metrics scraper. Scrape targets are GENERATED from
+# the fleet (nodes from the pve group + every guest manifest) at
+# converge time, so the fleet is watched as it grows.
+- name: prometheus
+  ansible.builtin.apt:
+    name: prometheus
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: scrape config (data-driven from the manifests + inventory)
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    mode: "0644"
+  notify: reload prometheus
+
+- name: drop-in dir
+  ansible.builtin.file:
+    path: /etc/systemd/system/prometheus.service.d
+    state: directory
+    mode: "0755"
+
+- name: systemd drop-in (Debian's unit hardening uses PrivateUsers,
+        which needs user namespaces -- blocked in unprivileged LXC)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service.d/50-lxc.conf
+    content: |
+      # managed by make converge (prometheus role)
+      [Service]
+      PrivateUsers=no
+    mode: "0644"
+  notify: restart prometheus
+
+- name: prometheus running + enabled
+  ansible.builtin.service:
+    name: prometheus
+    state: started
+    enabled: true

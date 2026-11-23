@@ -1,0 +1,15 @@
+# managed by make converge (prometheus role): targets generated
+# from guests/*.yaml + the pve inventory group.
+# (for-loop form on purpose: regex backrefs like '\1' are octal
+# escapes in Jinja string literals and silently corrupt the render)
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: node
+    static_configs:
+      - targets: [{% for t in (fleet_nodes + (fleet_guests | map(attribute='ip') | list)) %}'{{ t }}:9100', {% endfor %}]

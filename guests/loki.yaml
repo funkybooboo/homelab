@@ -1,0 +1,17 @@
+# loki.yaml -- log store; promtail on every node ships journald here
+# (node_glue). Grafana is its UI, so no serve front.
+name: loki
+vmid: 106
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 512
+disk: 20
+ip: 192.168.1.19
+role: loki
+tailnet: true
+mounts: []
+features: []

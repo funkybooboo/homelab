@@ -1,0 +1,18 @@
+# ntfy.yaml -- the alerting backbone (OPS-8, moved into the infra
+# batch: update summaries + every later story's notifications).
+name: ntfy
+vmid: 103
+state: present
+node: pve-aspires
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 4
+ip: 192.168.1.16
+role: ntfy
+tailnet: true
+tailnet_serve: 8080      # https://ntfy.tail54538d.ts.net
+mounts: []
+features: []

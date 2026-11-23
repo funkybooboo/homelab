@@ -1,0 +1,18 @@
+# grafana.yaml -- dashboards UI; datasources provisioned to
+# prometheus (.17) + loki (.19).
+name: grafana
+vmid: 105
+state: present
+node: pve-aspires
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 1024
+swap: 512
+disk: 4
+ip: 192.168.1.18
+role: grafana
+tailnet: true
+tailnet_serve: 3000      # https://grafana.tail54538d.ts.net
+mounts: []
+features: []

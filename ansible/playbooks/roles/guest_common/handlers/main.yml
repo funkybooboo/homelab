@@ -2,3 +2,8 @@
   ansible.builtin.service:
     name: ssh
     state: reloaded
+
+- name: restart tailscaled
+  ansible.builtin.service:
+    name: tailscaled
+    state: restarted

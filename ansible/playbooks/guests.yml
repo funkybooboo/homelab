@@ -16,6 +16,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  become: false   # group_vars become:true is global; debbie never escalates
   tasks:
     - name: Read guests/*.yaml
       ansible.builtin.set_fact:
@@ -23,6 +24,15 @@
       loop: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/../../guests/*.yaml', wantlist=true) }}"
       loop_control:
         label: "{{ item | basename }}"
+
+    - name: Is a staged PGDATA restore waiting? (gate for the postgres role)
+      ansible.builtin.stat:
+        path: "{{ playbook_dir | dirname | dirname }}/local/staging/pgdata-108.tar.gz"
+      register: _pgdata_stage
+
+    - name: pgdata_staged fact (read by the postgres role)
+      ansible.builtin.set_fact:
+        pgdata_staged: "{{ _pgdata_stage.stat.exists }}"
 
 - name: Converge guests on the cluster
   hosts: pve-thermaltake
@@ -118,6 +128,7 @@
             then echo BOOTSTRAPPED; else exit 1; fi
             # (getent exits 2 for a missing user -- normalize to 1)
       register: _bs_state
+      delegate_to: "{{ item.node }}"   # pct exec works on the CT's OWN node
       until: _bs_state.rc in [0, 1]   # rc=2 while the CT's init is
       retries: 12                     # still booting; retry until it
       delay: 5                        # settles into the real answer
@@ -127,11 +138,15 @@
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Stage the operator's key on the node (pct push reads it there)
+    - name: Stage the operator's key on every node (pct push reads it there)
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/keys/admin.ed25519.pub"
         dest: /tmp/homelab-admin.ed25519.pub
         mode: "0644"
+      loop: "{{ groups['pve'] }}"
+      delegate_to: "{{ item }}"
+      loop_control:
+        label: "{{ item }}"
 
     - name: Bootstrap the operator account (console channel, no root ssh)
       when:
@@ -162,6 +177,7 @@
         pct exec $C -- /bin/chmod 0440 /etc/sudoers.d/nate
         pct exec $C -- /usr/bin/systemctl enable --now ssh
       register: _bootstrap
+      delegate_to: "{{ item.node }}"   # pct exec works on the CT's OWN node
       changed_when: "'CREATED' in _bootstrap.stdout or 'BOOTSTRAP' in _bootstrap.stderr"
       loop: "{{ hostvars['localhost']['guests'] }}"
       loop_control:
@@ -176,6 +192,7 @@
         ansible_host: "{{ item.ip }}"
         ansible_user: nate
         guest_role: "{{ item.role | default(omit) }}"
+        tailnet_serve: "{{ item.tailnet_serve | default(omit) }}"   # model B front
       changed_when: false   # structural runtime inventory, not drift
       loop: "{{ hostvars['localhost']['guests'] }}"
       loop_control:
@@ -183,7 +200,12 @@
 
 - name: Apply common + service roles inside guests
   hosts: homelab_guests
+  become: true     # in-CT sudo is passwordless (bootstrap set it)
   gather_facts: true
+  vars:
+    # fleet addresses for data-driven roles (prometheus targets):
+    fleet_nodes: "{{ groups['pve'] | map('extract', hostvars, 'ansible_host') | list }}"
+    fleet_guests: "{{ hostvars['localhost']['guests'] }}"
   tasks:
     - name: guest_common (packages, good-ssh, operator account)
       ansible.builtin.include_role:

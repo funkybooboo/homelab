@@ -1,0 +1,19 @@
+# prometheus.yaml -- metrics scraper; targets are generated from the
+# manifests at converge time (the whole fleet gets watched as it
+# grows).
+name: prometheus
+vmid: 104
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 512
+disk: 10
+ip: 192.168.1.17
+role: prometheus
+tailnet: true
+tailnet_serve: 9090      # https://prometheus.tail54538d.ts.net
+mounts: []
+features: []

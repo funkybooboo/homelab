@@ -1,0 +1,56 @@
+# adminer -- the DB admin UI: nginx + php-fpm + the Debian adminer
+# package. Talks to postgres (.14) over the LAN.
+- name: nginx + php-fpm + adminer
+  ansible.builtin.apt:
+    name: [nginx, php-fpm, adminer]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify: [reload nginx, restart php-fpm]
+
+- name: php-fpm running + enabled
+  ansible.builtin.service:
+    name: php8.4-fpm
+    state: started
+    enabled: true
+
+- name: adminer site (the only vhost)
+  ansible.builtin.copy:
+    dest: /etc/nginx/sites-available/adminer
+    content: |
+      # managed by make converge (adminer role)
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          server_name _;
+          root /usr/share/adminer;
+          index adminer.php;   # the package entrypoint is adminer.php
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          location ~ \.php$ {
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/run/php/php-fpm.sock;
+          }
+      }
+    mode: "0644"
+  notify: reload nginx
+
+- name: default site off
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: adminer site on
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/adminer
+    state: link
+    src: /etc/nginx/sites-available/adminer
+  notify: reload nginx
+
+- name: nginx running + enabled
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

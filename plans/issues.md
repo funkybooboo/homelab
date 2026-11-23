@@ -30,10 +30,29 @@ OPEN).
    rebuilt; the arm/disarm maintenance runbook + node-affinity rules
    are OPS-6 deliverables. *Unblocks OPS-6 + every placement behavior
    after.*
-4. **Tailscale/TLS** -- ANSWERED 2026-11-06: **(a)** one subnet
-   router + `tailscale serve` only on the TLS-worthy hosts. The old
-   ~28-node per-guest-tailscale model is not rebuilt. *Unblocks OPS-7
-   + every USER story's access path.*
+4. **Tailscale/TLS** -- ANSWERED 2026-11-06, REVISED 2026-11-22
+   (operator): the model is **(B) per-service tailscale + serve
+   fronts, as code** -- every service guest enrolls in the tailnet
+   (MagicDNS name + tailnet IP) and UI-facing services get an https
+   serve front (https://<name>.tail54538d.ts.net, automatic LE
+   cert). The old fleet's graveyard failure mode is mitigated by:
+   enrollment via a preauthorized reusable auth key minted through
+   the tailscale API (local/tailscale-authkey.env, 90-day expiry
+   re-checked by make update), stable manifest-driven CT names, and
+   tailscaled in userspace-networking mode (no /dev/net/tun, no
+   pmxcfs config surgery in unprivileged CTs). The subnet router on
+   thermaltake STAYS for node UIs, appliances, tailscale-less boxes;
+   LAN access unchanged (fronts only add). Accepted cost: device
+   purges stay console-only on this tailnet (per-device API
+   endpoints 404), so destroy/recreate cycles leave orphan entries
+   until a periodic console purge.
+   FOLLOW-UP 2026-11-22 (operator surfaced the docs): an os-tailscale
+   community plugin exists since OPNsense v24.711 (GUI-installable,
+   System > Firmware > Plugins > community) -- the old "no plugin,
+   don't touch the gateway" fact is stale. Viable now: join the
+   router to the tailnet for off-LAN gateway management, and
+   optionally dual-advertise the 192.168.1.0/24 route (thermaltake
+   today) for redundancy. Decision pending the operator.
 5. **Backups** -- ANSWERED 2026-11-06: **PBS** VM, datastore on
    truenas (operator provisions the truenas access for it). vzdump
    remains the interim baseline until OPS-14's restore drill passes.
@@ -149,6 +168,22 @@ OPEN).
    vaultwarden suffice. DECIDED: DEFER (someday) -- recorded as
    demand; revisit when household multi-user web access becomes
    real.
+
+15. **Data architecture** -- ANSWERED 2026-11-22 (operator):
+STRUCTURED APP DATA CENTRALIZES in the shared postgres (CT 101) --
+one cluster, **database-per-service, role-per-service** (least
+privilege, scram, no app superusers). Services with postgres support
+land there as their stories run: n8n, freshrss, linkwarden, forgejo,
+superset (when queued). DELIBERATE EXCEPTIONS: vaultwarden stays on
+SQLite ON PURPOSE (tier-0: its availability must not depend on
+shared infra; dumped + B2'd independently); ntfy's cache is transient;
+media servers keep embedded DBs (metadata = derived state; the FILES
+on NFS are the data); prometheus TSDB + loki have purpose-built
+stores. Grafana config stays SQLite with dashboards as provisioning
+files in git (the repo is the backup). Apache Superset is the
+planned data-viewing layer (own pg metadata db + valkey cache when
+queued); it reaches per-service databases as sources for
+cross-service dashboards.
 
 ## Self-audit notes
 

@@ -1,6 +1,10 @@
-# node_glue -- what a PVE node needs to be ANSIBLE-MANAGED: the
-# proxmoxer python lib (the community.proxmox modules execute on the
-# node over ssh, so the node needs the API client library).
+# node_glue -- what a PVE node needs to be ANSIBLE-MANAGED + the
+# observability agents + the update plan (OPS-23):
+#  - proxmoxer python lib (community.proxmox modules run ON the node)
+#  - node_exporter (prometheus scrapes the node)
+#  - promtail (journald -> loki; grafana repo package)
+#  - unattended-upgrades, security-only (NEEDRESTART AUTO STAYS OFF
+#    on nodes: cluster services restart only with the node)
 #
 # TENSION, recorded: Debian trixie ships proxmoxer 2.2.0, but
 # community.proxmox 2.1.0's token-auth path requires >= 2.3. The apt
@@ -35,3 +39,129 @@
   ansible.builtin.assert:
     that: "_proxmoxer_v.stdout is version('2.3', '>=')"
     fail_msg: "proxmoxer {{ _proxmoxer_v.stdout }} still < 2.3 (pip overlay lost?)"
+
+# --- observability agents (OPS-11 infra batch) ---
+- name: Grafana apt repo (promtail lives there)
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: "0644"
+
+- name: Grafana repo (deb822)
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: [deb]
+    uris: https://apt.grafana.com
+    suites: [stable]
+    components: [main]
+    signed_by: /etc/apt/keyrings/grafana.asc
+    state: present
+
+- name: Old-fleet manual node_exporter absent (it shadows :9100 and
+        apt never updates it; the Debian package replaces it)
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: stopped
+    enabled: false
+  failed_when: false   # absent units are fine
+
+- name: Old exporter unit file + binary absent
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/node_exporter.service
+    - /usr/local/bin/node_exporter
+
+- name: node_exporter + promtail (forced cache refresh -- the grafana
+        repo was JUST added; cache_valid_time would skip it)
+  ansible.builtin.apt:
+    name: [prometheus-node-exporter, promtail]
+    state: present
+    update_cache: true
+
+- name: promtail data dir (grafana packages never create it)
+  ansible.builtin.file:
+    path: /var/lib/promtail
+    state: directory
+    owner: promtail
+    group: nogroup   # the package user's primary group
+    mode: "0755"
+
+- name: Old-fleet promtail fossils absent (the root-owned positions.yaml
+        + temp dot-files from the August era -- modern kernels deny
+        O_CREAT on existing files the opener doesn't own --
+        fs.protected_regular -- so promtail crash-loops until they're gone)
+  ansible.builtin.find:
+    paths: /var/lib/promtail
+    patterns: ["positions.yaml*", ".positions.yaml*"]
+    hidden: true
+  register: _fossils
+
+- name: Remove them
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ _fossils.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: promtail config (journald -> loki, the .19 infra guest)
+  ansible.builtin.copy:
+    dest: /etc/promtail/config.yml
+    content: |
+      # managed by make converge (node_glue)
+      server:
+        http_listen_port: 9080
+      positions:
+        filename: /var/lib/promtail/positions.yaml
+      clients:
+        - url: http://192.168.1.19:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: journal
+          journal:
+            json: false
+            max_age: 12h
+            labels:
+              host: {{ inventory_hostname }}
+              job: node-journal
+          relabel_configs:
+            - source_labels: ["__journal__systemd_unit"]
+              target_label: unit
+    mode: "0644"
+  notify: restart promtail
+
+- name: promtail can read the journal (the package never adds the
+        group; without it the journal scrape silently yields nothing)
+  ansible.builtin.user:
+    name: promtail
+    groups: systemd-journal
+    append: true
+  notify: restart promtail
+
+- name: agents running + enabled
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [prometheus-node-exporter, promtail]
+
+# --- the update plan (OPS-23), tier B ---
+- name: unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Security-only unattended-upgrades (51* wins over stock 50*)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/51homelab-security-only
+    content: |
+      // managed by make converge (node_glue, OPS-23)
+      // PVE packages NEVER auto-apply (pve-no-subscription mixes
+      // everything; full upgrades happen in the weekly make update).
+      Unattended-Upgrade::Origins-Pattern {
+              "origin=Debian,codename=${distro_codename}-security";
+              "origin=Debian,codename=${distro_codename},label=Debian-Security";
+      };
+      Unattended-Upgrade::Automatic-Reboot "false";
+    mode: "0644"

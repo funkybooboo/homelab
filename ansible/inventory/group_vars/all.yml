@@ -26,12 +26,13 @@ reserved:
 # --- ansible connection model (v2 skeleton, OPS-7) ---
 # Humans operate; assistants help under the same identity. NO root
 # login anywhere: ansible connects as the operator's key-only
-# account (nate) and escalates via passwordless sudo. The
-# truenas/opnsense appliances are API-driven (no ssh escalation) --
-# see their host_vars.
+# account (nate). Escalation is EXPLICIT PER PLAY (become: true on
+# the plays that touch nodes/CTs where sudo is passwordless) -- NEVER
+# a global ansible_become: inventory vars outrank play keywords, so
+# a global become breaks every localhost/debbie task with a sudo
+# prompt. The truenas/opnsense appliances are API-driven (no ssh
+# escalation) -- see their host_vars.
 ansible_user: nate
-ansible_become: true
-ansible_become_method: sudo
 
 # PVE API (community.proxmox guest lifecycle): the operator's PVE
 # user + a revocable token. The token SECRET lives in

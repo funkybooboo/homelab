@@ -101,14 +101,25 @@ service; `make converge`/`make verify` become real.
 [OPS-7 the IaC skeleton](./stories/OPS-7-iac-skeleton.md)
 (done -- shipped 2026-11-22: manifest -> CT -> running service,
 idempotent re-run proven),
-[OPS-8 ntfy alerting](./stories/OPS-8-ntfy-alerting.md),
+[OPS-8 ntfy alerting](./stories/OPS-8-ntfy-alerting.md)
+(infra live; alert wiring lands with the service stories),
 [OPS-9 the forgejo mirror](./stories/OPS-9-forgejo-mirror.md),
-[OPS-10 postgresql](./stories/OPS-10-postgresql.md),
-[OPS-11 the monitoring pair](./stories/OPS-11-monitoring-pair.md),
+[OPS-10 postgresql](./stories/OPS-10-postgresql.md)
+(done -- the infra batch 2026-11-22: postgres + adminer, the old
+fleet's forgejo + freshrss databases restored + live),
+[OPS-11 the monitoring pair](./stories/OPS-11-monitoring-pair.md)
+(infra live: prometheus + grafana + loki; dashboards/alerts land as
+used),
+[OPS-23 the update + maintenance model](./stories/OPS-23-update-model.md)
+(done -- every guest born patchable, make update real),
 [USER-1 vaultwarden restore](./stories/USER-1-vaultwarden-restore.md).
 
-Ends with: one service = one YAML + one role, the critical five
-built fresh and verified live.
+Ended with: the infra layer (postgres/adminer/ntfy/prometheus/
+grafana/loki) built fresh from manifests with https bookmarks per
+service (model B, issues item 4 revision), one service = one YAML +
+one role, and the update/maintenance model in
+[docs/maintenance.md](../docs/maintenance.md) + the data policy in
+[docs/data.md](../docs/data.md).
 
 ## v3: Curation + media fleet
 

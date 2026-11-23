@@ -1,0 +1,103 @@
+# maintenance.yml -- the patch pass (`make update`): tier-gated apt
+# dist-upgrade everywhere, NEVER reboots, surfaces reboot-required
+# flags loudly (the weekly operator habit, docs/maintenance.md).
+# Also checks the tailscale auth key expiry (model B enrollment
+# depends on it).
+- name: Load + register guest manifests (slim; no node work needed)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false   # never escalate on debbie (group_vars become:true is global)
+  tasks:
+    - name: Read guests/*.yaml
+      ansible.builtin.set_fact:
+        guests: "{{ guests | default([]) + [lookup('ansible.builtin.file', item) | from_yaml] }}"
+      loop: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/../../guests/*.yaml', wantlist=true) }}"
+      loop_control:
+        label: "{{ item | basename }}"
+
+    - name: Register present guests
+      when: item.state | default('present') == 'present'
+      ansible.builtin.add_host:
+        name: "{{ item.name }}"
+        groups: homelab_guests
+        ansible_host: "{{ item.ip }}"
+        ansible_user: nate
+      changed_when: false
+      loop: "{{ guests }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+- name: Tailscale auth key health (model B -- guests enroll with it)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false   # never escalate on debbie (group_vars become:true is global)
+  tasks:
+    - name: Key expiry (API read)
+      ansible.builtin.uri:
+        url: "https://api.tailscale.com/api/v2/tailnet/-/keys/{{ lookup('ansible.builtin.env', 'TS_AUTH_KEY_ID') }}"
+        headers:
+          Authorization: "Bearer {{ lookup('ansible.builtin.env', 'TAILSCALE_API_TOKEN') }}"
+        status_code: 200
+      register: _key
+      failed_when: false
+      changed_when: false
+
+    - name: Warn when the preauth key expires within 14 days
+      when:
+        - _key.status == 200
+        - "(_key.json.expires | regex_replace('Z$', '+00:00') | to_datetime('%Y-%m-%dT%H:%M:%S%z')).timestamp() | int <
+          now(utc=True).timestamp() | int + 1209600"
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: tailscale preauth key expires {{ _key.json.expires }} --
+          re-mint via scripts/mint-tailscale-key.sh so new guests can enroll
+
+- name: Patch pass -- guests (tier A)
+  hosts: homelab_guests
+  become: true     # in-CT sudo is passwordless
+  gather_facts: true
+  tasks:
+    - name: apt dist-upgrade
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Reboot-required flag (CTs -- services restarted live by needrestart)
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: _rr
+      changed_when: false
+
+    - name: Report guest reboot flags
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: REBOOT REQUIRED (host kernel updated -- handled at the NODE level)"
+      when: _rr.stat.exists
+
+- name: Patch pass -- nodes (tier B)
+  hosts: pve
+  become: true
+  gather_facts: false
+  tasks:
+    - name: apt dist-upgrade (includes PVE packages -- the weekly look)
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Reboot-required flag
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: _rr
+      changed_when: false
+      check_mode: false
+
+    - name: Report node reboot flags loudly
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }}: *** REBOOT REQUIRED *** --
+          run the node reboot runbook (docs/maintenance.md): one node
+          at a time, guests recover via onboot
+      when: _rr.stat.exists

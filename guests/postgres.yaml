@@ -1,0 +1,17 @@
+# postgres.yaml -- the shared DB layer (OPS-10). PGDATA restores
+# from the tier-0 extraction (staged by scripts/stage-pgdata.sh).
+name: postgres
+vmid: 101
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 2048
+swap: 512
+disk: 10
+ip: 192.168.1.14
+role: postgres
+tailnet: true            # MagicDNS name for psql from tailnet devices
+mounts: []
+features: []

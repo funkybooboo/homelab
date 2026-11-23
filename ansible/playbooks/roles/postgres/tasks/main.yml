@@ -1,0 +1,121 @@
+# postgres -- the shared DB layer. Fresh PG 17 from Debian; PGDATA
+# restores from the tier-0 extraction when the operator stages it
+# (scripts/stage-pgdata.sh -> local/staging/pgdata-108.tar.gz).
+# Without the tarball: a fresh empty cluster (still fully usable).
+- name: postgresql 17
+  ansible.builtin.apt:
+    name: [postgresql, python3-psycopg2]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify: restart postgres
+
+- name: en_US.UTF-8 locale (the old cluster's LC_COLLATE; the minimal
+        template never generates it -- without it the restored PGDATA
+        refuses to serve with 'database locale is incompatible')
+  ansible.builtin.shell: |
+    set -eu
+    if ! locale -a | grep -qi '^en_US.utf8'; then
+      sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+      /usr/sbin/locale-gen
+      echo GENERATED
+    fi
+  register: _locale
+  changed_when: "'GENERATED' in _locale.stdout"
+  notify: restart postgres
+
+- name: Restore gate (computed in the localhost play; the controller
+        owns the staged tarball -- never escalate on debbie)
+  ansible.builtin.set_fact:
+    pgdata_staged: "{{ hostvars['localhost']['pgdata_staged'] | default(false) }}"
+
+- name: Restore marker present? (restore runs exactly once)
+  ansible.builtin.stat:
+    path: /var/lib/postgresql/.restored-from-108
+  register: _pgdata_done
+  changed_when: false
+
+- name: Stage the tarball into the guest
+  when: pgdata_staged and not _pgdata_done.stat.exists
+  ansible.builtin.copy:
+    src: "{{ playbook_dir | dirname | dirname }}/local/staging/pgdata-108.tar.gz"
+    dest: /tmp/pgdata-108.tar.gz
+    mode: "0600"
+
+- name: Restore the old fleet's PGDATA (17/main from dump 108)
+  when: pgdata_staged and not _pgdata_done.stat.exists
+  block:
+    - name: stop postgres for the swap
+      ansible.builtin.service:
+        name: postgresql
+        state: stopped
+
+    - name: move the fresh cluster aside
+      ansible.builtin.command:
+        argv: [/usr/bin/mv, /var/lib/postgresql/17/main, /var/lib/postgresql/17/main.fresh]
+
+    - name: extract the staged PGDATA (tarball holds 17/main)
+      ansible.builtin.command:
+        argv: [/usr/bin/tar, -xzf, /tmp/pgdata-108.tar.gz, -C, /var/lib/postgresql/]
+
+    - name: ownership + permissions
+      ansible.builtin.command:
+        argv: [/bin/chown, -R, postgres:postgres, /var/lib/postgresql/17/main]
+      changed_when: false
+
+    - name: data dir mode
+      ansible.builtin.file:
+        path: /var/lib/postgresql/17/main
+        state: directory
+        mode: "0700"
+        owner: postgres
+        group: postgres
+
+    - name: marker (restore never repeats)
+      ansible.builtin.file:
+        path: /var/lib/postgresql/.restored-from-108
+        state: touch
+        mode: "0644"
+      changed_when: false
+
+    - name: start postgres on the restored data
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+
+- name: listen on the LAN (lineinfile survives the restored conf)
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/17/main/postgresql.conf
+    regexp: "^#?listen_addresses"
+    line: "listen_addresses = '*'"
+  notify: restart postgres
+
+- name: pg_hba -- LAN hosts use scram
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/17/main/pg_hba.conf
+    line: "host    all             all             192.168.1.0/24            scram-sha-256"
+    insertbefore: '^#.*IPv6'
+  notify: restart postgres
+
+- name: postgres running + enabled
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: the operator's login (adminer + psql; createrole/createdb, no
+        superuser -- the operator signs in, services get their own
+        per-service roles when their stories run)
+  community.postgresql.postgresql_user:
+    name: nate
+    password: "{{ lookup('ansible.builtin.env', 'PG_OPERATOR_PASSWORD') }}"
+    role_attr_flags: CREATEDB,CREATEROLE,LOGIN
+    state: present
+  become_user: postgres
+  become: true
+  no_log: true
+
+- name: verify -- pg_isready
+  ansible.builtin.command:
+    argv: [/usr/bin/pg_isready, -h, localhost]
+  changed_when: false

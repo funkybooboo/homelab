@@ -1,41 +1,30 @@
 # Documentation index
 
-Two tiers of truth here: what describes the fleet as it will be, and
-what describes the old fleet as it was (the old CTs are cleaned out,
-not revived -- that tier is the as-was reference for the v2 rebuild).
-The historical archive of the wind-down era lives in
-git history, not the tree.
+Two tiers: what describes the fleet NOW, and the old-fleet archive
+(moved to [legacy/](./legacy/) 2026-11-22 when the v2 docs landed).
 
-## Current (describe what exists / what we run against)
+## Current
 
-- [`overview.md`](./overview.md) -- the one-page picture (node table
-  predates the wind-down; re-anchored during v2)
-- [`network.md`](./network.md) -- the LAN + tailnet as mermaid diagrams:
-  now vs planned topologies, the access model, boot-order law
-- [`data-to-extract.md`](./data-to-extract.md) -- the LIVE tiered
-  extraction inventory (`scripts/extract-legacy.sh` walks it); tier-0
-  copy must exist outside the truenas pool before anything
-  destructive
-- [`backups.md`](./backups.md) -- vzdump + snapshots + B2 (still true;
-  PBS lands at OPS-14)
-- [`notifications.md`](./notifications.md) + [`ntfy-flow.md`](./ntfy-flow.md)
-  -- the ntfy push pipeline
-- [`https.md`](./https.md) -- per-node TLS + the per-CT `tailscale
-  serve` machinery
-- [`ha-recovery.md`](./ha-recovery.md) -- the HA error-state dance (the
-  revival evening's runbook for stuck CTs)
-- [`laptop-nodes.md`](./laptop-nodes.md) -- lid + screen-off setup
-- [`nextjs-behind-tls-proxy.md`](./nextjs-behind-tls-proxy.md) -- the
-  INTERNAL_API_URL app trap
+- [`access.md`](./access.md) -- the sign-in table for every guest
+  (URLs, credentials, first-use notes)
+- [`data.md`](./data.md) -- the data architecture: one postgres,
+  database-per-service, what centralizes + what deliberately does
+  not, the practices (credentials, migrations, layered backups)
+- [`maintenance.md`](./maintenance.md) -- update tiers, the
+  converge/update/verify loop, the backup baseline, the node reboot
+  runbook
+- [`network.md`](./network.md) -- the LAN + tailnet access layer
+  (mermaid diagrams), boot-order law
+- [`backups.md`](./backups.md) -- vzdump + snapshots + B2 (PBS lands
+  at OPS-14)
+- [`data-to-extract.md`](./data-to-extract.md) -- the extraction
+  reference (`scripts/extract-legacy.sh`); dumps remain on
+  pve-backups so re-extracts stay possible
 
-## Old-fleet as-built (as-was reference for the v2 rebuild; IPs were
-## 192.168.8.x then)
+## Archive
 
-- [`cluster.md`](./cluster.md) -- cluster + HA + the Pi rule
-- [`nodes.md`](./nodes.md) -- the 5 nodes + truenas (pre-shutdown
-  placements)
-- [`services.md`](./services.md) -- the 23-CT July catalog (the final
-  state added CTs 130-134)
-- [`storage.md`](./storage.md) -- NFS + the jellyfin media mounts
-- [`observability.md`](./observability.md) -- the observability stack
-  as-built 2026-08-30
+- [`legacy/`](./legacy/) -- the old fleet's operational docs
+  (cluster, HA quirks, TLS workflows, the 23-CT catalog, ...) as the
+  phase-0 record. History, not guidance.
+- `services/` (repo root) -- old-fleet assets + restore references;
+  see its README.

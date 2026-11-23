@@ -1,0 +1,35 @@
+# ntfy -- the alerting backbone (OPS-8): open publish on the LAN +
+# tailnet; topics are the access control (per-service story codes
+# mint topic tokens later when ACLs are wanted).
+- name: ntfy
+  ansible.builtin.apt:
+    name: ntfy
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: server config
+  ansible.builtin.copy:
+    dest: /etc/ntfy/server.yml
+    content: |
+      # managed by make converge (ntfy role)
+      # :8080 because the Debian unit runs unprivileged (no
+      # CAP_NET_BIND_SERVICE); the tailnet serve front owns 443 and
+      # the bookmarked name is the https one.
+      base-url: "https://ntfy.tail54538d.ts.net"
+      listen-http: ":8080"
+      behind-proxy: false
+    mode: "0644"
+  notify: restart ntfy
+
+- name: ntfy running + enabled
+  ansible.builtin.service:
+    name: ntfy
+    state: started
+    enabled: true
+
+- name: verify -- health endpoint
+  ansible.builtin.uri:
+    url: http://localhost:8080/v1/health
+    status_code: 200
+  changed_when: false

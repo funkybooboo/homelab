@@ -58,3 +58,105 @@
     name: ssh
     state: started
     enabled: true
+
+# --- the update plan (OPS-23): every guest born patchable ---
+- name: Update plan packages (unattended-upgrades, needrestart, node_exporter)
+  ansible.builtin.apt:
+    name: [unattended-upgrades, needrestart, prometheus-node-exporter]
+    state: present
+
+- name: Security-only unattended-upgrades (the 51* file wins over the stock 50*)
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/51homelab-security-only
+    content: |
+      // managed by make converge (guest_common, OPS-23)
+      // v2 refinement of the old fleet's full-update allowlist:
+      // full upgrades happen in the weekly `make update` pass,
+      // unattended stays limited to what is safe to apply blind.
+      Unattended-Upgrade::Origins-Pattern {
+              "origin=Debian,codename=${distro_codename}-security";
+              "origin=Debian,codename=${distro_codename},label=Debian-Security";
+      };
+      Unattended-Upgrade::Automatic-Reboot "false";
+    mode: "0644"
+
+- name: needrestart auto (CTs restart services live; old-fleet locked decision)
+  ansible.builtin.copy:
+    dest: /etc/needrestart/conf.d/homelab.conf
+    content: |
+      # managed by make converge (guest_common, OPS-23): a service
+      # restart blip at 03:30 is accepted; a CT never needs a reboot.
+      $nrconf{restart} = 'a';
+    mode: "0644"
+
+- name: node_exporter running + enabled
+  ansible.builtin.service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: true
+
+# --- the access layer, model B (issues item 4, revised 2026-11-22):
+# every guest enrolls in the tailnet; a manifest tailnet_serve port
+# gets an https serve front (https://<name>.tail54538d.ts.net) ---
+- name: Tailscale apt repo (official, per-release)
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    types: [deb]
+    uris: https://pkgs.tailscale.com/stable/debian
+    suites: ["{{ ansible_distribution_release }}"]
+    components: [main]
+    signed_by: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
+    state: present
+
+- name: tailscale installed (forced refresh -- the repo was just added)
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+- name: userspace networking (no /dev/net/tun in unprivileged CTs;
+        inbound + serve fronts work; outbound rides the LAN)
+  ansible.builtin.copy:
+    dest: /etc/default/tailscaled
+    content: |
+      # managed by make converge (guest_common): model B, issues 4.
+      # PORT must stay: the unit runs --port=${PORT} and an empty
+      # expansion is a flag error that crashes the service.
+      PORT=41641
+      FLAGS="--tun=userspace-networking"
+    mode: "0644"
+  notify: restart tailscaled
+
+- name: tailscaled running + enabled
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Enrolled? (probe; tailscale status fails when logged out)
+  ansible.builtin.command:
+    argv: [/usr/bin/tailscale, status]
+  register: _ts_state
+  changed_when: false
+  failed_when: _ts_state.rc not in [0, 1]
+
+- name: Enroll with the preauth key (once per guest)
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/tailscale
+      - up
+      - --authkey={{ lookup('ansible.builtin.env', 'TS_AUTH_KEY') }}
+      - --hostname={{ inventory_hostname }}
+  when: _ts_state.rc != 0
+  no_log: true
+
+- name: https serve front (manifest tailnet_serve; re-apply is a no-op)
+  when: tailnet_serve is defined
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/tailscale
+      - serve
+      - --bg
+      - --https=443
+      - http://localhost:{{ tailnet_serve }}
+  changed_when: false   # serve state is tailscaled's, not ansible's

@@ -1,8 +1,10 @@
-# test.yaml -- the OPS-7 end-to-end proof guest: manifest -> running
-# service (nginx serving a proof page) via `make converge`.
+# test.yaml -- RETIRED 2026-11-22: the OPS-7 proof guest (manifest ->
+# running nginx page -> https front) did its job; the infra batch is
+# the new proof. state: absent exercises the deprovision path; the
+# story text keeps the history.
 name: test
 vmid: 299
-state: present
+state: absent
 node: pve-thermaltake
 template: debian-13-standard_13.6-1_amd64.tar.zst
 storage: pve-shared
@@ -12,5 +14,7 @@ swap: 512
 disk: 4
 ip: 192.168.1.50
 role: test_service
+tailnet: true
+tailnet_serve: 80        # https://test.tail54538d.ts.net
 mounts: []
 features: []

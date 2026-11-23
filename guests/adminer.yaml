@@ -1,0 +1,17 @@
+# adminer.yaml -- the DB admin UI (OPS-10 scope addition).
+name: adminer
+vmid: 102
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 2
+ip: 192.168.1.15
+role: adminer
+tailnet: true
+tailnet_serve: 80        # https://adminer.tail54538d.ts.net
+mounts: []
+features: []

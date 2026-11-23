@@ -4,15 +4,23 @@ As the operator, I want prometheus + grafana watching the rebuild from
 arc v2 onward, so that the fleet is observable while it is being
 rebuilt, not only after.
 
-**Status**: planned
+**Status**: in progress (the pair + loki live 2026-11-22; dashboards + alerts land as used)
 **Arc**: v2
 
 ## Acceptance criteria
 
-- [ ] prometheus + grafana deployed from guest manifests; pve-exporter
-      scrape targets the new cluster
+- [x] prometheus + grafana deployed from guest manifests -- DONE
+      2026-11-22: prometheus (vmid 104, .17, aspiree15) + grafana
+      (vmid 105, .18, aspires) + loki added to scope (vmid 106, .19,
+      thermaltake); scrape targets are GENERATED from guests/*.yaml
+      + the pve inventory at converge (12 targets UP); promtail on
+      every node ships journald to loki (node_glue; the fs.protected_
+      regular fossil + journal-group traps are recorded in the repo)
 - [ ] Dashboards: node health, guest inventory, NFS/truenas basics
-- [ ] Alert routing into ntfy (OPS-8)
+      -- datasources provisioned (prometheus + loki in grafana);
+      dashboards build in the UI (old grafana data = dump 123 if a
+      restore is wanted)
+- [ ] Alert routing into ntfy (OPS-8) -- pending the alert wiring
 
 ## Notes
 
