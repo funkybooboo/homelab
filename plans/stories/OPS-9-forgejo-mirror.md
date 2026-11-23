@@ -5,23 +5,27 @@ As the operator, I want my personal forgejo hub back -- 17 accounts,
 read-mirror) -- so that the quarter's git history lives on the new
 cluster, and the control-plane repo has its on-cluster mirror.
 
-**Status**: building
+**Status**: sync layer building (hub itself is live and operator-verified)
 **Arc**: v2
 
 ## Acceptance criteria
 
-- [ ] forgejo deployed from a guest manifest; the restored DB (17
+- [x] forgejo deployed from a guest manifest; the restored DB (17
       users incl. admin nate) + 315 repo dirs from the 107 dump live
       on it; schema migrated forward by the new binary
-- [ ] Operator logs in with the OLD credentials; a class repo spot
-      check browses; the homelab mirror (funkybooboo/homelab) pulls on
-      schedule -- GitHub stays canonical (the repo must survive the
-      cluster it controls)
+- [x] Operator logs in with the OLD credentials; a class repo spot
+      check browses (operator-verified 2026-11-23)
 - [ ] The 32 mirror-only repos (DB rows without files, the
-      Oct-17/Nov-21 gap) recover: all 32 are mirror=true, so they
-      re-pull; any that need an admin nudge are listed
-- [ ] Serve front + observability from birth (promtail, scrape, the
-      watcher's front check)
+      Oct-17/Nov-21 gap) recover via the sync layer; any that need
+      an admin nudge are listed
+- [x] Serve front + observability from birth (promtail, scrape, the
+      watcher's front check) -- plus two API tokens now held in
+      local/ (forgejo-token.env user-scope, forgejo-admin-token.env
+      admin) for the sync layer and the future push-to-apply runner
+- [ ] gitea-mirror deployed (CT 203, RayLabsHQ upstream, pinned
+      v3.54.0/bun 1.4.5, bare-metal-Bun per their docs) and the
+      operator connects GitHub -> forgejo through its UI; a first
+      full sync runs green
 
 ## Notes
 
@@ -47,3 +51,26 @@ work over https; the class is over).
 Old forgejo 15.0.4 (schema 305) -> pinned v17.0.2 (codeberg ships
 prebuilt amd64, unlike vaultwarden's upstream); migrations run
 forward on first boot.
+
+SYNC LAYER DECISION (2026-11-23, operator): the old fleet's GitHub
+-> forgejo sync never rode forgejo-native pull mirrors -- the
+operator ran RayLabsHQ/gitea-mirror (push-based, auto-discovers new
+GitHub repos). The restored DB confirms it: mirror rows frozen
+mid-July while push-driven repo activity ran to Oct 19. Native is
+dormant here too (the update_mirrors cron fired by admin API was a
+silent no-op; 170 mirrors due, zero pulled) -- so the new hub keeps
+the same division of labor: forgejo serves, gitea-mirror syncs
+(CT 203, guests/gitea-mirror.yaml, bare-metal Bun, secrets
+generated only-while-absent because a regenerated ENCRYPTION_SECRET
+makes stored tokens unreadable). Native mirror rows are left as
+legacy state; the homelab mirror created 2026-11-23 via the migrate
+API (funkybooboo/homelab, 8h interval) stays -- it costs nothing
+and a native pull is harmless alongside pushes.
+
+TRAPS WORTH KEEPING: forgejo's FORGEJO__ env overrides are IGNORED
+by the runtime when --config is passed (proven live); a pgdata-restored
+DB is postgres-owned and migrations fail until a per-relkind DO-block
+reassigns user objects (REASSIGN OWNED BY postgres is impossible);
+forgejo rewrites app.ini post-migration (ReadWritePaths needed in a
+hardened unit); apt auto-start crash-loops tailscaled in fresh CTs
+and trips systemd's start limit (guest_common drop-in fixes it).

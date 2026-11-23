@@ -1,0 +1,7 @@
+# gitea_mirror handlers -- the marker-gated build notifies a plain
+# restart (no reload concept: bun serves one process).
+- name: restart gitea-mirror
+  ansible.builtin.systemd:
+    name: gitea-mirror
+    state: restarted
+    daemon_reload: true

@@ -1,0 +1,25 @@
+# gitea-mirror.yaml -- OPS-9 sync layer: the GitHub -> forgejo
+# syncer the operator ran in the old fleet (RayLabsHQ/gitea-mirror).
+# Chosen over forgejo-native pull mirrors for AUTO-DISCOVERY: new
+# GitHub repos mirror themselves; native needs a manual step per
+# repo. The hub's own mirror cron is dormant (mirror rows frozen
+# mid-July in the 107 DB while push-driven activity ran to Oct 19;
+# the update_mirrors cron proved a silent no-op on v17 too) -- so
+# the sync rides on the tool that always carried it.
+name: gitea-mirror
+vmid: 203
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: local-lvm      # node-local; lvmthin can't host vztmpl so the
+ostemplate: pve-shared:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
+cores: 2
+memory: 1024      # the sync pass clones repos one at a time
+swap: 1024
+disk: 15          # app + sqlite + one repo's tmp clone at a time
+ip: 192.168.1.53
+role: gitea_mirror
+tailnet: true
+tailnet_serve: 4321     # https://gitea-mirror.tail54538d.ts.net
+mounts: []
+features: [nesting]

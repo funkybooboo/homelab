@@ -37,3 +37,10 @@ RESTORE NOTE 2026-11-23: the old fleet's assets (services/) were
    freshrss story lands, pull the operator's feed list from history:
    `git log --oneline -- services/freshrss/feeds.opml` then
    `git show <commit>:services/freshrss/feeds.opml`.
+
+REVISED 2026-11-23 (completeness audit, operator kept everything):
+n8n and linkwarden moved OUT of this umbrella into their own stories
+(USER-6, USER-7); the other old-fleet keeps followed (USER-8 through
+USER-13 + OPS-24 -- see the roadmap's v3 section). This story keeps
+the tier-3 browser tools (it-tools, searxng, excalidraw, drawio) and
+the curation decision itself.

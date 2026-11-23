@@ -140,16 +140,42 @@ one role, and the update/maintenance model in
 REVISED 2026-11-22 (the plan shift's final form): nothing stale is
 stopped because nothing stale is built -- the curated list
 (~12-15, issues item 6) is enforced at BUILD TIME. v3 adds the rest
-of the curated services (USER-3) and the media fleet (USER-2),
-verified on its GPU node (thermaltake, CPU-decode fallback per the
-guest-mobility design).
+of the curated services and the media fleet, verified on its GPU
+node (thermaltake, CPU-decode fallback per the guest-mobility
+design).
+
+REVISED 2026-11-23 (operator directive, the completeness audit): a
+two-hour old-fleet inventory (data-to-extract table + the 187
+surviving vzdumps) found nine old services with recoverable data
+and NO story. The operator kept ALL of them -- one story each now
+(they outgrow USER-3's umbrella, which stays for the tier-3
+browser tools + the curation decision):
 
 [USER-2 the media fleet](./stories/USER-2-media-fleet.md),
-[USER-3 daily tools](./stories/USER-3-daily-tools.md).
+[USER-3 daily tools](./stories/USER-3-daily-tools.md),
+[USER-6 n8n](./stories/USER-6-n8n-restore.md),
+[USER-7 linkwarden](./stories/USER-7-linkwarden-restore.md),
+[USER-8 omnivore](./stories/USER-8-omnivore-restore.md)
+(upstream dead; frozen-pin caveat accepted),
+[USER-9 opengist](./stories/USER-9-opengist-restore.md),
+[USER-10 jupyter](./stories/USER-10-jupyter-notebooks.md),
+[USER-11 bichon mail archive](./stories/USER-11-bichon-mail-archive.md),
+[USER-12 protonmail-bridge](./stories/USER-12-protonmail-bridge.md)
+(pairs with bichon),
+[USER-13 speedtest-tracker](./stories/USER-13-speedtest-tracker.md),
+[OPS-24 cronmaster port](./stories/OPS-24-cronmaster-port.md)
+(job dispositions, not the tool).
+
+Also amended: [USER-5 firefox sync](./stories/USER-5-firefox-sync.md)
+carries the data-loss warning (old CT 131 has no dump and was never
+extracted; B2 check is its opening move) per the operator's
+keep-but-future directive. The two unidentified old CTs (110, 116,
+Sept-26 dumps only) are presumed stopped templates; resurrect on
+demand if the operator remembers otherwise.
 
 Ends with: the curated list running and documented; the uncurated
-stay as extraction tarballs + `services/` references, cheap to
-resurrect when a real need appears.
+stay as dumps + extraction notes, cheap to resurrect when a real
+need appears.
 
 ## v4: Automation polish
 

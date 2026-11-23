@@ -1,0 +1,239 @@
+# gitea_mirror/tasks/main.yml -- OPS-9 sync layer deploy.
+# Bare-metal-with-Bun per upstream docs (the fleet retired
+# container machinery in OPS-20; the community-scripts LXC
+# installer is not our manifest-driven pattern). Everything that
+# must survive a restart lives in /opt/gitea-mirror/data (sqlite);
+# the two auth secrets are generated ONCE only-while-absent (a
+# regenerated BETTER_AUTH_SECRET signs everyone out; a regenerated
+# ENCRYPTION_SECRET makes every stored token unreadable).
+# Version pins live in defaults/main.yml; the build is marker-gated
+# so converges skip in seconds when the pins match.
+- name: build deps
+  ansible.builtin.apt:
+    name:
+      - git
+      - unzip
+      - openssl
+      - ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# ---- bun runtime (marker-gated like every pinned artifact)
+- name: installed bun marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/bun-version
+  register: gm_bun_marker
+  failed_when: false
+
+- name: set_fact -- installed bun version
+  ansible.builtin.set_fact:
+    gm_bun_installed: "{{ (gm_bun_marker.content | default('') | b64decode).strip() }}"
+
+- name: bun release zip downloaded
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.get_url:
+    url: https://github.com/oven-sh/bun/releases/download/bun-v{{ gitea_mirror_bun_version }}/bun-linux-x64.zip
+    dest: /usr/local/src/bun-{{ gitea_mirror_bun_version }}.zip
+    mode: "0644"
+
+- name: previous bun extraction swept
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.file:
+    path: /usr/local/src/bun-extract
+    state: absent
+
+- name: bun extraction dir present
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.file:
+    path: /usr/local/src/bun-extract
+    state: directory
+    mode: "0755"
+
+- name: bun zip extracted
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.command:
+    argv:
+      - unzip
+      - -q
+      - /usr/local/src/bun-{{ gitea_mirror_bun_version }}.zip
+      - -d
+      - /usr/local/src/bun-extract
+  # dir pre-created above: unzip (like tar -C) will not mkdir
+
+- name: bun binary installed
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.copy:
+    src: /usr/local/src/bun-extract/bun-linux-x64/bun
+    dest: /usr/local/bin/bun
+    mode: "0755"
+    remote_src: true
+
+- name: bun version marker written
+  when: gm_bun_installed != gitea_mirror_bun_version
+  ansible.builtin.copy:
+    dest: /usr/local/share/bun-version
+    content: "{{ gitea_mirror_bun_version }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+# ---- runtime user (before the app chown)
+- name: gitea-mirror user
+  ansible.builtin.user:
+    name: gitea-mirror
+    system: true
+    home: /var/lib/gitea-mirror
+    shell: /usr/sbin/nologin
+
+# ---- the app (marker-gated: setup+build only when the pin moves)
+- name: installed app marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/gitea-mirror-version
+  register: gm_app_marker
+  failed_when: false
+
+- name: set_fact -- installed app version
+  ansible.builtin.set_fact:
+    gm_app_installed: "{{ (gm_app_marker.content | default('') | b64decode).strip() }}"
+
+- name: previous app tree swept
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.file:
+    path: /opt/gitea-mirror
+    state: absent
+
+- name: pinned release cloned (depth 1)
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.command:
+    argv:
+      - git
+      - clone
+      - --depth
+      - "1"
+      - --branch
+      - "{{ gitea_mirror_version }}"
+      - "{{ gitea_mirror_repo }}"
+      - /opt/gitea-mirror
+  # data/ (the sqlite db + secrets) lives under the tree; the sweep
+  # above only runs on version moves, where a data restore is a
+  # controller-side copy -- same contract as vaultwarden's db.
+
+- name: dependencies + database initialized (bun run setup)
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.command:
+    argv: [/usr/local/bin/bun, run, setup]
+    chdir: /opt/gitea-mirror
+
+- name: production bundle built (bun run build)
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.command:
+    argv: [/usr/local/bin/bun, run, build]
+    chdir: /opt/gitea-mirror
+
+- name: app tree owned by the service user (it writes data/ at runtime)
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.file:
+    path: /opt/gitea-mirror
+    state: directory
+    owner: gitea-mirror
+    group: gitea-mirror
+    recurse: true
+
+- name: app version marker written
+  when: gm_app_installed != gitea_mirror_version
+  ansible.builtin.copy:
+    dest: /usr/local/share/gitea-mirror-version
+    content: "{{ gitea_mirror_version }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+# ---- secrets: generated ONCE, never managed again (a regenerated
+# ---- BETTER_AUTH_SECRET signs everyone out; a regenerated
+# ---- ENCRYPTION_SECRET makes every stored token unreadable)
+- name: config dir present
+  ansible.builtin.file:
+    path: /etc/gitea-mirror
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: auth secrets generated (only while absent -- never clobbers)
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - -c
+      - printf 'BETTER_AUTH_SECRET=%s\nENCRYPTION_SECRET=%s\n' "$(openssl rand -base64 32)" "$(openssl rand -base64 32)" > /etc/gitea-mirror/secrets
+    creates: /etc/gitea-mirror/secrets
+  no_log: true
+
+- name: secrets file locked down
+  ansible.builtin.file:
+    path: /etc/gitea-mirror/secrets
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: environment file (BETTER_AUTH_URL must match the serve front exactly)
+  ansible.builtin.copy:
+    dest: /etc/gitea-mirror/env
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      NODE_ENV=production
+      HOST=0.0.0.0
+      PORT={{ gitea_mirror_port }}
+      DATABASE_URL=file:data/gitea-mirror.db
+      BETTER_AUTH_URL={{ gitea_mirror_base_url }}
+  notify: restart gitea-mirror
+
+# ---- service
+- name: systemd unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/gitea-mirror.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Gitea Mirror (GitHub -> forgejo syncer)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=gitea-mirror
+      WorkingDirectory=/opt/gitea-mirror
+      EnvironmentFile=/etc/gitea-mirror/env
+      EnvironmentFile=/etc/gitea-mirror/secrets
+      ExecStart=/usr/local/bin/bun run start
+      Restart=on-failure
+      RestartSec=10
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ReadWritePaths=/opt/gitea-mirror
+      PrivateTmp=true
+      ProtectHome=true
+      RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart gitea-mirror
+
+- name: service running + enabled
+  ansible.builtin.systemd:
+    name: gitea-mirror
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: verify -- the app answers on /api/health (the doc-named monitoring path)
+  ansible.builtin.uri:
+    url: http://localhost:{{ gitea_mirror_port }}/api/health
+    status_code: [200]
+  register: gm_check
+  retries: 12
+  delay: 10
+  until: gm_check.status == 200
