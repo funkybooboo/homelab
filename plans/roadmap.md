@@ -30,8 +30,11 @@ constitution is [identity.md](./identity.md); the shipped record is
   A post-skeleton readiness pass swept the last old-fleet residue
   (55 /tmp debug scripts, 5 stale CT templates, the promtail
   shipper whose endpoint died with the old loki serve-front) and
-  de-staled six story notes + issues item 8 for the build-fresh
-  reality. Entering the service stories, the cluster carries
+  later a root-owned /home/tom/sources pve-cd-builder checkout
+  from the May-2026 era (no account ever existed; swept
+  2026-11-23 on the operator's word), plus de-staling six story
+  notes + issues item 8 for the build-fresh reality. Entering the
+  service stories, the cluster carries
   exactly: 1 manifest-managed test CT, 1 base template, node glue
   (proxmoxer), and nothing else.
 - NEXT: the critical five, vaultwarden first (USER-1).
