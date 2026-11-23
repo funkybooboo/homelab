@@ -1,7 +1,8 @@
 # Documentation index
 
-Two tiers: what describes the fleet NOW, and the old-fleet archive
-(moved to [legacy/](./legacy/) 2026-11-22 when the v2 docs landed).
+The tree describes the fleet NOW; the old fleet's docs live in git
+history, not the tree (deleted 2026-11-22 -- retrievable via
+`git log -- docs/` when restore-time reference is ever wanted).
 
 ## Current
 
@@ -21,10 +22,10 @@ Two tiers: what describes the fleet NOW, and the old-fleet archive
   reference (`scripts/extract-legacy.sh`); dumps remain on
   pve-backups so re-extracts stay possible
 
-## Archive
+## Restore references
 
-- [`legacy/`](./legacy/) -- the old fleet's operational docs
-  (cluster, HA quirks, TLS workflows, the 23-CT catalog, ...) as the
-  phase-0 record. History, not guidance.
-- `services/` (repo root) -- old-fleet assets + restore references;
-  see its README.
+- `services/` (repo root) -- old-fleet assets the future stories
+  consume (feeds.opml is DATA, not docs -- the freshrss story needs
+  it); see its README.
+- `data-to-extract.md` -- the extraction reference; dumps remain on
+  pve-backups so re-extracts stay possible.
