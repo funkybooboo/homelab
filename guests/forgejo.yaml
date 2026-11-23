@@ -1,0 +1,22 @@
+# forgejo.yaml -- OPS-9: the personal git hub restored from the 107
+# dump (17 users, 347 repos: class work, DIRECTLab mirrors, the
+# homelab read-mirror). Rootfs on NODE-LOCAL storage like vaultwarden:
+# the class repos are the ONLY copy (mirrors re-pull, students' work
+# does not) -- they must not depend on truenas.
+name: forgejo
+vmid: 202
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: local-lvm      # node-local; lvmthin can't host vztmpl so the
+ostemplate: pve-shared:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
+cores: 2
+memory: 2048
+swap: 2048
+disk: 30                # 8.3G repos + forgejo + headroom
+ip: 192.168.1.52
+role: forgejo
+tailnet: true
+tailnet_serve: 3000     # https://forgejo.tail54538d.ts.net
+mounts: []
+features: [nesting]

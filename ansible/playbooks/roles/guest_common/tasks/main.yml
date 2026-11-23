@@ -202,6 +202,33 @@
     mode: "0644"
   notify: restart tailscaled
 
+- name: drop-in dir present
+  ansible.builtin.file:
+    path: /etc/systemd/system/tailscaled.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: tailscaled never rate-limits (apt's auto-start crashes 5x before
+        the env file exists -- no tun in unprivileged CTs -- and the
+        default 10s start limit then blocks this role's own start task;
+        found live on forgejo 2026-11-23, the other seven were timing-lucky)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tailscaled.service.d/50-homelab-nolimit.conf
+    content: |
+      [Unit]
+      StartLimitIntervalSec=0
+      [Service]
+      RestartSec=3
+    mode: "0644"
+  notify: restart tailscaled
+
+- name: unstick any burnt start-limit before starting (idempotent)
+  ansible.builtin.command:
+    argv: [systemctl, reset-failed, tailscaled]
+  changed_when: false
+
 - name: tailscaled running + enabled
   ansible.builtin.service:
     name: tailscaled

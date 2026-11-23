@@ -1,0 +1,9 @@
+forgejo_version: "17.0.2"
+forgejo_binary_url: "https://codeberg.org/forgejo/forgejo/releases/download/v{{ forgejo_version }}/forgejo-{{ forgejo_version }}-linux-amd64"
+# controller-side one-shot restore artifact (built from the 107 dump;
+# contains var/lib/forgejo + etc/forgejo incl. the verbatim app.ini)
+forgejo_restore_tar: "{{ playbook_dir }}/../../legacy-extraction/from-dump-107-fj-data.tar"
+forgejo_db_host: "192.168.1.14:5432"
+forgejo_db_name: "forgejo"
+forgejo_db_user: "forgejo"
+forgejo_db_password_file: "{{ playbook_dir }}/../../local/forgejo-db.env"

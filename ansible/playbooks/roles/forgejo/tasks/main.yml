@@ -1,0 +1,268 @@
+# forgejo/tasks/main.yml -- OPS-9: the personal git hub restored.
+# Unlike vaultwarden (build-from-source: no upstream binaries), forgejo
+# SHIPS a prebuilt static binary -- get_url it, pin the version. The
+# restore is the vaultwarden pattern: controller-side one-shot tarball
+# (built from the Oct-17 vzdump of old CT 107), applied only-if-absent.
+# app.ini rides IN the tarball verbatim (INTERNAL_TOKEN, LFS JWT, oauth
+# keys all preserved); the environment file overrides only what the new
+# world changes: the LAN postgres host, the role-per-service creds,
+# SSH-clone off (reads over https; the class is over).
+# First boot runs schema migrations 305 (v15.0.4) -> v17 forward.
+- name: forgejo runtime deps (git for the git plumbing)
+  ansible.builtin.apt:
+    name:
+      - git
+      - ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: git user (forgejo's RUN_USER; old app.ini expects it)
+  ansible.builtin.user:
+    name: git
+    system: true
+    home: /var/lib/forgejo
+    shell: /usr/sbin/nologin
+
+# ---- version-gated binary (marker pattern, like vaultwarden)
+- name: installed version marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/forgejo-version
+  register: fj_marker
+  failed_when: false
+
+- name: set_fact -- installed version
+  ansible.builtin.set_fact:
+    fj_installed: "{{ (fj_marker.content | default('') | b64decode).strip() }}"
+
+- name: pinned binary downloaded
+  ansible.builtin.get_url:
+    url: "{{ forgejo_binary_url }}"
+    dest: /usr/local/bin/forgejo
+    mode: "0755"
+  when: fj_installed != forgejo_version
+
+- name: version marker written
+  ansible.builtin.copy:
+    dest: /usr/local/share/forgejo-version
+    content: "{{ forgejo_version }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: fj_installed != forgejo_version
+
+# ---- the database: role-per-service on the shared cluster (the DB
+# itself is ALREADY THERE, restored with the pgdata batch)
+- name: db password file present on controller
+  ansible.builtin.stat:
+    path: "{{ forgejo_db_password_file }}"
+  register: fj_pw
+  become: false
+  delegate_to: localhost
+
+- name: db password file must exist (it is gitignored, created once)
+  ansible.builtin.assert:
+    that: fj_pw.stat.exists
+    fail_msg: >-
+      {{ forgejo_db_password_file }} not found on the controller --
+      create it (FORGEJO_DB_PASSWORD=<random>, mode 600).
+
+- name: set_fact -- the db password (controller-side read)
+  ansible.builtin.set_fact:
+    forgejo_db_password: "{{ lookup('ansible.builtin.file', forgejo_db_password_file) | regex_findall('FORGEJO_DB_PASSWORD=(\\S+)') | first }}"
+  become: false
+
+- name: forgejo role exists on the postgres cluster
+  community.postgresql.postgresql_user:
+    name: "{{ forgejo_db_user }}"
+    password: "{{ forgejo_db_password }}"
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
+- name: forgejo role owns its database
+  community.postgresql.postgresql_db:
+    name: "{{ forgejo_db_name }}"
+    owner: "{{ forgejo_db_user }}"
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
+- name: forgejo role owns the objects INSIDE its database (the pgdata
+        restore made every table postgres-owned; migrations ALTER them;
+        REASSIGN OWNED BY postgres is impossible -- postgres owns the
+        system catalogs -- so a DO block moves only the USER objects)
+  community.postgresql.postgresql_query:
+    login_db: "{{ forgejo_db_name }}"
+    query: |
+      DO $$ DECLARE r record; BEGIN
+        FOR r IN SELECT c.oid::regclass AS rel, c.relkind AS kind FROM pg_class c
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE c.relowner = (SELECT oid FROM pg_roles WHERE rolname='postgres')
+            AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+            AND NOT (c.relkind = 'S' AND EXISTS (SELECT 1 FROM pg_depend d
+                     WHERE d.objid = c.oid AND d.deptype = 'a')) LOOP
+          IF r.kind IN ('r','p') THEN
+            EXECUTE format('ALTER TABLE %s OWNER TO {{ forgejo_db_user }}', r.rel);
+          ELSIF r.kind = 'S' THEN
+            EXECUTE format('ALTER SEQUENCE %s OWNER TO {{ forgejo_db_user }}', r.rel);
+          ELSE
+            EXECUTE format('ALTER TABLE %s OWNER TO {{ forgejo_db_user }}', r.rel);
+          END IF;
+        END LOOP;
+      END $$;
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
+- name: forgejo role owns the public schema (migrations CREATE in it)
+  community.postgresql.postgresql_query:
+    login_db: "{{ forgejo_db_name }}"
+    query: ALTER SCHEMA public OWNER TO {{ forgejo_db_user }}
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
+# ---- the restore (only while absent -- never clobbers live data)
+- name: is the hub data already in place?
+  ansible.builtin.stat:
+    path: /var/lib/forgejo/data/forgejo-repositories
+  register: fj_data
+
+- name: controller holds the restore tarball (stat on debbie)
+  ansible.builtin.stat:
+    path: "{{ forgejo_restore_tar }}"
+  register: fj_tar_src
+  become: false
+  delegate_to: localhost
+  when: not fj_data.stat.exists
+
+- name: restore tarball must exist while the hub is still absent
+  when: not fj_data.stat.exists
+  ansible.builtin.assert:
+    that: fj_tar_src.stat.exists | default(false)
+    fail_msg: >-
+      {{ forgejo_restore_tar }} not found on the controller -- the
+      one-shot restore artifact must be staged from the 107 dump
+      before the first converge (see OPS-9 as-built).
+
+- name: restore tarball copied in (the 8.3G one-shot)
+  ansible.builtin.copy:
+    src: "{{ forgejo_restore_tar }}"
+    dest: /usr/local/src/forgejo-restore.tar
+    mode: "0600"
+  when: not fj_data.stat.exists
+
+- name: hub data + verbatim app.ini extracted
+  ansible.builtin.command:
+    argv:
+      - tar
+      - -xf
+      - /usr/local/src/forgejo-restore.tar
+      - -C
+      - /
+  when: not fj_data.stat.exists
+
+- name: restore tarball swept after extraction (frees 8.3G on the CT)
+  ansible.builtin.file:
+    path: /usr/local/src/forgejo-restore.tar
+    state: absent
+
+- name: hub tree owned by git
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: git
+    group: git
+    recurse: true
+  loop:
+    - /var/lib/forgejo
+    - /etc/forgejo
+
+- name: app.ini readable by its RUN_USER only
+  ansible.builtin.file:
+    path: /etc/forgejo/app.ini
+    owner: git
+    group: git
+    mode: "0600"
+
+# ---- new-world config: surgical line edits on the verbatim app.ini
+# (the FORGEJO__ env-override scheme was tried and IGNORED by the
+# runtime with --config; ini edits are deterministic. Secrets
+# sections -- INTERNAL_TOKEN, LFS JWT, oauth keys -- stay untouched.)
+- name: app.ini points at the LAN postgres host
+  ansible.builtin.lineinfile:
+    path: /etc/forgejo/app.ini
+    regexp: "^HOST ="
+    line: "HOST = {{ forgejo_db_host }}"
+  notify: restart forgejo
+
+- name: app.ini uses the role-per-service db user
+  ansible.builtin.lineinfile:
+    path: /etc/forgejo/app.ini
+    regexp: "^USER ="
+    line: "USER = {{ forgejo_db_user }}"
+  notify: restart forgejo
+
+- name: app.ini carries the service db password
+  ansible.builtin.lineinfile:
+    path: /etc/forgejo/app.ini
+    regexp: "^PASSWD ="
+    line: "PASSWD = {{ forgejo_db_password }}"
+  notify: restart forgejo
+
+- name: ssh clone off (reads over https; the class is over)
+  ansible.builtin.lineinfile:
+    path: /etc/forgejo/app.ini
+    regexp: "^DISABLE_SSH ="
+    line: "DISABLE_SSH = true"
+  notify: restart forgejo
+
+- name: self-registration off (the fleet posture)
+  ansible.builtin.lineinfile:
+    path: /etc/forgejo/app.ini
+    regexp: "^DISABLE_REGISTRATION ="
+    line: "DISABLE_REGISTRATION = true"
+  notify: restart forgejo
+
+- name: systemd unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/forgejo.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Forgejo (personal git hub)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=git
+      ExecStart=/usr/local/bin/forgejo web --port 3000 --config /etc/forgejo/app.ini
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=full
+      ReadWritePaths=/var/lib/forgejo /etc/forgejo
+      PrivateTmp=true
+      ProtectHome=true
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart forgejo
+
+- name: service running + enabled
+  ansible.builtin.systemd:
+    name: forgejo
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: verify -- healthz answers (first boot runs schema migrations 305 -> v17)
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/healthz
+    status_code: [200]
+  register: fj_check
+  retries: 20
+  delay: 15
+  until: fj_check.status == 200
