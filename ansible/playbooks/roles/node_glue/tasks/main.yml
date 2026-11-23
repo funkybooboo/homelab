@@ -88,21 +88,19 @@
     group: nogroup   # the package user's primary group
     mode: "0755"
 
-- name: Old-fleet promtail fossils absent (the root-owned positions.yaml
-        + temp dot-files from the August era -- modern kernels deny
-        O_CREAT on existing files the opener doesn't own --
-        fs.protected_regular -- so promtail crash-loops until they're gone)
-  ansible.builtin.find:
-    paths: /var/lib/promtail
-    patterns: ["positions.yaml*", ".positions.yaml*"]
-    hidden: true
-  register: _fossils
-
-- name: Remove them
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    state: absent
-  loop: "{{ _fossils.files }}"
+- name: Old-fleet promtail fossils absent (ROOT-OWNED files only --
+        the LIVE positions.yaml belongs to promtail and must survive;
+        the August-era root-owned ones crash-loop the service via
+        fs.protected_regular until swept; fixed 2026-11-23 after the
+        greedy pattern deleted the live state file every run)
+  ansible.builtin.shell: |
+    found=$(find /var/lib/promtail -maxdepth 1 \( -name 'positions.yaml*' -o -name '.positions.yaml*' \) -user root 2>/dev/null)
+    if [ -n "$found" ]; then
+      echo "$found" | xargs rm -f
+      echo SWEPT
+    fi
+  register: _promtail_fossils
+  changed_when: "'SWEPT' in _promtail_fossils.stdout"
   loop_control:
     label: "{{ item.path }}"
 
