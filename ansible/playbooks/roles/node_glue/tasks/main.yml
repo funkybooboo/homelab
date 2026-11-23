@@ -144,6 +144,26 @@
     enabled: true
   loop: [prometheus-node-exporter, promtail]
 
+- name: USB-NIC self-heal script (framework's vanish root cause --
+        the RTL8156 drops off the bus + re-enumerates; vmbr0 keeps
+        the stale port and the node sits network-dead until a human
+        intervenes; events Jul/Sep/Nov 2026 -- re-applying the
+        network config when the device returns heals it)
+  ansible.builtin.copy:
+    src: usb-nic-recover.sh
+    dest: /usr/local/sbin/usb-nic-recover.sh
+    mode: "0755"
+
+- name: udev rule -- nic0 returning triggers the self-heal
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/72-usb-nic-recover.rules
+    content: |
+      # managed by make converge (node_glue): if the USB NIC
+      # re-enumerates, re-apply the network config so vmbr0
+      # re-enslaves the fresh device instead of sitting dead.
+      ACTION=="add", SUBSYSTEM=="net", KERNEL=="nic0", RUN+="/usr/local/sbin/usb-nic-recover.sh"
+    mode: "0644"
+
 # --- the update plan (OPS-23), tier B ---
 - name: unattended-upgrades
   ansible.builtin.apt:

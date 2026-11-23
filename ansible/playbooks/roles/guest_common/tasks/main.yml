@@ -103,9 +103,9 @@
     name: tailscale
     types: [deb]
     uris: https://pkgs.tailscale.com/stable/debian
-    suites: ["{{ ansible_distribution_release }}"]
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
     components: [main]
-    signed_by: https://pkgs.tailscale.com/stable/debian/{{ ansible_distribution_release }}.noarmor.gpg
+    signed_by: https://pkgs.tailscale.com/stable/debian/{{ ansible_facts['distribution_release'] }}.noarmor.gpg
     state: present
 
 - name: tailscale installed (forced refresh -- the repo was just added)
