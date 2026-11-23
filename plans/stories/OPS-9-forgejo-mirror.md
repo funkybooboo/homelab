@@ -28,14 +28,13 @@ cluster, and the control-plane repo has its on-cluster mirror.
       full sync runs green
 - [ ] The CODEBERG leg returns: the old fleet ran a SECOND
       gitea-mirror (GitHub -> codeberg, the off-site public
-      mirror). Two paths, in preference order: (1) if the
-      Configuration page accepts a second destination card
-      (Codeberg = Forgejo-type destination, the operator's
-      codeberg token), add it to CT 203 -- one instance, two
-      destinations; (2) if the UI allows only one destination per
-      instance, spin CT 204 with the same role (base-URL
-      parameterized) and keep the old two-instance model.
-      Acceptance: a codeberg repo shows a fresh sync
+      mirror). RESOLVED 2026-11-23: the UI accepts only one
+      destination per instance (operator-confirmed), so the old
+      two-instance model is restored -- CT 204
+      gitea-mirror-codeberg, same role, base URL hostname-derived.
+      Acceptance: operator connects GitHub source + codeberg
+      destination (Forgejo-type, the operator's codeberg token) in
+      its UI; a codeberg repo shows a fresh sync
 
 ## Notes
 

@@ -5,6 +5,8 @@ gitea_mirror_version: "v3.54.0"
 gitea_mirror_bun_version: "1.4.5"
 gitea_mirror_repo: "https://github.com/RayLabsHQ/gitea-mirror.git"
 # BETTER_AUTH_URL must equal the serve front exactly (session
-# validation) -- the same rule as vaultwarden's DOMAIN.
-gitea_mirror_base_url: "https://gitea-mirror.tail54538d.ts.net"
+# validation) -- model B fronts are always https://<ct-name>.ts.net,
+# so it derives from inventory_hostname and ONE role serves every
+# instance (CT 203 hub leg, CT 204 codeberg leg).
+gitea_mirror_base_url: "https://{{ inventory_hostname }}.tail54538d.ts.net"
 gitea_mirror_port: "4321"
