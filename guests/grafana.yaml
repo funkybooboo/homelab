@@ -15,4 +15,7 @@ role: grafana
 tailnet: true
 tailnet_serve: 3000      # https://grafana.tail54538d.ts.net
 mounts: []
-features: []
+# nesting: Debian 13 CTs on systemd 257 without it warn on every
+# start (and PrivateUsers-style hardening breaks); the manifests'
+# features field exists for exactly this
+features: [nesting]

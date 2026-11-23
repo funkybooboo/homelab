@@ -119,3 +119,29 @@
   ansible.builtin.command:
     argv: [/usr/bin/pg_isready, -h, localhost]
   changed_when: false
+
+# --- metrics (docs/data.md -- the shared cluster gets watched like
+# --- everything else; grafana sees connections, db sizes, cache rates)
+- name: postgres_exporter
+  ansible.builtin.apt:
+    name: prometheus-postgres-exporter
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify: restart postgres-exporter
+
+- name: exporter connects via the local socket (peer auth, no
+        password involved)
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus-postgres-exporter
+    content: |
+      # managed by make converge (postgres role)
+      DATA_SOURCE_NAME="user=postgres host=/var/run/postgresql dbname=postgres"
+    mode: "0644"
+  notify: restart postgres-exporter
+
+- name: postgres_exporter running + enabled
+  ansible.builtin.service:
+    name: prometheus-postgres-exporter
+    state: started
+    enabled: true

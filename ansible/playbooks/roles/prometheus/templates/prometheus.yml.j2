@@ -16,3 +16,10 @@ scrape_configs:
   - job_name: node
     static_configs:
       - targets: [{% for t in (fleet_nodes + (present_guests | map(attribute='ip') | list)) %}'{{ t }}:9100', {% endfor %}]
+
+  - job_name: postgres-exporter
+    # the shared DB cluster's exporter (postgres guest, vmid 101,
+    # port 9187). Manifest-carried scrape ports are a later
+    # refinement if more service-level exporters appear.
+    static_configs:
+      - targets: ['192.168.1.14:9187']

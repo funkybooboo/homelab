@@ -31,3 +31,9 @@ REVISED 2026-11-22 (plan shift final form): the fleet was cleaned out
 (OPS-20), so curation = the BUILD LIST: decide which services get
 manifests at all (~12-15 keepers, issues item 6); the legacy archive
 (dumps + docs/) keeps lazy resurrection cheap for anything left off.
+
+RESTORE NOTE 2026-11-23: the old fleet's assets (services/) were
+   deleted from the tree per the git-history principle. When the
+   freshrss story lands, pull the operator's feed list from history:
+   `git log --oneline -- services/freshrss/feeds.opml` then
+   `git show <commit>:services/freshrss/feeds.opml`.

@@ -95,6 +95,78 @@
     state: started
     enabled: true
 
+# --- logs -- every guest journal ships to loki (same pattern as
+# --- node_glue; the grafana packages never create data dirs, never
+# --- add the journal group -- all three traps solved here
+- name: Grafana apt repo key
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: "0644"
+
+- name: Grafana repo (deb822)
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: [deb]
+    uris: https://apt.grafana.com
+    suites: [stable]
+    components: [main]
+    signed_by: /etc/apt/keyrings/grafana.asc
+    state: present
+
+- name: promtail installed (forced refresh -- repo just added)
+  ansible.builtin.apt:
+    name: promtail
+    state: present
+    update_cache: true
+
+- name: promtail data dir (the package never creates it)
+  ansible.builtin.file:
+    path: /var/lib/promtail
+    state: directory
+    owner: promtail
+    group: nogroup   # the package user's primary group
+    mode: "0755"
+
+- name: promtail can read the journal (the package never adds the
+        group; without it the scrape silently yields nothing)
+  ansible.builtin.user:
+    name: promtail
+    groups: systemd-journal
+    append: true
+  notify: restart promtail
+
+- name: promtail config (journald -> loki, the .19 infra guest)
+  ansible.builtin.copy:
+    dest: /etc/promtail/config.yml
+    content: |
+      # managed by make converge (guest_common)
+      server:
+        http_listen_port: 9080
+      positions:
+        filename: /var/lib/promtail/positions.yaml
+      clients:
+        - url: http://192.168.1.19:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: journal
+          journal:
+            json: false
+            max_age: 12h
+            labels:
+              host: {{ inventory_hostname }}
+              job: guest-journal
+          relabel_configs:
+            - source_labels: ["__journal__systemd_unit"]
+              target_label: unit
+    mode: "0644"
+  notify: restart promtail
+
+- name: promtail running + enabled
+  ansible.builtin.service:
+    name: promtail
+    state: started
+    enabled: true
+
 # --- the access layer, model B (issues item 4, revised 2026-11-22):
 # every guest enrolls in the tailnet; a manifest tailnet_serve port
 # gets an https serve front (https://<name>.tail54538d.ts.net) ---

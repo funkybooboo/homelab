@@ -51,7 +51,7 @@
               prefix: index_
               period: 24h
       limits_config:
-        retention_period: 168h
+        retention_period: 336h   # 14d -- debugging wants the trail
       compactor:
         working_directory: /var/lib/loki/compactor
         retention_enabled: true

@@ -14,4 +14,7 @@ ip: 192.168.1.19
 role: loki
 tailnet: true
 mounts: []
-features: []
+# nesting: Debian 13 CTs on systemd 257 without it warn on every
+# start (and PrivateUsers-style hardening breaks); the manifests'
+# features field exists for exactly this
+features: [nesting]
