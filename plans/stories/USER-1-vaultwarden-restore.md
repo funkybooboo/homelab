@@ -11,8 +11,8 @@ restored, so that the passwords are available again.
 - [x] vaultwarden deployed from a guest manifest
 - [x] Database restored from the v0 legacy extraction FIRST (it is the
       passwords) -- before the old rootfs is touched by anything
-- [ ] HTTPS access per the issues item 4 decision; unlock + one known
-      credential verified from a phone + a laptop (operator step)
+- [x] HTTPS access per the issues item 4 decision; unlock + one known
+      credential verified from a phone + a laptop (DONE 2026-11-23, operator)
 
 ## As-built (2026-11-23)
 
