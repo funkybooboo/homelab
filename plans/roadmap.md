@@ -166,6 +166,16 @@ browser tools + the curation decision):
 [OPS-24 cronmaster port](./stories/OPS-24-cronmaster-port.md)
 (job dispositions, not the tool).
 
+ADDED 2026-11-23 (operator request): the ONCE trio -- new builds,
+not restores, and the fleet's first container guests:
+[USER-14 campfire](./stories/USER-14-campfire.md),
+[USER-15 fizzy](./stories/USER-15-fizzy.md),
+[USER-16 writebook](./stories/USER-16-writebook.md)
+(Basecamp ONCE: chat / kanban / book-publishing; official Docker
+images pinned by digest, `docker compose` in nested CTs -- the
+vendor's `once` installer is rejected because it self-updates
+against the OPS-23 pin model).
+
 Also amended: [USER-5 firefox sync](./stories/USER-5-firefox-sync.md)
 carries the data-loss warning (old CT 131 has no dump and was never
 extracted; B2 check is its opening move) per the operator's
