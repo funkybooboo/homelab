@@ -33,7 +33,18 @@ constitution is [identity.md](./identity.md); the shipped record is
   later a root-owned /home/tom/sources pve-cd-builder checkout
   from the May-2026 era (no account ever existed; swept
   2026-11-23 on the operator's word), plus de-staling six story
-  notes + issues item 8 for the build-fresh reality. Entering the
+  notes + issues item 8 for the build-fresh reality. A full hygiene
+  audit 2026-11-23 then decommissioned the old fleet's LIVE
+  auto-update machinery from all 4 nodes (the hourly
+  pve-reboot-controller WAS ARMED with live pmxcfs flags + a fresh
+  lock -- unattended serialized cluster reboots were minutes away;
+  auto-update.service/timer, the maint + ha-state-watch +
+  renew-pve-tls crons, start-jellyfin + router-syslog-relay units,
+  php packages on the framework node all swept; the new
+  OPS-23 model is the only update system now). KEPT as verified
+  live: the thermaltake GPU stack, laptop screen-off, the NFS
+  self-healing glue (pve-shared-remount + nfs-check), vzdump, and
+  the system disk-hygiene timers. Entering the
   service stories, the cluster carries
   exactly: 1 manifest-managed test CT, 1 base template, node glue
   (proxmoxer), and nothing else.
