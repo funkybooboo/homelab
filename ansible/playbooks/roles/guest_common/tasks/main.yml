@@ -32,9 +32,8 @@
     validate: "/usr/sbin/visudo -cf %s"
 
 - name: sshd hardening drop-in (the good-ssh contract; restart-notify
-        not reload -- the SIGHUP re-exec is a tripwire: CT 204
-        2026-11-23 died with 'Cannot bind any address' + missing
-        /run/sshd on its first-converge reload; a restart re-runs
+        not reload because the SIGHUP re-exec is a tripwire -- CT 204
+        died on its first-converge reload; a restart re-runs
         RuntimeDirectory=sshd + ExecStartPre and always heals)
   ansible.builtin.copy:
     dest: /etc/ssh/sshd_config.d/50-homelab.conf
