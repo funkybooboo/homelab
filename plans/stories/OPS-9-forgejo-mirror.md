@@ -18,14 +18,35 @@ cluster, and the control-plane repo has its on-cluster mirror.
 - [ ] The 32 mirror-only repos (DB rows without files, the
       Oct-17/Nov-21 gap) recover via the sync layer; any that need
       an admin nudge are listed
+      OPEN 2026-11-24: partially superseded by the operator's
+      stale-but-present policy (below) -- a DB-only repo whose
+      sync fails stays a BROKEN page, not a stale one; healing
+      these 32 without deletion is the remaining question (native
+      mirror-sync fetch, or row-deletion of just the empty ones
+      -- a different thing from deleting content-bearing repos)
 - [x] Serve front + observability from birth (promtail, scrape, the
       watcher's front check) -- plus two API tokens now held in
       local/ (forgejo-token.env user-scope, forgejo-admin-token.env
       admin) for the sync layer and the future push-to-apply runner
-- [ ] gitea-mirror deployed (CT 203, RayLabsHQ upstream, pinned
+- [x] gitea-mirror deployed (CT 203, RayLabsHQ upstream, pinned
       v3.54.0/bun 1.4.5, bare-metal-Bun per their docs) and the
       operator connects GitHub -> forgejo through its UI; a first
       full sync runs green
+      AS-BUILT 2026-11-24: connection made via the LAN URL form
+      (http://192.168.1.52:3000 -- userspace tailscaled guests
+      cannot dial tailnet IPs), nightly schedule 22:00
+      America/Denver, autoMirror on, self-owned repos sync GREEN.
+      Known wrinkle, OPERATOR POLICY (stale-but-present, decided
+      2026-11-24): collaborator repos that already exist in the
+      restored hub confuse the app's create path (phantom
+      "still importing" -> 30-min wait -> failed, every run);
+      the operator chose to keep those hub copies as-is rather
+      than delete+re-create. Follow-up: after the first full
+      batch settles, add the failed list to the app's per-repo
+      EXCLUDE config so nightly runs skip the class (no deletion
+      involved). TRAP learned: the app's cancel-pending endpoint
+      is actually stop-pending-mirrors (sets repos to ignored);
+      retry-repo with repositoryIds[] is the correct re-queue.
 - [ ] The CODEBERG leg returns: the old fleet ran a SECOND
       gitea-mirror (GitHub -> codeberg, the off-site public
       mirror). RESOLVED 2026-11-23: the UI accepts only one
