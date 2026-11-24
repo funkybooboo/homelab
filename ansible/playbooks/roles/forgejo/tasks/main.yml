@@ -70,6 +70,8 @@
 - name: set_fact -- the db password (controller-side read)
   ansible.builtin.set_fact:
     forgejo_db_password: "{{ lookup('ansible.builtin.file', forgejo_db_password_file) | regex_findall('FORGEJO_DB_PASSWORD=(\\S+)') | first }}"
+    # in-app /metrics bearer token (prometheus scrapes :3000/metrics)
+    forgejo_metrics_token: "{{ lookup('ansible.builtin.file', forgejo_db_password_file | dirname ~ '/forgejo-metrics.env') | regex_findall('FORGEJO_METRICS_TOKEN=(\\S+)') | first }}"
   become: false
 
 - name: forgejo role exists on the postgres cluster
@@ -222,6 +224,21 @@
     path: /etc/forgejo/app.ini
     regexp: "^DISABLE_REGISTRATION ="
     line: "DISABLE_REGISTRATION = true"
+  notify: restart forgejo
+
+- name: app.ini enables the in-app metrics endpoint (bearer token)
+  # blockinfile, not lineinfile: the restored app.ini has NO
+  # [metrics] section, so this appends one. Forgejo preserves +
+  # normalizes unknown/known sections on its own rewrites; the
+  # marker keeps re-converges honest.
+  ansible.builtin.blockinfile:
+    path: /etc/forgejo/app.ini
+    marker: "# {mark} ansible-managed metrics"
+    block: |
+      [metrics]
+      ENABLED = true
+      TOKEN = {{ forgejo_metrics_token }}
+  no_log: true
   notify: restart forgejo
 
 - name: systemd unit

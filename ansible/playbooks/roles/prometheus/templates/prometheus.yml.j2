@@ -23,3 +23,11 @@ scrape_configs:
     # refinement if more service-level exporters appear.
     static_configs:
       - targets: ['192.168.1.14:9187']
+
+  - job_name: forgejo-app
+    # the hub's IN-APP exporter (app.ini [metrics], bearer token --
+    # repos, queues, sessions; the only service-internal metrics
+    # source that exists in this fleet tier)
+    bearer_token: {{ lookup('ansible.builtin.file', playbook_dir ~ '/../../local/forgejo-metrics.env') | regex_findall('FORGEJO_METRICS_TOKEN=(\S+)') | first }}
+    static_configs:
+      - targets: ['192.168.1.52:3000']
