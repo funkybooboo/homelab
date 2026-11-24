@@ -1,7 +1,10 @@
-- name: reload sshd
+- name: restart sshd
+  # restart, never reload: the SIGHUP re-exec died on CT 204
+  # ('Cannot bind any address' + missing /run/sshd); restart re-runs
+  # RuntimeDirectory=sshd + ExecStartPre and always heals
   ansible.builtin.service:
     name: ssh
-    state: reloaded
+    state: restarted
 
 - name: restart tailscaled
   ansible.builtin.service:
