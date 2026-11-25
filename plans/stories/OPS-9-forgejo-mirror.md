@@ -15,15 +15,30 @@ cluster, and the control-plane repo has its on-cluster mirror.
       on it; schema migrated forward by the new binary
 - [x] Operator logs in with the OLD credentials; a class repo spot
       check browses (operator-verified 2026-11-23)
-- [ ] The 32 mirror-only repos (DB rows without files, the
+- [x] The 32 mirror-only repos (DB rows without files, the
       Oct-17/Nov-21 gap) recover via the sync layer; any that need
       an admin nudge are listed
-      OPEN 2026-11-24: partially superseded by the operator's
-      stale-but-present policy (below) -- a DB-only repo whose
-      sync fails stays a BROKEN page, not a stale one; healing
-      these 32 without deletion is the remaining question (native
-      mirror-sync fetch, or row-deletion of just the empty ones
-      -- a different thing from deleting content-bearing repos)
+      RESOLVED 2026-11-25: the gap class turned out to be the root
+      disease of every sync stall (empty DB rows confuse the app's
+      create path into a phantom-import 30-min wait-loop). All 17
+      broken rows deleted (no data existed in any of them -- verified
+      empty before each delete, manifests kept in local/) and
+      re-mirrored fresh from GitHub. 108/108 hub repos live.
+- [x] The CODEBERG leg returns ... RESOLVED 2026-11-25 as a
+      PUSH CHAIN, not gitea-mirror: codeberg's site policy forbids
+      pull-mirror creation (403: "the site administrator has
+      disabled the creation of new pull mirrors"), and gitea-mirror
+      only does pull mirrors for forgejo destinations -- so the
+      backup rides FORGEJO'S OWN push-mirror feature instead:
+      github ->(app)-> hub ->(native 8h push mirrors)-> codeberg
+      flat under funkybooboo/<name> (the old fleet's layout;
+      collisions get <owner>- prefixes; private sources stay
+      private on codeberg). Final audit: 96/100 SHA-identical,
+      zero differs. The app's CT 204 instance is now redundant
+      (decommission candidate). One tail: 12 new codeberg targets
+      hit codeberg's repo-creation rate limit -- push mirrors are
+      pre-configured on the hub, content lands on the 8h interval
+      once the targets exist (retry the creates later)
 - [x] Serve front + observability from birth (promtail, scrape, the
       watcher's front check) -- plus two API tokens now held in
       local/ (forgejo-token.env user-scope, forgejo-admin-token.env
@@ -47,15 +62,11 @@ cluster, and the control-plane repo has its on-cluster mirror.
       involved). TRAP learned: the app's cancel-pending endpoint
       is actually stop-pending-mirrors (sets repos to ignored);
       retry-repo with repositoryIds[] is the correct re-queue.
-- [ ] The CODEBERG leg returns: the old fleet ran a SECOND
+- [x] The CODEBERG leg returns: the old fleet ran a SECOND
       gitea-mirror (GitHub -> codeberg, the off-site public
-      mirror). RESOLVED 2026-11-23: the UI accepts only one
-      destination per instance (operator-confirmed), so the old
-      two-instance model is restored -- CT 204
-      gitea-mirror-codeberg, same role, base URL hostname-derived.
-      Acceptance: operator connects GitHub source + codeberg
-      destination (Forgejo-type, the operator's codeberg token) in
-      its UI; a codeberg repo shows a fresh sync
+      mirror). RESOLVED via the push chain above (codeberg
+      forbids pull mirrors site-wide; see the resolved 32-repos
+      entry)
 
 ## Notes
 
