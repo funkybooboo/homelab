@@ -212,6 +212,10 @@ stay as dumps + extraction notes, cheap to resurrect when a real
 need appears.
 
 ADDED 2026-11-25 (operator requests, the personal-content family):
+[OPS-26 Proton Pass secrets home](./stories/OPS-26-pass-cli-secrets.md)
+(vault items + tracked templates + a secrets-restore script -- the
+repo becomes clone-and-restore portable; the audit's answer to
+"what if debbie dies"), plus
 [USER-17 the knowledge base](./stories/USER-17-knowledge-base.md)
 (md corpus hosted -- writebook considered, forgejo+mdbook is the
 fleet-native option; tier-0),

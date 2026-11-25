@@ -10,12 +10,16 @@ tailscale.
 
 | Guest | URL | Sign-in | First-use notes |
 | --- | --- | --- | --- |
-| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the old fleet's `forgejo` + `freshrss` databases are restored and waiting for their stories |
-| adminer | https://adminer.tail54538d.ts.net | server `192.168.1.14:5432`, user `nate`, same password | the DB admin UI; pick a restored database from the dropdown |
+| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here; the old fleet's `freshrss` waits for its story |
+| adminer | https://adminer.tail54538d.ts.net | server `192.168.1.14:5432`, user `nate`, same password | the DB admin UI; pick a database from the dropdown |
 | ntfy | https://ntfy.tail54538d.ts.net | open (topics are the access control) | subscribe from the phone app: add server, topic `homelab`; alert wiring lands with the service stories |
-| prometheus | https://prometheus.tail54538d.ts.net | open (read-only) | Status > Targets should show the whole fleet UP |
+| prometheus | https://prometheus.tail54538d.ts.net | open (read-only) | Status > Targets should show the whole fleet UP (incl. the forgejo-app job) |
 | grafana | https://grafana.tail54538d.ts.net | `admin` / `admin` -- CHANGE ON FIRST LOGIN | datasources (prometheus + loki) are pre-provisioned; build dashboards in the UI (old grafana data sits in dump 123 if a restore is wanted) |
 | loki | (no UI; grafana is its face) | via grafana Explore | promtail on every node ships journald here |
+| vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | restored (USER-1); sign-in on phone + laptop verified 2026-11-23 |
+| forgejo | https://forgejo.tail54538d.ts.net | `nate` / `funkybooboo`; API tokens in `local/forgejo-*.env` | the git hub (349 repos); sync legs: gitea-mirror nightly -> hub, push mirrors -> codeberg |
+| gitea-mirror | https://gitea-mirror.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-api.env` | github -> hub sync app; nightly 22:00 |
+| gitea-mirror-codeberg | https://gitea-mirror-codeberg.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-codeberg-api.env` | parked (codeberg pull-mirror ban; the push chain carries codeberg) |
 
 ## The underlying rules
 

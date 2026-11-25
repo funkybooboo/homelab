@@ -11,6 +11,9 @@ https://adminer.tail54538d.ts.net      -> 200 (DB UI)
 https://ntfy.tail54538d.ts.net         -> 200 (subscribe UI)
 https://grafana.tail54538d.ts.net      -> 302 (login redirect)
 https://prometheus.tail54538d.ts.net   -> 302 (redirect to /graph)
+https://vaultwarden.tail54538d.ts.net  -> 200 (password manager UI)
+https://forgejo.tail54538d.ts.net      -> 302 (login redirect)
+https://gitea-mirror.tail54538d.ts.net  -> 200 (sync app UI)
 ```
 
 Real LE certs (padlock in the browser). If a front 502s: the guest's
@@ -79,7 +82,7 @@ make verify     # read-only drift check, same
 make update     # patch pass; prints REBOOT REQUIRED flags when kernels stack
 ```
 
-Truth: 12 hosts converge green, guests changed=0. The 4 x86 nodes
+Truth: 16 hosts converge green, guests changed=0. The 4 x86 nodes
 flagged reboot-required after the first update pass (PVE kernels) --
 the runbook is [maintenance.md](./maintenance.md) (one node at a time,
 guests recover via onboot, quorum holds).
@@ -87,8 +90,9 @@ guests recover via onboot, quorum holds).
 ## 7. The cluster (the PVE view)
 
 `https://192.168.1.3:8006` (or the tailnet front) -> Datacenter:
-6 CTs (postgres 101, adminer 102, ntfy 103, prometheus 104,
-grafana 105, loki 106), 5/5 quorate.
+10 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
+105 grafana, 106 loki, 201 vaultwarden, 202 forgejo,
+203 gitea-mirror, 204 gitea-mirror-codeberg), 5/5 quorate.
 
 CLI: `source local/pve-api.env` + the storage/guest API calls the
 scripts use; or just `curl -sk -H "Authorization: Bearer ..."`.

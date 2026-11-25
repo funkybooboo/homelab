@@ -5,10 +5,11 @@ a TrueNAS storage box on a flat 192.168.1.0/24 LAN behind OPNsense,
 every service tailnet-only, and this repo as the source of truth --
 `git push` + (from v2) `make converge` *is* the deploy.
 
-> State (2026-11-22): revival shipped -- all 5 nodes + truenas live
-> on the new LAN, 5/5 quorate. The old CTs are cleaned out, not
-> revived; the fleet is then rebuilt as code (v2) on the bare
-> cluster. The router stays untouched for now. See
+> State (2026-11-25): v2 SHIPPED -- the IaC skeleton is live and
+> idempotent (manifest -> CT -> service), the observability pair
+> watches the fleet, vaultwarden is restored and operator-verified,
+> and the forgejo hub + both sync legs run themselves. v3 (the
+> media fleet + the restored keeps) is the active era. See
 > [`plans/roadmap.md`](plans/roadmap.md).
 
 ## Repo layout
@@ -16,12 +17,12 @@ every service tailnet-only, and this repo as the source of truth --
 | Path | What it is |
 |------|------------|
 | [`plans/`](plans/) | The erledigen-style planning system: identity (constitution), roadmap (arcs v0-v5 + someday), stories (one file per work item), design records, history, issues. Start at [`plans/roadmap.md`](plans/roadmap.md). |
-| [`ansible/`](ansible/) | The v2 IaC skeleton home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`, playbook static files (`playbooks/files/keys/` = the admin pubkey the bootstrap flow installs). Playbooks + roles land with OPS-7. |
+| [`ansible/`](ansible/) | The IaC home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`, playbooks + roles (`playbooks/roles/<name>/` -- one role per service guest), playbook static files (`playbooks/files/keys/` = the admin pubkey the bootstrap flow installs). |
+| [`guests/`](guests/) | The fleet declaration: one YAML per guest, read by the converge/update/verify loop. This, not the PVE UI, is the list of what should exist. |
 | [`scripts/`](scripts/) | The operator's toolbelt -- bring-up + fleet tools, run from debbie over ssh (by you, or by a directed assistant acting as you). See each header for usage. |
 | [`docs/`](docs/) | All documentation, indexed by tier (current / old-fleet as-built) in [`docs/README.md`](docs/README.md). The wind-down-era archive lives in git history, not the tree. |
-| [`services/`](services/) | Old-fleet shipped artifacts (TLS renewals, auto-update, observability configs + dashboards, ntfy bridge, remount helpers) -- the as-shipped reference for the v2 rebuild: each piece becomes an ansible role (e.g. OPS-13 auto-update) once the clean-out leaves the cluster bare. |
-| [`local/`](local/) | Gitignored credentials (e.g. the router API keypair). Only `*.example` templates are tracked. |
-| `Makefile` | `make help` / `converge` / `verify` (converge + verify are honest stubs until the v2 skeleton lands). |
+| [`local/`](local/) | Gitignored credentials + audit evidence; every env file documented by an `.example` sibling (see [`local/README.md`](local/README.md)). |
+| `Makefile` | `make help` / `converge` / `update` / `verify` -- the fleet loop (idempotent converge, tier-gated patch pass, read-only drift check). |
 
 ## Working mode
 
@@ -38,10 +39,10 @@ constitution, [`plans/identity.md`](plans/identity.md)).
 
 * **No secrets in this repo.** Secrets live in gitignored files under
   `local/` or on the hosts; only `*.example` templates are tracked.
-* **The repo is the reproducible backup of state**, not the source of
-  truth for live systems until v2's converge loop lands: renewal
-  scripts + configs here mirror what runs on the boxes (see each
-  service dir README), and the direction flips with OPS-7.
+* **The repo is the source of truth for live state**: `make converge`
+  applies `guests/*.yaml` + the roles idempotently; `make verify`
+  checks drift read-only. Hand-edits on boxes are expected to be
+  overwritten (or flagged, if a manifest has not caught up).
 * Every commit references the story it serves; decisions live in
   `plans/issues.md` (answered questions + reasoning), demand lives in
   `plans/stories/`, design rationale lives in `plans/design/`.

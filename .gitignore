@@ -24,9 +24,11 @@ __pycache__/
 *.swp
 .DS_Store
 # Local-only (not tracked): credentials the agent uses against live
-# systems, e.g. opnsense-api.env (OPNSENSE_KEY/OPNSENSE_SECRET)
+# systems; every real env file is documented by an .example sibling
+# (see local/README.md)
 local/*
 !local/*.example
+!local/README.md
 
 # Extraction output (contains old-fleet secrets; tier-0 insurance copy
 # must never be committed)

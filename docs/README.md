@@ -24,8 +24,6 @@ history, not the tree (deleted 2026-11-22 -- retrievable via
 
 ## Restore references
 
-- `services/` (repo root) -- old-fleet assets the future stories
-  consume (feeds.opml is DATA, not docs -- the freshrss story needs
-  it); see its README.
-- `data-to-extract.md` -- the extraction reference; dumps remain on
-  pve-backups so re-extracts stay possible.
+- [`data-to-extract.md`](./data-to-extract.md) -- the extraction
+  reference; dumps remain on pve-backups so re-extracts stay
+  possible.
