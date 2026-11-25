@@ -1,25 +1,12 @@
-# gitea-mirror-codeberg.yaml -- the CODEBERG leg of the sync layer
-# (OPS-9). The old fleet ran two gitea-mirror instances (hub +
-# codeberg); upstream's UI accepts only ONE destination per
-# instance (operator-confirmed 2026-11-23), so the two-instance
-# model is restored as-is: this one syncs GitHub -> codeberg, the
-# off-site public mirror. Same role as CT 203 (the base URL derives
-# from this hostname -- model B). Node spread: aspires carries this
-# leg so the syncers do not stack on aspiree15.
+# gitea-mirror-codeberg.yaml -- REMOVED 2026-11-25.
+# Codeberg declined the pull-mirror exception request
+# (Codeberg/Community#3313): their site-wide pull-mirror ban is
+# policy, permanent for this account. The codeberg leg of OPS-9 is
+# carried entirely by the forgejo native push mirrors (hub ->
+# codeberg, 8h, verified SHA-identical); this CT never synced
+# anything (schedule was off, repos ignored -- zero data inside).
+# state: absent = the converge's destroy task removes it.
 name: gitea-mirror-codeberg
 vmid: 204
-state: present
+state: absent
 node: pve-aspires
-template: debian-13-standard_13.6-1_amd64.tar.zst
-storage: local-lvm      # node-local; lvmthin can't host vztmpl so the
-ostemplate: pve-shared:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
-cores: 2
-memory: 1024
-swap: 1024
-disk: 15          # app + sqlite + one repo's tmp clone at a time
-ip: 192.168.1.54
-role: gitea_mirror
-tailnet: true
-tailnet_serve: 4321     # https://gitea-mirror-codeberg.tail54538d.ts.net
-mounts: []
-features: [nesting]

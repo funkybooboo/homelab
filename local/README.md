@@ -23,7 +23,6 @@ documents the variable names + where the credential is minted.
 | forgejo-admin-token.env | FORGEJO_ADMIN_TOKEN | hub admin `nate` token |
 | forgejo-metrics.env | FORGEJO_METRICS_TOKEN | in-app /metrics bearer (app.ini [metrics]) |
 | gitea-mirror-api.env | GITEA_MIRROR_API_KEY | CT 203 UI (x-api-key header) |
-| gitea-mirror-codeberg-api.env | GITEA_MIRROR_CODEBERG_API_KEY | CT 204 UI |
 | codeberg-api.env | CODEBERG_API_TOKEN | codeberg.org user token (repo rw) |
 
 ## Restore path (OPS-26, shipped 2026-11-25)

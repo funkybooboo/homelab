@@ -19,7 +19,6 @@ tailscale.
 | vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | restored (USER-1); sign-in on phone + laptop verified 2026-11-23 |
 | forgejo | https://forgejo.tail54538d.ts.net | `nate` / `funkybooboo`; API tokens in `local/forgejo-*.env` | the git hub (349 repos); sync legs: gitea-mirror nightly -> hub, push mirrors -> codeberg |
 | gitea-mirror | https://gitea-mirror.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-api.env` | github -> hub sync app; nightly 22:00 |
-| gitea-mirror-codeberg | https://gitea-mirror-codeberg.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-codeberg-api.env` | parked (codeberg pull-mirror ban; the push chain carries codeberg) |
 
 ## The underlying rules
 

@@ -7,10 +7,13 @@ cluster, and the control-plane repo has its on-cluster mirror.
 
 **Status**: DONE 2026-11-25 (hub restored + verified by the operator;
 both sync legs resolved -- hub via the app nightly, codeberg via
-the push chain after codeberg's pull-mirror ban; carried notes:
-the codeberg pull-mirror request is parked until their team
-answers, CT 204 decommission is the operator's pending call, the
-3.54.0->3.56.1 pin bump rides the next make update)
+the push chain after codeberg's pull-mirror ban; CLOSED
+2026-11-25: codeberg declined the pull-mirror request
+[Community#3313], so the push chain is the PERMANENT codeberg leg
+and CT 204 was decommissioned by manifest -- zero data inside,
+schedule was off, repos ignored; env + vault item + docs swept.
+Remaining note: the 3.54.0->3.56.1 pin bump rides the next
+make update)
 **Arc**: v2
 
 ## Acceptance criteria

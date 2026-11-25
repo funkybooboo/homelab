@@ -238,7 +238,12 @@ wherever the corpus is unrecoverable.
 [OPS-25 UPS power-loss protection](./stories/OPS-25-ups-power-loss.md)
 (the operator's APC BE600M1 -- NUT on the Pi, grace timer, staged
 clean shutdown; the deliberate standing-rule exception: power-loss
-shutdown is automated, unlike update reboots).
+shutdown is automated, unlike update reboots), and
+[OPS-27 mise as the fleet loop front door](./stories/OPS-27-mise-fleet-loop.md)
+(operator request: converge/update/verify as mise tasks, ansible
+pinned via mise.toml [tools], Makefile deleted; mechanical port
++ the doc sweep that keeps the docs honest; small enough to pull
+forward into v3 whenever the operator wants).
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
 

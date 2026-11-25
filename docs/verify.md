@@ -90,9 +90,11 @@ guests recover via onboot, quorum holds).
 ## 7. The cluster (the PVE view)
 
 `https://192.168.1.3:8006` (or the tailnet front) -> Datacenter:
-10 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
+9 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
 105 grafana, 106 loki, 201 vaultwarden, 202 forgejo,
-203 gitea-mirror, 204 gitea-mirror-codeberg), 5/5 quorate.
+203 gitea-mirror), 5/5 quorate. (204 gitea-mirror-codeberg was
+removed 2026-11-25 after codeberg declined the pull-mirror
+request; the forgejo push chain is the codeberg leg.)
 
 CLI: `source local/pve-api.env` + the storage/guest API calls the
 scripts use; or just `curl -sk -H "Authorization: Bearer ..."`.
