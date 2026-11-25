@@ -90,10 +90,27 @@
   become: true
   become_user: postgres
 
+- name: any user objects still postgres-owned? (drift check)
+  community.postgresql.postgresql_query:
+    login_db: "{{ forgejo_db_name }}"
+    query: >-
+      SELECT count(*) AS n FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE c.relowner = (SELECT oid FROM pg_roles WHERE rolname='postgres')
+        AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+        AND NOT (c.relkind = 'S' AND EXISTS (SELECT 1 FROM pg_depend d
+                 WHERE d.objid = c.oid AND d.deptype = 'a'))
+  register: _own_drift
+  changed_when: false
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
 - name: forgejo role owns the objects INSIDE its database (the pgdata
         restore made every table postgres-owned; migrations ALTER them;
         REASSIGN OWNED BY postgres is impossible -- postgres owns the
         system catalogs -- so a DO block moves only the USER objects)
+  when: _own_drift.query_result[0].n | int > 0
   community.postgresql.postgresql_query:
     login_db: "{{ forgejo_db_name }}"
     query: |
@@ -117,7 +134,21 @@
   become: true
   become_user: postgres
 
+- name: is the public schema already forgejo's? (drift check)
+  community.postgresql.postgresql_query:
+    login_db: "{{ forgejo_db_name }}"
+    query: >-
+      SELECT count(*) AS n FROM pg_namespace
+      WHERE nspname='public'
+        AND nspowner <> (SELECT oid FROM pg_roles WHERE rolname='{{ forgejo_db_user }}')
+  register: _schema_drift
+  changed_when: false
+  delegate_to: postgres
+  become: true
+  become_user: postgres
+
 - name: forgejo role owns the public schema (migrations CREATE in it)
+  when: _schema_drift.query_result[0].n | int > 0
   community.postgresql.postgresql_query:
     login_db: "{{ forgejo_db_name }}"
     query: ALTER SCHEMA public OWNER TO {{ forgejo_db_user }}
@@ -226,17 +257,36 @@
     line: "DISABLE_REGISTRATION = true"
   notify: restart forgejo
 
-- name: app.ini enables the in-app metrics endpoint (bearer token)
+- name: metrics endpoint state (is forgejo's own [metrics] intact?)
+  # forgejo PRESERVES the section + TOKEN across its app.ini
+  # rewrites, but EATS in-section trailing comments -- including
+  # blockinfile's END marker. A blockfile here can therefore only
+  # ever be a BOOTSTRAP: re-applying it every converge = rewrite +
+  # restart + forgejo re-normalizes = changed-loop forever (found by
+  # the 2026-11-25 idempotence audit). So: verify normally, apply
+  # only when the verify fails.
+  ansible.builtin.shell: >-
+    grep -q '^\[metrics\]' /etc/forgejo/app.ini
+    && grep -q "^TOKEN = {{ forgejo_metrics_token }}$" /etc/forgejo/app.ini
+  register: _metrics_state
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: app.ini enables the in-app metrics endpoint (bearer token; bootstrap-only)
+  when: _metrics_state.rc != 0
   # blockinfile, not lineinfile: the restored app.ini has NO
-  # [metrics] section, so this appends one. Forgejo preserves +
-  # normalizes unknown/known sections on its own rewrites; the
-  # marker keeps re-converges honest.
+  # [metrics] section, so this appends one. Runs ONCE per restore;
+  # subsequent converges take the verify path above (changed=0).
+  # DISABLE_INTERVAL is forgejo's own normalization default -- write
+  # it now so the post-restart file matches what forgejo keeps.
   ansible.builtin.blockinfile:
     path: /etc/forgejo/app.ini
     marker: "# {mark} ansible-managed metrics"
     block: |
       [metrics]
       ENABLED = true
+      DISABLE_INTERVAL = 300
       TOKEN = {{ forgejo_metrics_token }}
   no_log: true
   notify: restart forgejo
