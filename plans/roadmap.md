@@ -242,6 +242,17 @@ keep the running fleet boring.
 - [OPS-16 homelab auto-repair](./stories/OPS-16-homelab-auto-repair.md)
   (design: [design/homelab-auto-repair.md](./design/homelab-auto-repair.md))
 
+ADDED 2026-11-25 (operator-supplied designs + the community-scripts
+survey): [design/offsite-alerting.md](./design/offsite-alerting.md)
+(the v4 alerting tier -- detection in the lab, delivery + dead-man's
+switch on a $5 VPS; supersedes the bare-alertmanager note),
+[design/offline-docs-library.md](./design/offline-docs-library.md)
+(DevDocs-first private reference library), and
+[design/future-services-backlog.md](./design/future-services-backlog.md)
+(the 42-service triage: 9 already on the board, new candidates filed
+with era suggestions, 3 honest overlaps marked skip). Nothing joins
+a converge without its own story first.
+
 ## Policy
 
 Numeric order: always complete the lowest incomplete arc before
