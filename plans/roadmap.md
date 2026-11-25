@@ -216,9 +216,17 @@ need appears.
 [OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
 [OPS-13 the auto-update port](./stories/OPS-13-auto-update-port.md),
 [OPS-14 PBS backups](./stories/OPS-14-pbs-backups.md),
-[OPS-15 drift detection](./stories/OPS-15-drift-detection.md).
+[OPS-15 drift detection](./stories/OPS-15-drift-detection.md),
+[OPS-25 UPS power-loss protection](./stories/OPS-25-ups-power-loss.md)
+(the operator's APC BE600M1 -- NUT on the Pi, grace timer, staged
+clean shutdown; the deliberate standing-rule exception: power-loss
+shutdown is automated, unlike update reboots).
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
+
+Alerting for this era carries the
+[off-site design](./design/offsite-alerting.md) (detection in the
+lab, delivery + dead-man's switch on a VPS).
 
 ## v5: Platform refresh
 
