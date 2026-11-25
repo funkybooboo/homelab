@@ -59,8 +59,20 @@ class, recorded here.
       choreography begins)
 - [ ] Choreography proven in a drill: guests, truenas, nodes, Pi
       -- in order, clean halts, no corruption
+- [ ] **The operator RECEIVES a notification when the homelab loses
+      power** -- two tiers, by design: (a) immediate push (ntfy) at the
+      moment the UPS reports on-battery -- the lab is still alive on
+      battery, so the in-lab delivery path carries it: 'power out;
+      fleet on battery; shutdown begins in N minutes'; and (b) the
+      guaranteed-eventual tier via the off-site dead-man's switch
+      (design/offsite-alerting.md): if the outage is so fast that
+      even the UPS/Pi die before anything sends, the VPS notices the
+      heartbeat stop and the phone learns the lab went dark -- the
+      only path that works when the lab itself cannot speak
 - [ ] ntfy (and later the VPS path) carries the outage story end
-      to end
+      to end: on-battery, shutdown-beginning, shutdown-complete,
+      power-restored -- the operator can reconstruct the whole
+      event from notifications alone
 - [ ] The shutdown sequence is a repo script (declarative, not
       hand-wiring on the Pi)
 
