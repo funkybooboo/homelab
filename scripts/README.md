@@ -15,3 +15,4 @@
 | mint-tailscale-key.sh | live | re-mint the guest-enrollment preauth key (make update warns at <14d) |
 | stage-pgdata.sh | one-shot, done | staged the root-owned PGDATA for the postgres restore; kept for restore reproducibility |
 | truenas-network-move.sh | historical | the .10 move (done 2026-11-21) |
+| secrets-restore.sh | live | materialize every local/*.env from the Proton Pass vault (OPS-26; run after `pass-cli login` on a new machine) |

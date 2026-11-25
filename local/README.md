@@ -26,13 +26,17 @@ documents the variable names + where the credential is minted.
 | gitea-mirror-codeberg-api.env | GITEA_MIRROR_CODEBERG_API_KEY | CT 204 UI |
 | codeberg-api.env | CODEBERG_API_TOKEN | codeberg.org user token (repo rw) |
 
-## Restore path (OPS-26, in flight)
+## Restore path (OPS-26, shipped 2026-11-25)
 
 The durable home for these secrets is the operator's Proton Pass
-vault (pass-cli). On a new machine: dotfiles `setup.sh` step 1 is
-`pass-cli login`; then the OPS-26 restore script materializes every
-`local/*.env` from the vault. Until that ships, a fresh machine
-means re-minting each credential at its source (the table above).
+vault (pass-cli; vault `homelab`, one item per env file, hidden
+field per variable). Every `.env.example` in this directory is an
+inject template carrying `{{ pass://... }}` references.
+
+On a new machine: dotfiles `setup.sh` step 1 is `pass-cli login`,
+then run `scripts/secrets-restore.sh` -- it materializes every
+`local/*.env` (mode 600). Rotation updates the live env file AND
+the vault item; templates are references, not values.
 
 ## Subdirectories
 

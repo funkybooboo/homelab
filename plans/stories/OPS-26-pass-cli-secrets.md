@@ -5,8 +5,10 @@ Pass vault so cloning this repo on a new machine is enough to
 restore operations -- no credential lives only on one laptop's
 disk.
 
-**Status**: planned (recorded 2026-11-25; the audit's restore-path
-gap)
+**Status**: DONE 2026-11-25 (operator logged in; vault populated,
+templates generated FROM the live files byte-identically, restore
+script proven live: 13/13 env files rebuilt from the vault and a
+full `make verify` green against them)
 **Arc**: v3 opening move (restores the repo's portability before
 new services pile on)
 
