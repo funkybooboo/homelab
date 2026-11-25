@@ -59,6 +59,10 @@
   become: true     # in-CT sudo is passwordless
   gather_facts: true
   tasks:
+    - name: apt cache clean (frees archive space on small CTs)
+      ansible.builtin.command: apt-get clean
+      changed_when: false
+
     - name: apt dist-upgrade
       ansible.builtin.apt:
         upgrade: dist

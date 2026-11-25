@@ -9,7 +9,8 @@ storage: pve-shared
 cores: 1
 memory: 1024
 swap: 512
-disk: 4
+disk: 8               # was 4 -- grafana's own deb is ~400MB and the
+                       # apt cache couldn't fit it (2026-11-25 update fail)
 ip: 192.168.1.18
 role: grafana
 tailnet: true

@@ -211,6 +211,20 @@ Ends with: the curated list running and documented; the uncurated
 stay as dumps + extraction notes, cheap to resurrect when a real
 need appears.
 
+ADDED 2026-11-25 (operator requests, the personal-content family):
+[USER-17 the knowledge base](./stories/USER-17-knowledge-base.md)
+(md corpus hosted -- writebook considered, forgejo+mdbook is the
+fleet-native option; tier-0),
+[USER-18 the books library](./stories/USER-18-books-library.md)
+(omnivore considered; calibre-web is the library-shaped answer;
+tier-0), and
+[USER-19 the YouTube queue](./stories/USER-19-youtube-queue.md)
+(metube for hand-picked videos -> jellyfin; Tube Archivist only
+if it grows into channel archiving; cronmaster only for scheduled
+sync). All three pair with the media fleet and land on the
+personal-content tier: served via tailnet, backed as tier-0
+wherever the corpus is unrecoverable.
+
 ## v4: Automation polish
 
 [OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
