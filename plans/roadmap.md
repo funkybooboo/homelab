@@ -48,7 +48,9 @@ constitution is [identity.md](./identity.md); the shipped record is
   service stories, the cluster carries
   exactly: 1 manifest-managed test CT, 1 base template, node glue
   (proxmoxer), and nothing else.
-- NEXT: the critical five, vaultwarden first (USER-1).
+- NEXT: v3 -- the media fleet (USER-2) first, then the daily tools and
+  the restored keeps. v2 SHIPPED 2026-11-25 (see the v2 section);
+  carry-forwards are recorded there, not lost.
 - Standing tooling: `docs/` (the live data-to-extract inventory),
   `ansible/inventory/` (LAN plan, host facts),
   `scripts/revive-node.sh` + the parked future-node tooling
@@ -103,7 +105,7 @@ Ended with: a bare cluster (zero guests, zero orphans, zero stale
 addresses), HTTPS-everywhere access from the tailnet, the good-ssh
 state on every node, and second factors on both PVE UI identities.
 
-## v2: IaC skeleton -- BUILD FRESH on the bare cluster
+## v2: IaC skeleton -- SHIPPED 2026-11-25
 
 REVISED 2026-11-22 (the plan shift's final form): the old CTs are
 cleaned out (v1.5), not revived, so v2 BUILDS the critical five
@@ -111,6 +113,28 @@ fresh -- the skeleton (OPS-7) creates guests via the PVE API and
 each service restores its data from the extraction tarballs + the
 `services/` as-was references. Curated resurrection, one story per
 service; `make converge`/`make verify` become real.
+
+SHIPPED AS BUILT: the observability foundation first (every guest
+born with journald->loki, node_exporter, the five-family watcher +
+daily heartbeat), then USER-1 vaultwarden (source build, vault
+restored, operator-verified), OPS-9 the full hub restore -- the
+operator's Option B: 17 users + 349 repos on the new forgejo
+(CT 202), with the sync layer rebuilt as the old fleet ran it:
+TWO gitea-mirror instances (CT 203 github->forgejo hub leg,
+CT 204 github->codeberg leg; one shared role, base URLs
+hostname-derived). Nightly schedules set; self-owned repos sync
+green; the phantom-import class (pre-existing collaborator repos)
+is kept STALE-BUT-PRESENT by operator policy, with the exclude
+list as the follow-up. In-app forgejo metrics scraped (the only
+service-internal exporter that exists in this tier). Plus the
+completeness audit: every old-fleet service is now live, planned
+(USER-6..13, OPS-24 + the ONCE trio USER-14..16), or consciously
+deferred (USER-5 with its data warning).
+
+Carried into v3 (recorded, not lost): the app exclude list for the
+phantom class; the 32 DB-only repos (failed = broken page, not
+stale); gitea-mirror ntfy wiring (the operator holds the URL);
+the gitea-mirror upstream pin bump (3.54.0 -> 3.56.1 available).
 
 [OPS-7 the IaC skeleton](./stories/OPS-7-iac-skeleton.md)
 (done -- shipped 2026-11-22: manifest -> CT -> running service,
