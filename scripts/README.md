@@ -16,3 +16,4 @@
 | stage-pgdata.sh | one-shot, done | staged the root-owned PGDATA for the postgres restore; kept for restore reproducibility |
 | truenas-network-move.sh | historical | the .10 move (done 2026-11-21) |
 | secrets-restore.sh | live | materialize every local/*.env from the Proton Pass vault (OPS-26; run after `pass-cli login` on a new machine) |
+| reboot-node.sh | live | the node reboot runbook, executable: gated, one-at-a-time, aborts on any failed check; operator-invoked only (proven live 2026-11-25, the Pi) |

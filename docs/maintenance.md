@@ -44,16 +44,16 @@ reboot runbook below.
 
 ## Node reboot runbook (pre-HA)
 
-HA placement for guests is not wired yet (the OPS-6 deferral), so a
-node reboot briefly interrupts the guests on that node; they recover
-via `onboot: true`. One node at a time:
+The runbook is EXECUTABLE: `scripts/reboot-node.sh`. It enforces
+the invariants below in code -- quorate + no vzdump before
+starting, one node at a time, node back + full quorum + every
+guest recovered between nodes, hard abort on any failed gate, ntfy
+carrying the story. It is human-gated by invocation only (never
+scheduled; the never-self-reboot rule stands). Proven live
+2026-11-25 (the Pi). Rehearse any time with `--dry-run`.
 
-1. `make update` first; note which nodes flagged reboot-required.
-2. Check no vzdump job is mid-run (Sat 21:00 window).
-3. Reboot ONE node. Guests on it come back on boot. Quorum holds
-   (4/5 + Pi witness).
-4. Verify: quorum, guest recovery (the monitoring pair shows it),
-   then next node if another flag stands.
-
-Never reboot two nodes at once; never schedule reboots; the LRM
-watchdog stays unarmed for guest recovery until HA lands.
+Background: HA placement for guests is not wired yet (the OPS-6
+deferral), so a node reboot briefly interrupts the guests on that
+node; they recover via `onboot: true`. Never reboot two nodes at
+once; never schedule reboots; the LRM watchdog stays unarmed for
+guest recovery until HA lands.
