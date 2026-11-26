@@ -47,7 +47,7 @@ alerting tier)
 
 - Alert counts/types wait for the v4 alerting tier
   (design/offsite-alerting.md); the panels land empty by design,
-  honestly labeled.
+  labeled as such.
 - Power/cost: static watts table (one meter reading per host) +
       the UPS story's nut-exporter later; external utility-rate
       API only if a live rate is actually wanted.

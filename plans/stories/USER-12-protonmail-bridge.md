@@ -23,5 +23,5 @@ without the re-login + 2FA + re-pairing dance.
 The entire value is avoiding the re-auth ritual -- if the
 credentials turn out unreadable at extract time (gpg state
 corrupt, or the account already de-paired server-side), the story
-degrades to "fresh pairing, operator-run" and the honest move is
+degrades to "fresh pairing, operator-run" and the plain answer is
 to say so rather than ship a hollow restore.

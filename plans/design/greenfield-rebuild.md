@@ -195,7 +195,7 @@ Adding a service = one YAML in `guests/` + (usually) one role in `ansible/roles/
    *Needs decision.*
 5. **Backups**: PBS VM with datastore on truenas (my lean: dedup, verify,
    file-level restore; run verify jobs or don't bother) vs vzdump-to-NFS as
-   before (simpler, honest for a small fleet). *Needs decision.*
+   before (simpler, and fitting for a small fleet). *Needs decision.*
 6. **Service list**: full resurrection (~28) vs curated (~12-15) -- my lean is
    curated; the legacy archive makes lazy resurrection cheap later.
    *Needs answer.*
@@ -246,7 +246,7 @@ Adding a service = one YAML in `guests/` + (usually) one role in `ansible/roles/
 - OPNsense-on-PVE walkthrough (bridges vs passthrough, virtio + offload
   settings, start order 1): https://homenetworkguy.com/how-to/virtualize-opnsense-on-proxmox-as-your-primary-router/
 - OPNsense VM ACPI hang reports: https://forum.opnsense.org/index.php?topic=20715.0
-- HA honest verdict + watchdog/fencing mechanics:
+- HA verdict + watchdog/fencing mechanics:
   https://budgethomelab.com/articles/proxmox-cluster-high-availability/
 - NFS homelab patterns (unprivileged LXC bind mounts, tuning):
   https://blog.gntech.me/posts/2026-05-25-nfs-storage-homelab-proxmox-docker/

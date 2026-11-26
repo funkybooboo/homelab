@@ -26,11 +26,11 @@ syncstorage payloads are likely GONE. The one remaining hope is the
 B2 archive (the old volume1 datasets were cloud-synced); CHECK B2
 FIRST as the story's opening move, before promising any data
 restore. If B2 holds nothing, the acceptance criterion above flips
-to an honest "fresh start, zero legacy sync payloads" and Firefox
+to a plain "fresh start, zero legacy sync payloads" and Firefox
 re-syncs from a client's local profile on first pairing.
 
 Native integration, no browser extensions -- the only self-host option
-that gives that. The honest caveat in the design record stands:
+that gives that. The caveat in the design record stands:
 self-hosting does not eliminate the Mozilla dependency entirely.
 See [../design/firefox-sync-server.md](../design/firefox-sync-server.md).
 

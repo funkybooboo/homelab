@@ -3,7 +3,7 @@
 ## Honest TL;DR
 
 This is really **two and a half separate goals** the request bundled into one,
-and they have very different honesty profiles:
+and they differ sharply in privacy, custody, and risk:
 
 1. **Run a Monero full/pruned node** so you broadcast your own transactions
    without leaking tx data + view-key scans to a third-party node. **Real
@@ -11,7 +11,7 @@ and they have very different honesty profiles:
 2. **Buy/sell XMR "privately."** A node does *not* buy you this. Privacy of
    fiat<->XMR is a property of the *exchange path* (DEX vs KYC'd CEX vs P2P),
    not the node. The node only protects broadcast/chain-query privacy. Worth
-   building the second half honestly and separately, because it is where the
+   building the second half separately, because it is where the
    real privacy (and the real risk) lives.
 3. **Mine Monero.** On this cluster: **negative ROI for years, network
    support only.** Real money (electricity) for lottery tickets. Included
@@ -35,7 +35,7 @@ the tradeoffs that actually matter for a 1GbE tailnet-only Proxmox homelab."
 The request said: "a monero node so I can buy and sell monero privently and
 maybe even mine monero." That collapses three independent privacy/economic
 properties. They must be designed separately, because the node is easy and
-honest, and the exchange path is hard and has a long dishonest marketing
+sound, and the exchange path is hard and has a long slick marketing
 tail (swap aggregators, "no-KYC" CEXs, Telegram OTC). The table below is the
 whole thesis of this doc:
 
@@ -50,7 +50,7 @@ whole thesis of this doc:
 > **One-line correction to the request's framing:** a self-hosted node gives
 > you *broadcast + query + custody* privacy. It does **not** give you
 > *acquisition* privacy. Buying/selling "privately" is solved by *which
-> exchange you use*, and the honest options for that are fewer and flakier
+> exchange you use*, and the options for that are fewer and flakier
 > than the Monero marketing suggests (see "Exchange path" below).
 
 ---
@@ -103,7 +103,7 @@ locked, see "Decisions locked" below).
 
 ---
 
-## Phase 1 -- The node (the honest, recommended part)
+## Phase 1 -- The node (the recommended part)
 
 ### 1a -- CT creation
 
@@ -169,7 +169,7 @@ source (chain-verification defeat). Let it sync from real peers.
 
 - **Prometheus**: scrape `monero` via a small exporter. The homelab already
   scrapes app-native `/metrics` (forgejo, grafana). `monerod` has no native
-  metrics endpoint; the honest options are (a) a lightweight
+  metrics endpoint; the options are (a) a lightweight
   `monero-prometheus-exporter` sidecar (community ones exist, e.g.
   `monero-exporter`), or (b) a `node_exporter` on the CT for at least
   CPU/mem/disk (matches the pattern already on every PVE host). Default to
@@ -204,23 +204,23 @@ source (chain-verification defeat). Let it sync from real peers.
 ## Phase 2 -- The exchange path (the "buy and sell privately" part)
 
 This phase has nothing to do with the node. It is included because the
-request asked for it, and because the honest answer is more useful than the
+request asked for it, and because the plain answer is more useful than the
 marketing. **All of these are out-of-cluster decisions** -- none of them run
 on the homelab; they're just where you point your (now-self-hosted) wallet.
 
 ### Honest options, ranked by how private they actually are
 
-| path | KYC? | custody | real privacy | real risk | honest verdict |
+| path | KYC? | custody | real privacy | real risk | verdict |
 | --- | --- | --- | --- | --- | --- |
 | KYC'd CEX (Kraken, etc. -- the ones that still list XMR) | full | exchange holds until withdraw | **none** -- CEX sees your identity, your bank, your tx graph | exchange delist/regulatory rugpull (Kraken delisted XMR in EU/EEA already) | easy, not private at all. Use only to acquire, withdraw immediately to self-custody, never keep balance there. |
-| **Haveno** (decentralized, Monero-native, Tor) | none | non-custodial multisig escrow | **high** -- peer-to-peer, Tor, no central KYC | counterparty + escrow dispute risk; thin liquidity; project is young | the honest "private buy/sell" option today. Expect low liquidity + patience. |
+| **Haveno** (decentralized, Monero-native, Tor) | none | non-custodial multisig escrow | **high** -- peer-to-peer, Tor, no central KYC | counterparty + escrow dispute risk; thin liquidity; project is young | the practical "private buy/sell" option today. Expect low liquidity + patience. |
 | Bisq (BTC/XMR swap market) | none | non-custodial | high | same as Haveno + an extra hop (fiat->BTC->XMR or reverse) | reasonable, more steps |
 | "no-KYC" CEX / swap aggregators (Trocador, ChangeNOW, etc.) | "none" advertised | **custodial during swap** | **low in practice** -- many are front-ends for KYC'd CEXs; some flag "AML" and hold funds; some are outright honeypots | **high** -- funds lost to "AML review" holds is a known pattern | **be skeptical.** "No KYC" marketing is often false. Treat as custodial and risky, not as private. |
 | cash-by-mail / local cash (the old LocalMonero model) | none | n/a | highest | personal safety + scam risk; LocalMonero was seized in 2024 | works but the on-the-ground risk is real and the platforms are mostly gone |
 | centralized swap (e.g. FixedFloat, before its 2024 hack) | none advertised | custodial | low | demonstrated loss (FixedFloat lost ~$26M and paused) | the failure cases are public; avoid |
 
 **Punchline for the "buy and sell privately" goal:** Haveno (or Bisq) is the
-honest answer. The "swap aggregator" ecosystem markets itself as private and
+plain answer. The "swap aggregator" ecosystem markets itself as private and
 mostly isn't. KYC'd CEXs are the path of least resistance if you tolerate
 identity leakage *for the acquisition step only* and withdraw immediately to
 your self-hosted-wallet-over-your-own-node. The node protects everything
@@ -247,7 +247,7 @@ Monero uses **RandomX**, a CPU + memory-hard PoW. Profitable RandomX mining
 means: modern many-core CPU, lots of fast RAM, huge pages, cheap electricity,
 and ideally cooler-than-ambient air. This homelab has none of those as
 primary design goals -- it's a quiet 5-node cluster on a 1GbE LAN, mostly
-laptops, sharing RAM with 23 service CTs. The honest math:
+laptops, sharing RAM with 23 service CTs. The math:
 
 - A modern desktop CPU (e.g. an 8-core Ryzen-class on `pve-thermaltake`)
   mines on the order of **a few thousand H/s**. At network difficulty and
@@ -264,7 +264,7 @@ laptops, sharing RAM with 23 service CTs. The honest math:
 the donation, do not budget for income.** If that framing is unattractive,
 skip this phase. It is genuinely fine to skip it.
 
-### If you still want to (the honest minimal setup)
+### If you still want to (the minimal setup)
 
 - Run `xmrig` on **one** node only, **not** in the shared cluster's CTs
   competing for cores with services. The cleanest is on `pve-thermaltake`
@@ -301,7 +301,7 @@ skip this phase. It is genuinely fine to skip it.
 | `monero-wallet-rpc` on a VPS | full | full | medium + ongoing cost | no -- reintroduces a third-party box, defeats the point |
 
 Self-hosted is the only one that gives full broadcast/query/sovereignty
-privacy. Remote-node wallets are the honest "good enough, zero effort"
+privacy. Remote-node wallets are the "good enough, zero effort"
 alternative and we note them so the tradeoff is explicit, not implicit.
 
 ---
@@ -400,7 +400,7 @@ alternative and we note them so the tradeoff is explicit, not implicit.
    (Also: since you don't want to expose your IP, any Haveno/Bisq use should
    be over Tor, which both run natively. Note it, don't build it here.)
 4. **Mining: build it, or just leave this phase as "available if you ever
-   want a heater"?** Given the near-certain negative ROI, the honest default
+   want a heater"?** Given the near-certain negative ROI, the sensible default
    is "don't, unless you want to participate." Confirm we're skipping it
    for now.
 
@@ -432,7 +432,7 @@ alternative and we note them so the tradeoff is explicit, not implicit.
 
 **Phase:** idea -- ready for Phase 1 (node) when a free weekend + tolerance
 for a 2-5 day initial sync lands. Phase 2 is an out-of-cluster decision
-documented here for honesty, not a build. Phase 3 (mining) is "available if
+documented here for completeness, not a build. Phase 3 (mining) is "available if
 you ever want a network-participation donation / a space heater," not a plan.
 **Estimated effort:** Phase 1 ~1 weekend (mostly waiting on sync); Phase 2
 zero homelab effort (it's where you point your wallet); Phase 3 ~1 evening

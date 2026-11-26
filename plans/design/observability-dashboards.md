@@ -29,7 +29,7 @@ a periodic puller also lands a row in postgres for superset.
 - grafana: datasources provisioned, ZERO dashboards (built-in-UI
   only so far; docs/data.md commits dashboards-as-provisioning).
 
-## GAPS -- what we do not collect yet (the honest list)
+## GAPS -- what we do not collect yet
 
 | Gap | Idiomatic fix | Notes |
 | --- | --- | --- |
@@ -41,11 +41,11 @@ a periodic puller also lands a row in postgres for superset.
 | Packages + updates per host | node_exporter TEXTFILE collector scripts (updates-available, reboot-required, last-converge) | the canonical trick for "no exporter exists" cases |
 | Services up (ports/fronts) | blackbox exporter (ping/http probes) | pairs with the v4 offsite-alerting design (design/offsite-alerting.md) |
 | Tailscale (device count, key expiry, serve fronts) | textfile collector via the tailscale API (keys route works) | device routes are console-only (recorded trap) |
-| Alert counts/types | alertmanager metrics (when the v4 alerting tier lands) | the "alerts" dashboard is empty until then -- honest |
+| Alert counts/types | alertmanager metrics (when the v4 alerting tier lands) | the "alerts" dashboard is empty until then |
 | sshd auth events (usage, failures) | already IN loki (journald) -- just needs dashboards | promtail already ships sshd units |
 | systemd restarts | node_exporter systemd collector flag + loki unit-restart events | one flag + queries |
 | Vaultwarden/media/DB row counts | textfile collectors querying each service's own DB nightly | e.g. items count, 715-movie count, navidrome tracks |
-| Cost-of-running estimate | textfile collector: static watts-per-host table (measured once with a meter) x up/running + local utility rate | external APIs only for the utility rate if we want it live; a one-time meter reading is more honest than an API guess |
+| Cost-of-running estimate | textfile collector: static watts-per-host table (measured once with a meter) x up/running + local utility rate | external APIs only for the utility rate if we want it live; a one-time meter reading beats an API guess |
 
 Textfile collectors run as systemd timers owned by node_glue/guest
 roles (the fleet has a no-cron rule -- timers are the code-managed

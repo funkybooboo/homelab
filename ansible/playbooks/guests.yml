@@ -93,7 +93,7 @@
         state: present
         # update defaults TRUE in community.proxmox 2.1.0 (every run
         # re-applies config + reports changed). We want create-if-
-        # missing with honest idempotence; drift is make verify's
+        # missing with real idempotence; drift is make verify's
         # job (OPS-15). To change an existing guest's resources:
         # one-off run with -e guest_update=true.
         update: "{{ guest_update | default(false) }}"
@@ -119,7 +119,7 @@
 
     - name: Apply missing mp entries (USER-2 media binds; verify-first
             -- pct config grep before every pct set, so converge is
-            honest-idempotent; a present entry is never touched)
+            idempotent; a present entry is never touched)
       when:
         - item.state | default('present') == 'present'
         - item.mounts | default([]) | length > 0

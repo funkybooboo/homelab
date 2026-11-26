@@ -20,10 +20,10 @@
 #
 # Read-only calls are safe; POST calls change live state -- they stay
 # in the human-gated category (identity rule 2) and the helper echoes
-# what it is about to send before sending it. TRAP from the move
-# evening (TrueNAS fail-safe): interface changes stage + REVERT unless
-# confirmed -- after any interface POST, watch the UI's save prompt
-# (or call interface/checkin).
+# what it is about to send before sending it. TrueNAS fail-safe:
+# interface changes stage + REVERT unless confirmed -- after any
+# interface POST, watch the UI's save prompt (or call
+# interface/checkin).
 #
 # Read-only ssh also works for diagnostics (no escalation):
 #   ssh nate@192.168.1.10 '/usr/sbin/zpool status volume1'

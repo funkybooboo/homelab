@@ -68,8 +68,8 @@ account's 100-repo cap -- OPEN in issues.md item 16)
       than delete+re-create. Follow-up: after the first full
       batch settles, add the failed list to the app's per-repo
       EXCLUDE config so nightly runs skip the class (no deletion
-      involved). TRAP learned: the app's cancel-pending endpoint
-      is actually stop-pending-mirrors (sets repos to ignored);
+      involved). Note: the app's cancel-pending endpoint is
+      actually stop-pending-mirrors (sets repos to ignored);
       retry-repo with repositoryIds[] is the correct re-queue.
 - [x] The CODEBERG leg returns: the old fleet ran a SECOND
       gitea-mirror (GitHub -> codeberg, the off-site public

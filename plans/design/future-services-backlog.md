@@ -4,7 +4,7 @@
 **Why**: the operator surveyed the Proxmox VE Community Scripts catalog
 and flagged 42 services of interest. This is the triage: what is
 already on the roadmap, what fits an existing era, what is genuinely
-new, and what honestly overlaps what the fleet already runs.
+new, and what overlaps what the fleet already runs.
 
 **Deployment stance** (same as the ONCE trio, USER-14..16): the
 community scripts are REFERENCES for what upstream ships, not our

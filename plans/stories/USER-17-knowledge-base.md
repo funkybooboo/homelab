@@ -9,7 +9,7 @@ with the fleet instead of living only on my laptop.
 **Corpus**: ~/Documents/knowlege_base (~markdown, organized in dirs)
 **Arc**: v3 (personal-content family)
 
-## The operator's instinct + honest options
+## The operator's instinct + the options
 
 The idea on the table: **writebook** (the ONCE trio, USER-16).
 Writebook is book-shaped -- writing and PUBLISHING volumes with
@@ -39,4 +39,4 @@ umbrella (truenas tier-0 -- this one is NOT re-fetchable).
 - [ ] Readable from any operator device via the tailnet
 - [ ] Backup path verified (this corpus is tier-0: original
       writing, unrecoverable)
-- [ ] A write-from-phone story exists or is honestly declined
+- [ ] A write-from-phone story exists or is declined

@@ -66,7 +66,7 @@ network first; RPC will amplify any network problem.
 
 ---
 
-## If you still want to try it: minimal, honest setup
+## If you still want to try it: minimal setup
 
 ### Step 0: stay single-node first
 
@@ -218,7 +218,7 @@ like every other CT, and point your clients at `https://llm.tail54538d.ts.net`.
 That is a 30-minute job, not a multi-day build, and it gets you a working LLM
 endpoint. RPC becomes interesting only when you outgrow the one GPU.
 
-If you want redundancy or more throughput than the one GPU gives, the honest
+If you want redundancy or more throughput than the one GPU gives, the
 answer is "add a second GPU node", not "federate across CPU laptops over 1GbE."
 
 ---

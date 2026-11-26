@@ -57,6 +57,6 @@ rule 2): nothing destroys before the manifest check, and the word
 "clean it out" comes from the operator. Because CT rootfs lives on
 truenas NFS, guest destruction leaves the pve-shared images until
 the delete step -- deleting them is insurance against accidental
-re-adds and makes the bare-cluster verification honest. The one
+re-adds and verifies the bare cluster. The one
 live CT (101 alpine-it-tools) is an HA auto-start artifact, not a
 revival: it goes with the rest.

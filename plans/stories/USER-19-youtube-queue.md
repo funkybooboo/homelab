@@ -15,7 +15,7 @@ USER-2)
 jellyfin. NOT (yet) channel subscriptions, mass archival, or a
 separate player. The queue is a UI; jellyfin stays the player.
 
-## The honest options
+## The options
 
 1. **metube -- the exact fit for the stated use** -- a minimal
    web UI: paste URL, it downloads via yt-dlp into a folder

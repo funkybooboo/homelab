@@ -10,7 +10,7 @@ on my laptop.
 papers/)
 **Arc**: v3 (personal-content family)
 
-## The operator's instinct + honest options
+## The operator's instinct + the options
 
 The idea on the table: **omnivore** (USER-8). Omnivore can ingest
 PDFs, but it is read-it-later shaped -- article flow, highlights,

@@ -85,7 +85,7 @@ instead of from my memory log.
   templates cloned via `pct`; Packer buys you nothing for LXC and the VM stock
   is one Pi. Skip until there's a real VM image-pipeline need.
 - **S3/MinIO + DynamoDB state backend**: no AWS, no MinIO currently running.
-  The honest fit is **local state in the repo** (private repo, tailnet-only) or
+  The fit is **local state in the repo** (private repo, tailnet-only) or
   a single state file on the TrueNAS NFS share. Locking matters less for a
   one-operator cluster; state encryption-at-rest comes from SOPS if the state
   ever carries secrets (it shouldn't -- keep secrets out of state).
@@ -266,7 +266,7 @@ provider "proxmox" {
 }
 ```
 
-### State backend (honest pick: local in the private repo)
+### State backend (the pick: local in the private repo)
 
 ```hcl
 terraform {
@@ -314,7 +314,7 @@ module "ntfy" {
 
 ---
 
-## 9. Success metrics (honest for one operator)
+## 9. Success metrics (for one operator)
 
 - **Rebuild-time to back-in-service**: from "re-type everything from memory" to
   "tofu apply + ansible-playbook".

@@ -42,7 +42,7 @@ task instead of Makefile prefix duplication.
 
 ## Acceptance criteria
 
-- [ ] mise.toml carries converge/update/verify/deps with honest
+- [ ] mise.toml carries converge/update/verify/deps with
       descriptions (what it does + why, the repo's style)
 - [ ] `mise run verify` green against the live fleet
 - [ ] ansible version pinned in mise.toml [tools]

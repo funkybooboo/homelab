@@ -17,9 +17,9 @@ chain without leaking tx data or view-key scans to a third-party node.
 
 ## Notes
 
-The design record separates the three bundled goals honestly: the node
+The design record separates the three bundled goals: the node
 (real win, cheap, clean fit), the exchange path (privacy lives there,
-not in the node; Haveno/Bisq vs KYC CEX honesty table), and mining
+not in the node; a comparison table of Haveno/Bisq vs KYC CEX), and mining
 (near-certain negative ROI on this cluster). See
 [../design/monero-node.md](../design/monero-node.md) -- it is written
 against the OLD cluster, so re-anchor its placement facts before

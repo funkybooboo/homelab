@@ -14,7 +14,7 @@ This doc began as an external pitch ("HAL") -- ntfy alerts -> n8n workflow
 first, then pressure-tested against THIS homelab's live stack (probed
 2026-08: 5-node Proxmox cluster, 23 LXC CTs, TrueNAS, GL-MT2500 router, no
 Docker, no Uptime Kuma, alertmanager+ntfy already live). The pitch assumed
-a different homelab (Docker swarm, Plex/\*arr, Uptime Kuma). The honest
+a different homelab (Docker swarm, Plex/\*arr, Uptime Kuma). The
 read below records what survived, what didn't, and what's worth building.
 
 ---
@@ -46,7 +46,7 @@ The deterministic detection-and-act loop is partly built:
 - `ideas/auto-update.md` (decisions locked) -- self-healing for the most
   common failure mode (unpatched software). Scoped, deterministic, rollback
   via existing vzdump snapshots. Equivalent to ~half of HAL's playbook
-  library done as honest infrastructure.
+  library done as durable infrastructure.
 
 So: detection rail = done. Several playbooks = done or specified. The
 missing piece is a **dispatcher** that routes an ntfy alert-topic to a
@@ -186,7 +186,7 @@ it; the dispatcher works fine without it.
 - Docker playbooks (not on this stack).
 - The 4-week "share with homelab community" / "month 3: 50% of alerts
   handled without human" targets -- those are product-marketing for a
-  SaaS pitch, not goals for a personal homelab. The honest target is:
+  SaaS pitch, not goals for a personal homelab. The target is:
   "the top 3 repeat incidents stop waking me up."
 
 ---
