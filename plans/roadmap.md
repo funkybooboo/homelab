@@ -22,10 +22,18 @@ constitution is [identity.md](./identity.md); the shipped record is
   [design/observability-dashboards.md](./design/observability-dashboards.md))
   and, with it, USER-20 (superset BI). OPS-28 (router exit node +
   Proton) is filed and waiting on operator-held facts.
-- Parked, not lost: issues.md item 16 (codeberg 100-repo cap;
-  12 un-mirrored targets), the OPS-9 carried notes (phantom
-  exclude list, 32 DB-only rows, mirror ntfy wiring, the
-  3.54.0 -> 3.56.1 bump), issues item 8 (open).
+- Parked items (see [issues.md](./issues.md)): item 16 (codeberg
+  100-repo cap; 12 un-mirrored targets), the OPS-9 carried notes
+  (phantom exclude list, 32 DB-only rows, mirror ntfy wiring, the
+  3.54.0 -> 3.56.1 bump), item 8 (open).
+- [OPS-30 repo text + structure]
+  (./stories/OPS-30-repo-text-structure.md): a full-repo read
+  found history told in forward files, one topic split across
+  several docs, and a consistent set of wording habits. The
+  plan (design/repo-text-structure.md) defines the placement
+  doctrine, the writing rules, and four execution passes;
+  era-independent, runs between v3 stories, two naming
+  decisions open with the operator.
 - Standing tooling: `docs/` (the live data-to-extract inventory),
   `ansible/inventory/` (LAN plan, host facts),
   `scripts/revive-node.sh` + `reboot-node.sh` + the parked
