@@ -54,56 +54,82 @@
     name: audiobookshelf
     state: stopped
 
-- name: controller holds the 133 dump? (stat on debbie; the vzdump
-        extraction -- the image-walk source died with the cleanout;
-        whichever era-path the dump carries, the restore follows)
+- name: which era does the 133 dump carry, with REAL content?
+        (files, not bare dirs -- interrupted extractions leave
+        empties; found live 2026-11-26. deb-era = the old CT's
+        vendor-default /usr/share layout, confirmed at extraction)
   when: not _abs_restored.stat.exists
   become: false
-  ansible.builtin.stat:
-    path: "{{ audiobookshelf_restore_dir }}/from-dump-133/var/lib/audiobookshelf"
-  register: _abs_src_vl
+  ansible.builtin.command:
+    argv: [find, "{{ audiobookshelf_restore_dir }}/from-dump-133/{{ item.src }}", -type, f, -print, -quit]
+  register: _abs_src
   delegate_to: localhost
+  changed_when: false
+  failed_when: false
+  loop:
+    - { era: deb, src: usr/share/audiobookshelf }
+    - { era: varlib, src: var/lib/audiobookshelf }
+    - { era: root, src: audiobookshelf }
+  loop_control:
+    label: "{{ item.era }}"
 
-- name: controller holds the 133 alt-path dump?
+- name: set_fact -- which era the dump carries
   when: not _abs_restored.stat.exists
-  become: false
-  ansible.builtin.stat:
-    path: "{{ audiobookshelf_restore_dir }}/from-dump-133/audiobookshelf"
-  register: _abs_src_alt
-  delegate_to: localhost
+  ansible.builtin.set_fact:
+    _abs_era: "{{ 'none' if (_abs_src.results | map(attribute='stdout') | join | length == 0) else
+                   (_abs_src.results | selectattr('stdout') | map(attribute='item.era') | first) }}"
 
-- name: legacy data restored (dest / -- the dump's own path structure
-        decides where it lands; the service-path probe below follows)
+- name: legacy data restored + owned (each era to its own path; the
+        service-path probe below follows wherever it landed; an
+        empty/absent source leaves the window OPEN)
   when:
     - not _abs_restored.stat.exists
-    - (_abs_src_vl.stat.exists | default(false)) or (_abs_src_alt.stat.exists | default(false))
-  ansible.builtin.copy:
-    src: "{{ audiobookshelf_restore_dir }}/from-dump-133/{{ 'var/lib/audiobookshelf' if (_abs_src_vl.stat.exists | default(false)) else 'audiobookshelf' }}"
-    dest: "{{ '/var/lib/' if (_abs_src_vl.stat.exists | default(false)) else '/' }}"
-  notify: restart audiobookshelf
+    - _abs_era != 'none'
+  block:
+    - name: the copy
+      ansible.builtin.copy:
+        src: "{{ audiobookshelf_restore_dir }}/from-dump-133/{{ {'deb': 'usr/share/audiobookshelf', 'varlib': 'var/lib/audiobookshelf', 'root': 'audiobookshelf'}[_abs_era] }}"
+        dest: "{{ {'deb': '/usr/share/', 'varlib': '/var/lib/', 'root': '/'}[_abs_era] }}"
+      notify: restart audiobookshelf
 
-- name: restored data owned by the service (the dump preserves the
-        old CT's ownership; this one owns its data dir)
-  when:
-    - not _abs_restored.stat.exists
-    - (_abs_src_vl.stat.exists | default(false)) or (_abs_src_alt.stat.exists | default(false))
-  ansible.builtin.file:
-    path: "{{ '/var/lib/audiobookshelf' if (_abs_src_vl.stat.exists | default(false)) else '/audiobookshelf' }}"
-    owner: audiobookshelf
-    group: audiobookshelf
-    recurse: true
+    - name: ownership (the dump preserves the old CT's owners)
+      ansible.builtin.file:
+        path: "{{ {'deb': '/usr/share/audiobookshelf', 'varlib': '/var/lib/audiobookshelf', 'root': '/audiobookshelf'}[_abs_era] }}"
+        owner: audiobookshelf
+        group: audiobookshelf
+        recurse: true
+
+    - name: restore marker written (INSIDE the block -- only when the
+            restore ran)
+      ansible.builtin.copy:
+        dest: /var/lib/audiobookshelf/homelab-restore.done
+        owner: audiobookshelf
+        group: audiobookshelf
+        mode: "0644"
+        content: |
+          Managed by make converge (audiobookshelf role, USER-2).
+          Restore source: legacy-extraction/from-dump-133
+          (era {{ _abs_era }}). This marker present = the restore RAN.
 
 # ---- service paths: follow the data (restored binary-era layout
 # ---- wins; fresh install uses /var/lib)
-- name: where does the app data live? (probe the two eras)
+- name: where does the app data live? (probe all three eras --
+        deb-era /usr/share, binary-era /var/lib, alt root path)
   ansible.builtin.stat:
-    path: /audiobookshelf/config
+    path: "{{ item }}"
   register: _abs_layout
   changed_when: false
+  loop:
+    - /usr/share/audiobookshelf/config
+    - /var/lib/audiobookshelf/config
+    - /audiobookshelf/config
 
-- name: set_fact -- the config base that is real
+- name: set_fact -- the config base that is real (deb-era first; it
+        is what the old CT actually used, confirmed 2026-11-26)
   ansible.builtin.set_fact:
-    audiobookshelf_base: "{{ '/audiobookshelf' if _abs_layout.stat.exists | default(false) else '/var/lib/audiobookshelf' }}"
+    audiobookshelf_base: "{{ '/usr/share/audiobookshelf' if (_abs_layout.results[0].stat.exists | default(false)) else
+                              ('/var/lib/audiobookshelf' if (_abs_layout.results[1].stat.exists | default(false)) else
+                              ('/audiobookshelf' if (_abs_layout.results[2].stat.exists | default(false)) else '/var/lib/audiobookshelf')) }}"
 
 - name: service environment (the deb reads /etc/default; paths follow
         the data layout above)

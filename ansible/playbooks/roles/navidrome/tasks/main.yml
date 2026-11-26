@@ -88,38 +88,43 @@
     path: /var/lib/navidrome/homelab-restore.done
   register: _nd_restored
 
-- name: controller holds the 132 dump? (stat on debbie; the vzdump
-        extraction, not the image-walk tarballs -- those died with
-        the OPS-20 cleanout)
+- name: controller holds a REAL 132 dump? (files, not a bare dir --
+        an interrupted extraction leaves empty dirs; found live
+        2026-11-26 on the sibling 102 pull)
   when: not _nd_restored.stat.exists
   become: false
-  ansible.builtin.stat:
-    path: "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome"
+  ansible.builtin.command:
+    argv: [find, "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome", -type, f, -print, -quit]
   register: _nd_src
   delegate_to: localhost
+  changed_when: false
+  failed_when: false
 
-- name: legacy db restored (only while unmarked AND the dump exists)
+- name: legacy db restored (only while unmarked AND the dump holds
+        files; an absent source leaves the window OPEN)
   when:
     - not _nd_restored.stat.exists
-    - _nd_src.stat.exists | default(false)
-  ansible.builtin.copy:
-    src: "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome"
-    dest: /var/lib/
-    owner: navidrome
-    group: navidrome
-  notify: restart navidrome
+    - (_nd_src.stdout | default('') | length) > 0
+  block:
+    - name: the copy
+      ansible.builtin.copy:
+        src: "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome"
+        dest: /var/lib/
+        owner: navidrome
+        group: navidrome
+      notify: restart navidrome
 
-- name: restore marker written (window closed either way)
-  when: not _nd_restored.stat.exists
-  ansible.builtin.copy:
-    dest: /var/lib/navidrome/homelab-restore.done
-    owner: navidrome
-    group: navidrome
-    mode: "0644"
-    content: |
-      Managed by make converge (navidrome role, USER-2).
-      If written WITHOUT a restore, the tier-1 extraction had not
-      been run yet at that converge -- see docs/data-to-extract.md.
+    - name: restore marker written (INSIDE the block -- only when the
+            restore ran)
+      ansible.builtin.copy:
+        dest: /var/lib/navidrome/homelab-restore.done
+        owner: navidrome
+        group: navidrome
+        mode: "0644"
+        content: |
+          Managed by make converge (navidrome role, USER-2).
+          Restore source: legacy-extraction/from-dump-132.
+          This marker present = the restore RAN.
 
 # ---- the service
 - name: systemd unit

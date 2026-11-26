@@ -115,21 +115,25 @@
     name: jellyfin
     state: stopped
 
-- name: controller holds the 102 dump? (stat on debbie; gates on the
-        actual extraction tree, not the dir that holds all of them)
+- name: controller holds a REAL 102 dump? (files, not a bare dir --
+        an interrupted extraction leaves empty dirs behind, and the old
+        existence-gate "restored" nothing from one and burned the
+        once-only marker; found live 2026-11-26)
   when: not _jf_restored.stat.exists
   become: false
-  ansible.builtin.stat:
-    path: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin"
+  ansible.builtin.command:
+    argv: [find, "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin", -type, f, -print, -quit]
   register: _jf_src
   delegate_to: localhost
+  changed_when: false
+  failed_when: false
 
 - name: restore config + library metadata (only while the marker is
         absent AND the dump exists -- fresh-state otherwise; never
         clobbers, never re-runs)
   when:
     - not _jf_restored.stat.exists
-    - _jf_src.stat.exists | default(false)
+    - (_jf_src.stdout | default('') | length) > 0
   block:
     - name: legacy /etc/jellyfin restored
       ansible.builtin.copy:
@@ -153,17 +157,18 @@
         group: jellyfin
         recurse: true
 
-- name: restore marker written (marks the window closed either way)
-  when: not _jf_restored.stat.exists
-  ansible.builtin.copy:
-    dest: /var/lib/jellyfin/homelab-restore.done
-    owner: jellyfin
-    group: jellyfin
-    mode: "0644"
-    content: |
-      Managed by make converge (jellyfin role, USER-2).
-      If written WITHOUT a restore, the tier-1 extraction had not
-      been run yet at that converge -- see docs/data-to-extract.md.
+    - name: restore marker written (INSIDE the block -- only when the
+            restore actually ran; an absent or empty source must NOT
+            close the window)
+      ansible.builtin.copy:
+        dest: /var/lib/jellyfin/homelab-restore.done
+        owner: jellyfin
+        group: jellyfin
+        mode: "0644"
+        content: |
+          Managed by make converge (jellyfin role, USER-2).
+          Restore source: legacy-extraction/from-dump-102.
+          This marker present = the restore RAN.
 
 - name: Jellyfin running + enabled
   ansible.builtin.service:
