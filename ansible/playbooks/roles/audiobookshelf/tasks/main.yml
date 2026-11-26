@@ -181,18 +181,6 @@
           }
       notify: restart audiobookshelf
 
-- name: restore marker written (window closed either way)
-  when: not _abs_restored.stat.exists
-  ansible.builtin.copy:
-    dest: /var/lib/audiobookshelf/homelab-restore.done
-    owner: audiobookshelf
-    group: audiobookshelf
-    mode: "0644"
-    content: |
-      Managed by make converge (audiobookshelf role, USER-2).
-      If written WITHOUT a restore, the tier-1 extraction had not
-      been run yet at that converge -- see docs/data-to-extract.md.
-
 - name: audiobookshelf running + enabled
   ansible.builtin.service:
     name: audiobookshelf

@@ -24,7 +24,7 @@
 
 - name: Jellyfin installed (forced refresh -- repo just added)
   ansible.builtin.apt:
-    name: jellyfin
+    name: [jellyfin, rsync]
     state: present
     update_cache: true
 
@@ -142,12 +142,15 @@
         owner: jellyfin
         group: jellyfin
 
-    - name: legacy /var/lib/jellyfin restored
-      ansible.builtin.copy:
-        src: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin"
-        dest: /var/lib/
-        owner: jellyfin
-        group: jellyfin
+    - name: legacy /var/lib/jellyfin restored (rsync -- 12.9k files
+            over the ansible copy module would take an hour of
+            per-file SFTP round trips; found live 2026-11-26)
+      ansible.posix.synchronize:
+        src: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin/"
+        dest: /var/lib/jellyfin/
+        rsync_opts:
+          - "--chown=jellyfin:jellyfin"
+      notify: restart jellyfin
 
     - name: restored config writable by the service (dump preserves
             root ownership from the old CT's rsync era)

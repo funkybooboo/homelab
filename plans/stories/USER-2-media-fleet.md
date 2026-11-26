@@ -4,8 +4,8 @@ As a household member, I want the media services back on the GPU node
 (jellyfin, navidrome, audiobookshelf), so that movies, music, and
 audiobooks work again.
 
-**Status**: BUILT 2026-11-26 (converge green + idempotent;
-metadata restore awaits the operator's extraction run)
+**Status**: SHIPPED 2026-11-26 (build + metadata restore complete;
+converge idempotent end-to-end; services live on their serve fronts)
 **Arc**: v3 (scope: [../issues.md](../issues.md) item 6)
 
 ## Acceptance criteria
@@ -16,10 +16,12 @@ metadata restore awaits the operator's extraction run)
 - [x] Media libraries mounted from truenas NFS (6 exports on every
       amd64 node at /mnt/media/*, bind-mounted into the CTs; no
       in-CT NFS)
-- [ ] Per-service metadata extracted from the old rootfs and restored
-      (operator runs `./scripts/extract-legacy.sh --copy 1` on debbie
-      -- needs root; one converge after lands all three restores,
-      marker-gated, never-clobber)
+- [x] Per-service metadata extracted and restored (vzdump archive
+      via --copy-from-dump: jellyfin 2.1G data + 18.4MB library db
+      from 102 Sep 26; navidrome 21M db from 132 Sep 26;
+      audiobookshelf 3.8M metadata + config from 133 Nov 21 --
+      marker-gated, never-clobber, markers only written on a real
+      restore; final converge changed=0 across the whole fleet)
 
 ## Notes
 
