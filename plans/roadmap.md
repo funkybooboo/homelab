@@ -20,8 +20,9 @@ next.
   (router exit node + Proton) waits on operator-held facts: the
   Proton plan tier, the WireGuard config, and the
   blanket-vs-split egress decision.
-- OPS-30 (repo text + structure) runs between stories; passes 2-3
-  are in flight.
+- OPS-30 (repo text + structure) is SHIPPED: every file one
+  topic, current, plainly written; the traps live in
+  [../docs/quirks.md](../docs/quirks.md).
 - Parked items (see [issues.md](./issues.md)): item 16 (the
   codeberg 100-repo cap; 12 un-mirrored targets), the OPS-9
   carried notes (phantom exclude list, 32 DB-only rows, mirror

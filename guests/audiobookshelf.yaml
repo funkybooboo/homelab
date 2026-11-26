@@ -15,7 +15,8 @@ ip: 192.168.1.57
 role: audiobookshelf
 tailnet: true
 tailnet_serve: 13378 # https://audiobookshelf.tail54538d.ts.net
-mounts:
-  - { mp: /media/audiobooks, src: /mnt/media/audiobooks }
-  - { mp: /media/books, src: /mnt/media/books }
-  - { mp: /media/podcasts, src: /mnt/media/podcasts }
+mounts:               # binds land at the legacy in-CT paths so the
+                       # restored metadata database resolves files
+  - { mp: /mnt/media/media/audiobooks, src: /mnt/media/audiobooks }
+  - { mp: /mnt/media/media/books, src: /mnt/media/books }
+  - { mp: /mnt/media/media/podcasts, src: /mnt/media/podcasts }

@@ -172,9 +172,9 @@
         content: |
           {
             "MetadataPath": "{{ audiobookshelf_base }}/metadata",
-            "audiobooks": "/media/audiobooks",
-            "books": "/media/books",
-            "podcasts": "/media/podcasts"
+            "audiobooks": "/mnt/media/media/audiobooks",
+            "books": "/mnt/media/media/books",
+            "podcasts": "/mnt/media/media/podcasts"
           }
       notify: restart audiobookshelf
 

@@ -122,3 +122,12 @@ where the fix lives. Code comments link here instead of retelling.
   while the user ssh-agent holds the unlocked key; after a reboot
   the agent is empty. `ssh-add -l` is the first check on any
   fleet-wide auth failure; one `ssh-add` restores all hosts.
+
+## Restored media metadata
+
+- **The restored media databases reference the legacy in-CT paths**
+  (`/mnt/media/media/<library>`). The media manifests bind the node
+  NFS mounts there on purpose, so the restored jellyfin library
+  database and audiobookshelf metadata resolve files with zero
+  database surgery. A fresh install would prefer `/media/<library>`;
+  changing the bind paths later requires migrating the databases.

@@ -18,7 +18,9 @@ role: jellyfin
 tailnet: true
 tailnet_serve: 8096   # https://jellyfin.tail54538d.ts.net
 gpu: true             # -> node_glue driver; guests.yml devnode lines
-mounts:               # node-level NFS binds (no in-CT NFS)
-  - { mp: /media/movies, src: /mnt/media/movies }
-  - { mp: /media/tvshows, src: /mnt/media/tvshows }
+mounts:               # binds land at the legacy in-CT paths
+                       # (/mnt/media/media/*) so the restored library
+                       # databases resolve files without surgery
+  - { mp: /mnt/media/media/movies, src: /mnt/media/movies }
+  - { mp: /mnt/media/media/tvshows, src: /mnt/media/tvshows }
 features: [nesting]

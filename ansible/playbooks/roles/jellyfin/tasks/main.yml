@@ -90,7 +90,7 @@
     content: |
       # managed by make converge (jellyfin role, USER-2)
       [Service]
-      ExecStartPre=/bin/sh -c 'i=0; until mountpoint -q /media/movies && mountpoint -q /media/tvshows; do i=$$((i+1)); [ $$i -ge 12 ] && exit 0; sleep 5; done; exit 0'
+      ExecStartPre=/bin/sh -c 'i=0; until mountpoint -q /mnt/media/media/movies && mountpoint -q /mnt/media/media/tvshows; do i=$$((i+1)); [ $$i -ge 12 ] && exit 0; sleep 5; done; exit 0'
   notify: restart jellyfin
 
 # ---- the metadata restore (the 715-movie library DB + watched
