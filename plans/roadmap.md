@@ -249,7 +249,24 @@ forward into v3 whenever the operator wants), and
 (operator request 2026-11-26: os-tailscale exit-node role on the
 OPNsense box + Proton WireGuard gateway, with the blanket-vs-split
 egress decision recorded in-story; router surgery, operator-held
-facts: Proton plan tier + WG config).
+facts: Proton plan tier + WG config),
+[OPS-29 Grafana observability -- the dashboard layer]
+(./stories/OPS-29-grafana-dashboards.md)
+(operator request 2026-11-26, full design in
+[design/observability-dashboards.md](./design/observability-dashboards.md):
+THE at-a-glance dashboard + a low-level set per domain, the
+current-collection gap table (pve exporter, SNMP for truenas +
+opnsense, DCGM, blackbox, textfile collectors), dashboards as
+code, and the grafana-vs-superset split rule; pull-forwardable
+into v3 right after USER-2 if the operator wants the fleet
+visible before more services land), and
+[USER-20 personal-data BI -- the Superset layer]
+(./stories/USER-20-personal-data-superset.md)
+(the docs/data.md goal state made concrete: github/codeberg,
+leetcode/neetcode/exercism/codecrafters/pluralsight/udemy,
+privacy.com/cloaked/amazon spend, ollama/opencode, youtube/odysee,
+ActivityWatch local usage; per-source schemas in the analytics
+postgres, pulls as code, export-shaped sources via drop-box).
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
 
