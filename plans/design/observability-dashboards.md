@@ -47,9 +47,9 @@ a periodic puller also lands a row in postgres for superset.
 | Vaultwarden/media/DB row counts | textfile collectors querying each service's own DB nightly | e.g. items count, 715-movie count, navidrome tracks |
 | Cost-of-running estimate | textfile collector: static watts-per-host table (measured once with a meter) x up/running + local utility rate | external APIs only for the utility rate if we want it live; a one-time meter reading beats an API guess |
 
-Textfile collectors run as systemd timers owned by node_glue/guest
-roles (the fleet has a no-cron rule -- timers are the code-managed
-equivalent).
+Textfile collectors are scheduled jobs: cronmaster owns them once
+it is live (see [cronmaster-scheduled-jobs.md](./cronmaster-scheduled-jobs.md));
+systemd timers are a temporary measure until then.
 
 ## The dashboards (one high, many low)
 

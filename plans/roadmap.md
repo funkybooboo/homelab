@@ -54,7 +54,10 @@ questions into [issues.md](./issues.md). Scout the current state of
 what the era touches -- fleets drift between eras, and docs can
 lag. Prove access to every external and internal system the era
 needs (APIs, accounts, hardware) before building against it.
-Chase the operator-held facts to closure.
+Chase the operator-held facts to closure. Walk the quality
+lenses (security, visibility, reliability, scalability --
+[design/quality-lenses.md](./design/quality-lenses.md)) against
+every story; the answers land in acceptance criteria.
 
 **Phase 1 -- docs.** Update and clean the docs the era inherits so
 they tell the truth on day one.

@@ -19,7 +19,9 @@ alerting tier)
       blackbox for front/port probes, and the textfile-collector
       scripts (updates pending, reboot flags, tailscale key ages,
       library counts, watt/cost model) as systemd timers owned by
-      the roles -- the fleet's no-cron rule applies.
+      cronmaster once it is live (see
+      [../design/cronmaster-scheduled-jobs.md](../design/cronmaster-scheduled-jobs.md);
+      systemd timers only as a temporary measure).
 - [ ] **OPS-29b -- THE dashboard**: "Homelab at a glance" -- fleet
       health strip, per-host board, resource heatmaps, storage +
       backup ages, network, event feed; recording rules so it

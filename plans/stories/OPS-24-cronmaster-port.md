@@ -1,29 +1,39 @@
-# OPS-24: cronmaster job port
+# OPS-24: cronmaster -- the fleet's scheduled-jobs service
 
-As the operator, I want the jobs the old cronmaster ran either
-ported into the new fleet's model or consciously retired -- so
-that nothing the old fleet did on a schedule silently stops
-happening.
+As the operator, I want cronmaster running as the fleet's
+scheduled-jobs service with every scheduled job ported to it, so
+that one place owns what happens on a schedule.
 
-**Status**: planned (operator-confirmed keep, 2026-11-23)
-**Arc**: v3
+**Status**: planned (operator directive: cronmaster IS the
+scheduler -- see
+[../design/cronmaster-scheduled-jobs.md](../design/cronmaster-scheduled-jobs.md))
+**Arc**: v3 (after the keeps that restore its data)
 
 ## Acceptance criteria
 
 - [ ] Jobs db + `.env` extracted from the Oct-17 vzdump of old
-      CT 127 (`/opt/cronmaster/`; the env's INTERNAL_API_URL
-      points at the OLD fleet -- it needs rewriting either way)
-- [ ] Every job in the db listed with a disposition: PORTED (to
-      a systemd timer, an ansible cron role, or the watcher) or
-      RETIRED (with the one-line reason)
-- [ ] Zero jobs left undispositioned; the disposition list lives
-      in this story
+      CT 127 (`/opt/cronmaster/`); INTERNAL_API_URL rewritten for
+      the new fleet
+- [ ] cronmaster deployed as a manifest + role on the shared
+      postgres (data.md policy)
+- [ ] The operator's repos land as its first new jobs:
+      [migrate-github-to-codeberg]
+      (https://github.com/funkybooboo/migrate-github-to-codeberg)
+      (the codeberg leg) and
+      [sync-protonpass-to-bitwarden]
+      (https://github.com/funkybooboo/sync-protonpass-to-bitwarden)
+      (the Proton Pass -> vaultwarden sync)
+- [ ] Every scheduled job in the fleet runs under cronmaster:
+      the old CT 127 job list dispositioned (PORTED or RETIRED
+      with reasons), the debbie watcher, and any temporary
+      systemd timers created before cronmaster was live
+- [ ] Job results visible (a dashboard panel or an ntfy failure
+      topic); job secrets in the pass vault (OPS-26 pattern)
 
-## Notes
+## Lenses
 
-The new fleet ALREADY has a scheduler layer (the debbie watcher
-timer + guest systemd timers), so cronmaster-the-software is
-likely superseded -- this story is about the JOB CONTENTS, not
-the tool. Do not rebuild cronmaster unless a job genuinely needs
-its web-ui/API shape; a ported job is a unit file + a log line,
-and it inherits observability for free.
+- Security: job secrets in the pass vault; jobs run under the
+  operator identity; no secrets in job definitions.
+- Visibility: job results on a dashboard; failures notify.
+- Reliability: a dead cronmaster degrades to "jobs did not run"
+  (onboot + converge recovery), never to fleet damage.
