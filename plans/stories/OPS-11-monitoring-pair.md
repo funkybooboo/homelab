@@ -29,12 +29,7 @@ The old stack is described in `docs/observability.md` (as-built at
 Loki/centralized logging is deliberately out of scope here; revisit
 after v4.
 
-REVISED 2026-11-21 (revival): the pair revives with the fleet; the
-story becomes verify scrape targets + dashboards for the revived
-nodes/CTs, and re-wire the truenas alert bridge.
-
-REVISED 2026-11-22 (plan shift final form): the old CTs were cleaned
-out (OPS-20). BUILD FRESH: manifests + roles; scrape targets = the
-new fleet as it lands; dashboards rebuilt fresh (old grafana data
-sits in dump 123 if a restore is ever wanted); ntfy is the alert
-channel (OPS-8).
+Build fresh: manifests + roles; scrape targets are the new fleet
+as it lands; dashboards rebuilt fresh (old grafana data sits in
+dump 123 if a restore is ever wanted); ntfy is the alert channel
+(OPS-8).

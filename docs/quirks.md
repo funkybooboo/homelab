@@ -57,6 +57,15 @@ where the fix lives. Code comments link here instead of retelling.
   markers.** A blockfile in `app.ini` restart-loops. The role
   verifies the current state first and writes the blockfile only at
   bootstrap; the metrics token is checked by grep, never rewritten.
+- **FORGEJO__ environment overrides are ignored when the runtime is
+  passed --config.** The role writes app.ini directly instead of
+  relying on env overrides.
+- **Postgres: REASSIGN OWNED BY is impossible for the bootstrap
+  owner.** A pgdata-restored database is postgres-owned; user
+  objects need a per-relkind DO-block to reassign before
+  migrations run.
+- **gitea-mirror secrets are generated only-if-absent**: a
+  regenerated ENCRYPTION_SECRET makes stored tokens unreadable.
 - **Postgres DDL modules always report changed.** Ownership fixes
   are gated behind count queries so converge stays idempotent.
   (postgres role.)

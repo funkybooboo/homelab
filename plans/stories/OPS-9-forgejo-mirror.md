@@ -79,48 +79,8 @@ account's 100-repo cap -- OPEN in issues.md item 16)
 
 ## Notes
 
-REVISED 2026-11-23 (operator chose B -- the full hub, not the
-mirror-only letter): the scoping found the restored forgejo DB is the
-whole personal hub (17 users, 347 repos), not just the homelab mirror.
-The repo FILES were never extracted pre-clean-out (only tier-0 dumps
-106/108/109 came out), but the Oct-17 vzdump of CT 107 holds them:
-315 of 347 on disk (8.3G); the 32 DB-only repos are ALL mirrors (the
-dump predates the DB's Nov-21 state by 5 quiet weeks -- last real
-activity Oct 19) so they self-heal by re-pulling. Zero non-mirror
-data lost.
-
-RESTORE MODEL: extract from the dump tarball (the old live rootfs was
-wiped in OPS-20; the dump is the tier-1 archive) ->
-legacy-extraction/from-dump-107/ on debbie -> role restores
-only-if-absent, like vaultwarden. app.ini restored VERBATIM (all
-secrets: INTERNAL_TOKEN, LFS JWT, oauth keys) with the database +
-server sections overridden by environment (LAN pg host, the new
-role-per-service forgejo role, SSH clone disabled for v1 -- reads
-work over https; the class is over).
-
-Old forgejo 15.0.4 (schema 305) -> pinned v17.0.2 (codeberg ships
-prebuilt amd64, unlike vaultwarden's upstream); migrations run
-forward on first boot.
-
-SYNC LAYER DECISION (2026-11-23, operator): the old fleet's GitHub
--> forgejo sync never rode forgejo-native pull mirrors -- the
-operator ran RayLabsHQ/gitea-mirror (push-based, auto-discovers new
-GitHub repos). The restored DB confirms it: mirror rows frozen
-mid-July while push-driven repo activity ran to Oct 19. Native is
-dormant here too (the update_mirrors cron fired by admin API was a
-silent no-op; 170 mirrors due, zero pulled) -- so the new hub keeps
-the same division of labor: forgejo serves, gitea-mirror syncs
-(CT 203, guests/gitea-mirror.yaml, bare-metal Bun, secrets
-generated only-while-absent because a regenerated ENCRYPTION_SECRET
-makes stored tokens unreadable). Native mirror rows are left as
-legacy state; the homelab mirror created 2026-11-23 via the migrate
-API (funkybooboo/homelab, 8h interval) stays -- it costs nothing
-and a native pull is harmless alongside pushes.
-
-TRAPS WORTH KEEPING: forgejo's FORGEJO__ env overrides are IGNORED
-by the runtime when --config is passed (proven live); a pgdata-restored
-DB is postgres-owned and migrations fail until a per-relkind DO-block
-reassigns user objects (REASSIGN OWNED BY postgres is impossible);
-forgejo rewrites app.ini post-migration (ReadWritePaths needed in a
-hardened unit); apt auto-start crash-loops tailscaled in fresh CTs
-and trips systemd's start limit (guest_common drop-in fixes it).
+The full as-built record -- the scoping decision (the whole
+personal hub, 17 users + 349 repos), the restore model, the sync
+layer decision (forgejo serves, gitea-mirror syncs), and the traps
+this build surfaced -- is in [../history.md](../history.md) (the
+v2/v3 records). The live gotchas are in [../docs/quirks.md](../docs/quirks.md).

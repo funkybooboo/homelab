@@ -3,14 +3,11 @@
 The declaratively managed self-hosted service fleet: Proxmox nodes +
 a TrueNAS storage box on a flat 192.168.1.0/24 LAN behind OPNsense,
 every service tailnet-only, and this repo as the source of truth --
-`git push` + (from v2) `make converge` *is* the deploy.
+`git push` + `make converge` is the deploy.
 
-> State (2026-11-25): v2 SHIPPED -- the IaC skeleton is live and
-> idempotent (manifest -> CT -> service), the observability pair
-> watches the fleet, vaultwarden is restored and operator-verified,
-> and the forgejo hub + both sync legs run themselves. v3 (the
-> media fleet + the restored keeps) is the active era. See
-> [`plans/roadmap.md`](plans/roadmap.md).
+> Current state: see [`plans/roadmap.md`](plans/roadmap.md) (the
+> queue) and [`plans/history.md`](plans/history.md) (the shipped
+> record).
 
 ## Repo layout
 
@@ -20,7 +17,7 @@ every service tailnet-only, and this repo as the source of truth --
 | [`ansible/`](ansible/) | The IaC home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`, playbooks + roles (`playbooks/roles/<name>/` -- one role per service guest), playbook static files (`playbooks/files/keys/` = the admin pubkey the bootstrap flow installs). |
 | [`guests/`](guests/) | The fleet declaration: one YAML per guest, read by the converge/update/verify loop. This, not the PVE UI, is the list of what should exist. |
 | [`scripts/`](scripts/) | The operator's toolbelt -- bring-up + fleet tools, run from debbie over ssh (by you, or by a directed assistant acting as you). See each header for usage. |
-| [`docs/`](docs/) | All documentation, indexed by tier (current / old-fleet as-built) in [`docs/README.md`](docs/README.md). The wind-down-era archive lives in git history, not the tree. |
+| [`docs/`](docs/) | All documentation, indexed in [`docs/README.md`](docs/README.md). |
 | [`local/`](local/) | Gitignored credentials + audit evidence; every env file documented by an `.example` sibling (see [`local/README.md`](local/README.md)). |
 | `Makefile` | `make help` / `converge` / `update` / `verify` -- the fleet loop (idempotent converge, tier-gated patch pass, read-only drift check). |
 

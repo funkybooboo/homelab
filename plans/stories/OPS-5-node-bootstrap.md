@@ -23,9 +23,7 @@ replaceable part.
 
 ## Notes
 
-REVISED 2026-11-21: the fresh-install approach was reversed (issues
-item 8, revival); this story is superseded by OPS-18. The shipped
-tooling stays valid and parked: `bootstrap.sh` + `deploy-node-glue.sh`
-+ `ansible/inventory/host_vars/` serve any FUTURE fresh install (a rebuilt node, a
-new machine) and the framework's eventual enrollment if it is
-rebuilt instead of revived.
+Superseded by OPS-18 (the nodes revived in place). The tooling
+stays valid and parked: `bootstrap.sh` + `deploy-node-glue.sh` +
+`ansible/inventory/host_vars/` serve any future fresh install (a
+rebuilt node, a new machine).

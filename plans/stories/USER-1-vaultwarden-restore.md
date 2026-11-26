@@ -40,10 +40,8 @@ restored, so that the passwords are available again.
   the watcher (manifest-driven), LAN fallback http://192.168.1.51:8222
   survives tailnet outages; front https://vaultwarden.tail54538d.ts.net
 
-REVISED 2026-11-22 (plan shift final form): the old CT was cleaned
-out (OPS-20), so this story is BUILD-FRESH + RESTORE: vaultwarden
-deployed from a guest manifest (OPS-7 skeleton), db.sqlite3 restored
-from the extraction
+Build fresh and restore: vaultwarden deployed from a guest
+manifest, db.sqlite3 restored from the extraction
 (legacy-extraction/from-dump-109/opt/vaultwarden/data/db.sqlite3 on
 debbie; systemd unit + /opt/vaultwarden layout recorded there),
 HTTPS via the tailnet serve-front model (issues item 4a). Dumps on

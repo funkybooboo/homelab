@@ -188,6 +188,150 @@ manifest mounts + GPU devnode passthrough. Remaining v3 work
 proceeds per the roadmap (USER-3, the keeps, the ONCE trio, the
 personal-content family; OPS-29/USER-20 pull-forwardable).
 
+
+### USER-2 as built: the media fleet
+
+Build design (recorded before code):
+
+(as built; the build log's deviations are appended below)
+
+- IDs per guests/README conventions: jellyfin 205/.55, navidrome
+  206/.56, audiobookshelf 207/.57 (.54 skipped -- the dead mirror
+  CT's IP, stale DNS confusion risk).
+- NFS model per docs/network.md planned diagram: the media exports
+  mount on EVERY x86 node at the same path (/mnt/media/*), CTs get
+  bind mounts via pct mp entries -- guest mobility, no in-CT NFS.
+  Node mounts are fstab + `_netdev,nofail` (boot-order law: truenas
+  boots first; nofail keeps a dead truenas from hanging a node).
+- Six exports (truenas sharing/nfs, verified live): movies,
+  tvshows, Music, Audiobooks, Books, Podcasts. All map to
+  /mnt/media/{movies,tvshows,music,audiobooks,books,podcasts}.
+- mounts:[] + devnodes were DECLARED in manifests but UNIMPLEMENTED
+  in guests.yml (no guest needed them until now) -- this story adds
+  the mp/devn application, verify-first style (pct config probe
+  before pct set; never trust, always check).
+- Roles follow the vaultwarden house pattern: version-gate marker,
+  pinned installs, restore-if-absent from legacy-extraction/, systemd
+  hardening, serve fronts (8096/4533/13378).
+- GPU: dkms nvidia 580.142 was built for kernel 7.0.14-20-pve; the
+  nodes now run 7.0.14-30-pve and the driver is GONE (nvidia-smi
+  fails, no /dev/nvidia*). Rebuild dkms for the running kernel,
+  verify nvidia-smi, then devnode passthrough into CT 205.
+- Metadata restore sequence: CTs converge EMPTY first (services
+  healthy, libraries absent), then the operator runs
+  `scripts/extract-legacy.sh --copy 1` on debbie (needs root; the
+  tier-1 list covers jellyfin 102, navidrome 132, audiobookshelf
+  133 -- their raw disks verified present on pve-shared), then one
+  more converge lands the metadata restore-if-absent. Never-clobber
+  both ways: an empty-fresh CT accepts the dump; a live library
+  with real state refuses to be overwritten.
+- ports: jellyfin 8096, navidrome 4533, audiobookshelf 13378.
+
+As-built deviations:
+
+- **GPU driver = the .run 580.142 branch, not Debian's apt driver.**
+  Found live: Debian trixie's nvidia-driver 550 cannot compile
+  against PVE kernel 7.0 (dkms fails in nv-mmap.c -- VMA_LOCK_OFFSET
+  + mmap_lock API drift), and NVIDIA's CUDA apt repo has rotated
+  past the 580 branch entirely (590+ dropped Pascal). The GTX 1060
+  has NO apt-managed driver left anywhere; the old fleet's .run
+  choice was forced, not a habit. Managed the vaultwarden way now:
+  pinned in group_vars, marker-gated in node_glue, --dkms registered,
+  CT-side userspace installed --no-kernel-module from the same pin.
+  (This re-cleans a trap: the leftover .run residue breaks apt's
+  nvidia-installer-cleanup postinst with debconf exit 30 -- the
+  uninstaller must run before ANY apt nvidia transaction.)
+- **Audiobookshelf installs from the vendor's flat apt repo**
+  (advplyr.github.io/audiobookshelf-ppa) -- GitHub release binaries
+  no longer exist (checked: zero assets on the last 100 releases);
+  the repo is their documented Debian path. Its config layout probe
+  handles both old eras (/var/lib/audiobookshelf and /audiobookshelf).
+- **Jellyfin's repo key moved**: jellyfin.gpg.key 404s now;
+  jellyfin_team.gpg.key is the current name. The trixie suite
+  exists (v12.4, live since 2026-11-23).
+- **PVE kernel packages renamed**: proxmox-headers-<kernel>
+  provides linux-headers-* -- the plain names show no candidates.
+- **Extractor tarball naming fixed before first use**:
+  multi-path probes (102, 133) overwrote their own tarballs;
+  per-path slugs now. The lxc-confs copy never existed (the old
+  confs lived in /etc/pve, lost with the old cluster) -- the
+  devnode lines were rebuilt from standard LXC practice instead.
+- **The NFS-image source is DEAD for the old fleet** (found at the
+  operator's --copy 1 run): OPS-20 removed the old disks, and the
+  v2 fleet recycled vmids 101-106 -- the probe path now sees the
+  NEW guests' rootfs images. The extractor warns + skips recycled
+  vmids; docs/data-to-extract.md carries the correction. THE
+  SOURCE OF RECORD = the vzdump archive (--copy-from-dump),
+  confirmed present for 102 (Sep 26), 132 (Sep 26), 133 (Nov 21).
+  All three roles now restore from the from-dump rootfs trees
+  (directory copies, never-clobber, marker-gated, ownership
+  fixed post-restore).
+- **MISDIAGNOSIS CORRECTED 2026-11-26**: the first restore attempt
+  appeared to fail because "from-dump-102's jellyfin dirs were
+  empty after a reboot-truncated extraction" -- WRONG. The sudo
+  extraction left root-owned 750 dirs; the agent's unprivileged
+  du/ls read them as empty and led to a false truncation story
+  (the ssh-agent drops + /tmp wipes were the only real reboot
+  damage). The roles' content-gates (find as nate) correctly
+  refused to 'restore' from unreadable sources; the burned markers
+  were cleared and the contract tightened: gates now demand
+  FILES, and markers are only written inside a real restore.
+  Lesson: a 0-byte du on a dir you do not own is a PERMISSION
+  reading, not a content reading -- check with the become channel
+  (pct exec / root) before declaring source data missing.
+- **133's real era-path**: the old CT was a deb-install using the
+  vendor defaults (/usr/share/audiobookshelf, 95M: binary 90M +
+  metadata 3.5M + config 1.5M); the probe alternates in
+  data-to-extract.md were guesses. The role probes all three
+  eras.
+
+
+
+### OPS-9 as built: the forgejo hub + sync layer
+
+Scope (operator chose the full hub, not the mirror-only letter):
+the restored forgejo DB is the whole personal hub (17 users, 347
+repos). The repo files live in the Oct-17 vzdump of CT 107: 315 of
+347 on disk (8.3G); the 32 DB-only repos are all mirrors and
+self-heal by re-pulling. Zero non-mirror data lost.
+
+RESTORE MODEL: extract from the dump tarball (the old live rootfs was
+wiped in OPS-20; the dump is the tier-1 archive) ->
+legacy-extraction/from-dump-107/ on debbie -> role restores
+only-if-absent, like vaultwarden. app.ini restored VERBATIM (all
+secrets: INTERNAL_TOKEN, LFS JWT, oauth keys) with the database +
+server sections overridden by environment (LAN pg host, the new
+role-per-service forgejo role, SSH clone disabled for v1 -- reads
+work over https; the class is over).
+
+Old forgejo 15.0.4 (schema 305) -> pinned v17.0.2 (codeberg ships
+prebuilt amd64, unlike vaultwarden's upstream); migrations run
+forward on first boot.
+
+SYNC LAYER DECISION (operator): the old fleet's GitHub
+-> forgejo sync never rode forgejo-native pull mirrors -- the
+operator ran RayLabsHQ/gitea-mirror (push-based, auto-discovers new
+GitHub repos). The restored DB confirms it: mirror rows frozen
+mid-July while push-driven repo activity ran to Oct 19. Native is
+dormant here too (the update_mirrors cron fired by admin API was a
+silent no-op; 170 mirrors due, zero pulled) -- so the new hub keeps
+the same division of labor: forgejo serves, gitea-mirror syncs
+(CT 203, guests/gitea-mirror.yaml, bare-metal Bun, secrets
+generated only-while-absent because a regenerated ENCRYPTION_SECRET
+makes stored tokens unreadable). Native mirror rows are left as
+legacy state; the homelab mirror created 2026-11-23 via the migrate
+API (funkybooboo/homelab, 8h interval) stays -- it costs nothing
+and a native pull is harmless alongside pushes.
+
+TRAPS WORTH KEEPING: forgejo's FORGEJO__ env overrides are IGNORED
+by the runtime when --config is passed (proven live); a pgdata-restored
+DB is postgres-owned and migrations fail until a per-relkind DO-block
+reassigns user objects (REASSIGN OWNED BY postgres is impossible);
+forgejo rewrites app.ini post-migration (ReadWritePaths needed in a
+hardened unit); apt auto-start crash-loops tailscaled in fresh CTs
+and trips systemd's start limit (guest_common drop-in fixes it).
+
+
 ## Greenfield arcs (to be written as they ship)
 
 v4 automation polish, v5 platform refresh -- each appended above
@@ -211,3 +355,21 @@ as its stories flip done.
 - Jinja '\1' regex backrefs in string literals are octal escapes
   and silently corrupt generated configs; the prometheus target
   template was rewritten in for-loop form.
+
+Detail carried from the roadmap's v2 record (the roadmap is
+forward-looking now; this is the last of the shipped narrative):
+
+- Build order inside v2: observability first (every guest born
+  with journald->loki, node_exporter, the five-family watcher +
+  daily heartbeat), then the services.
+- OPS-9 shipped as the operator's Option B: 17 users + 349 repos on
+  the new forgejo (CT 202), sync rebuilt as the old fleet ran it:
+  two gitea-mirror instances (CT 203 github->hub, CT 204
+  github->codeberg; one shared role, base URLs hostname-derived).
+  Nightly schedules; self-owned repos sync green; the
+  phantom-import class (pre-existing collaborator repos) stayed
+  stale-but-present by operator policy, with the exclude list as
+  follow-up. In-app forgejo metrics scraped.
+- The completeness audit: every old-fleet service accounted as
+  live, planned (USER-6..13, OPS-24, the ONCE trio), or
+  consciously deferred (USER-5 with its data warning).

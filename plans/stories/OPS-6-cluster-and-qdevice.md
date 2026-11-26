@@ -22,9 +22,8 @@ the QDevice role and PVE 9.2's HA arm/disarm exist to prevent. The old
 `pve-balance` is not rebuilt: the native Dynamic Load Balancer replaces
 it (and only manages HA-managed guests -- decided, issues item 3).
 
-REVISED 2026-11-21: under the revival path the Pi stays OFF -- the
-3 revived nodes carry quorum (3 of 5) -- and it never comes back as a
-PVE node. At v5 (OPS-17) it is removed from the cluster config and
-returns as a QDevice. The fleet HA + arm/disarm decisions (issues
-item 3) stay exactly as decided; the native balancer arrives with the
-v5 platform refresh.
+Under the revival path the Pi stays off (3 revived nodes carry
+quorum) and never returns as a PVE node. At v5 (OPS-17) it leaves
+the cluster config and returns as a QDevice. The fleet HA +
+arm/disarm decisions (issues item 3) stand; the native balancer
+arrives with the v5 platform refresh.

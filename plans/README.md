@@ -66,3 +66,19 @@ links to the design records behind it.
 - Differences from erledigen's `plans/`: `design/` here plays the role
   erledigen gives docs/build ADRs (this repo has no ADR system), and
   arcs play the role of versions.
+
+## Writing rules
+
+These apply to every file in the repo.
+
+1. One file, one topic. Each kind of truth has one home; other
+   files link to it instead of repeating it.
+2. Files state what is true now. Revision timing lives in git;
+   shipped narrative lives in history.md.
+3. Plain wording, no drama: no hedges ("honest"), no caps for
+   emphasis, no reassurance phrases ("recorded, not lost").
+4. Every sentence says what is true, what to do, or where to look.
+5. Prefer the domain-standard term (tombstone, converge, drift);
+   keep "deliberate" only where it marks a chosen exception to a
+   standing rule.
+6. Short lines, one idea per line.

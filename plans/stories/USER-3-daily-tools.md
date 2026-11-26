@@ -23,24 +23,17 @@ The deliberately-not-resurrected get a one-line reason each in
 one-liner each -- "unused", "superseded by X", or "resurrect on
 demand"; that list is what makes lazy resurrection cheap later.
 
-REVISED 2026-11-21 (revival): everything revives first, so this story
-becomes the CURATION PASS -- decide the stop-list (issues item 6,
-~12-15 keepers), stop + disable the rest, document each one-liner.
+Curation is the build list: decide which services get manifests at
+all (~12-15 keepers, issues item 6); the dump archive
+([../docs/data-to-extract.md](../docs/data-to-extract.md)) keeps
+lazy resurrection cheap for anything left off. The old-fleet keeps
+(n8n, linkwarden, omnivore, opengist, jupyter, bichon,
+protonmail-bridge, speedtest, cronmaster) each have their own story
+now (USER-6 through USER-13 + OPS-24); this story keeps the tier-3
+browser tools (it-tools, searxng, excalidraw, drawio) and the
+curation decision itself.
 
-REVISED 2026-11-22 (plan shift final form): the fleet was cleaned out
-(OPS-20), so curation = the BUILD LIST: decide which services get
-manifests at all (~12-15 keepers, issues item 6); the legacy archive
-(dumps + docs/) keeps lazy resurrection cheap for anything left off.
-
-RESTORE NOTE 2026-11-23: the old fleet's assets (services/) were
-   deleted from the tree per the git-history principle. When the
-   freshrss story lands, pull the operator's feed list from history:
-   `git log --oneline -- services/freshrss/feeds.opml` then
-   `git show <commit>:services/freshrss/feeds.opml`.
-
-REVISED 2026-11-23 (completeness audit, operator kept everything):
-n8n and linkwarden moved OUT of this umbrella into their own stories
-(USER-6, USER-7); the other old-fleet keeps followed (USER-8 through
-USER-13 + OPS-24 -- see the roadmap's v3 section). This story keeps
-the tier-3 browser tools (it-tools, searxng, excalidraw, drawio) and
-the curation decision itself.
+The old fleet's assets (services/) live in git history. When the
+freshrss story lands, pull the operator's feed list from there:
+`git log --oneline -- services/freshrss/feeds.opml` then
+`git show <commit>:services/freshrss/feeds.opml`.
