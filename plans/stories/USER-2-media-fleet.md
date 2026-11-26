@@ -112,3 +112,21 @@ only per-service configs/metadata would restore from dumps if wanted
   All three roles now restore from the from-dump rootfs trees
   (directory copies, never-clobber, marker-gated, ownership
   fixed post-restore).
+- **MISDIAGNOSIS CORRECTED 2026-11-26**: the first restore attempt
+  appeared to fail because "from-dump-102's jellyfin dirs were
+  empty after a reboot-truncated extraction" -- WRONG. The sudo
+  extraction left root-owned 750 dirs; the agent's unprivileged
+  du/ls read them as empty and led to a false truncation story
+  (the ssh-agent drops + /tmp wipes were the only real reboot
+  damage). The roles' content-gates (find as nate) correctly
+  refused to 'restore' from unreadable sources; the burned markers
+  were cleared and the contract tightened: gates now demand
+  FILES, and markers are only written inside a real restore.
+  Lesson: a 0-byte du on a dir you do not own is a PERMISSION
+  reading, not a content reading -- check with the become channel
+  (pct exec / root) before declaring source data missing.
+- **133's real era-path**: the old CT was a deb-install using the
+  vendor defaults (/usr/share/audiobookshelf, 95M: binary 90M +
+  metadata 3.5M + config 1.5M); the probe alternates in
+  data-to-extract.md were guesses. The role probes all three
+  eras.
