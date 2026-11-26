@@ -141,8 +141,54 @@ As built:
   (RTL8156) keep-awake pinned via udev rule on top of the r8152
   driver behavior. The dead 192.168.8.x subnet verified silent.
 
+## v2: IaC skeleton + the critical five (shipped 2026-11-25)
+
+The OPS-7 skeleton shipped 2026-11-22 (manifest -> CT -> running
+service, idempotent re-run proven, make converge/verify real). A
+post-skeleton readiness pass swept the last old-fleet residue (55
+/tmp debug scripts, 5 stale CT templates, the promtail shipper
+whose endpoint died with the old loki serve-front) and a root-owned
+/home/tom/sources pve-cd-builder checkout from the May-2026 era
+(swept 2026-11-23 on the operator's word), plus de-staled six story
+notes + issues item 8. A full hygiene audit 2026-11-23 then
+decommissioned the old fleet's LIVE auto-update machinery from all
+4 nodes: the hourly pve-reboot-controller WAS ARMED with live
+pmxcfs flags + a fresh lock (unattended serialized cluster reboots
+were minutes away); auto-update.service/timer, the maint +
+ha-state-watch + renew-pve-tls crons, start-jellyfin +
+router-syslog-relay units, php packages on the framework node all
+went. KEPT as verified live: the thermaltake GPU stack, laptop
+screen-off, the NFS self-healing glue, vzdump, the disk-hygiene
+timers. The OPS-23 model became the only update system.
+
+Then the critical five, built fresh from manifests: the
+observability foundation first (every guest born with journald->
+loki, node_exporter, the five-family watcher + heartbeat), USER-1
+vaultwarden (source build, vault restored, operator-verified),
+OPS-10 postgres + adminer (old forgejo + freshrss databases
+restored), OPS-11 prometheus + grafana + loki, OPS-8 ntfy, and
+OPS-9 the hub restore (17 users + 349 repos on CT 202, both sync
+legs). The idempotence war (forgejo's app.ini blockfile restart
+loop) closed 2026-11-25 with verify-first + bootstrap-only +
+DDL-gating. OPS-26 made the repo clone-and-restore portable
+(Proton Pass vault). CT 204's decommission + the push-chain
+codeberg leg closed the arc.
+
+## v3: Curation + media fleet (ACTIVE -- first story shipped)
+
+USER-2 the media fleet SHIPPED 2026-11-26: jellyfin 205/.55,
+navidrome 206/.56, audiobookshelf 207/.57 on thermaltake; the
+NFS media mounts on every amd64 node; the GPU driver saga (no apt
+path for Pascal on kernel 7.x; the .run 580.142, pinned,
+dkms-registered, CT userspace from the same pin; nvidia-smi
+answers from inside the jellyfin CT); metadata restored from the
+vzdump archive after the recycled-vmid + permission-reading
+misdiagnoses; converge idempotent fleet-wide. The skeleton gained
+manifest mounts + GPU devnode passthrough. Remaining v3 work
+proceeds per the roadmap (USER-3, the keeps, the ONCE trio, the
+personal-content family; OPS-29/USER-20 pull-forwardable).
+
 ## Greenfield arcs (to be written as they ship)
 
-v2 IaC skeleton + the critical five, v3 curated services + media,
 v4 automation polish, v5 platform refresh -- each appended above
 as its stories flip done.

@@ -5,56 +5,85 @@ stories are the work (one file each in [stories/](./stories/)); the
 constitution is [identity.md](./identity.md); the shipped record is
 [history.md](./history.md). Every change serves one of the three roles.
 
-## Where we stand (2026-11-22)
+## Where we stand (2026-11-26)
 
-- v1 SHIPPED: all 5 nodes + truenas live on the new LAN, 5/5
-  quorate (thermaltake .3, framework .4, aspiree15 .5, aspires .6,
-  Pi .11 witness-only). Nothing was reinstalled: nodes renumbered in
-  place ([history.md](./history.md) v1), the cluster turned out to
-  already run PVE 9.2 (OPS-17's upgrade evaporated), the GPU is live
-  on thermaltake, and the access model is complete end-to-end:
-  `nate@pam` + the homelab-ops API token, router + truenas APIs
-  under the nate identity, B2 verified.
-- The plan shifted ON the revival evening (operator directive,
-  recorded as issues item 8's second revision): the old CTs are
-  cleaned out, NOT revived -- curation happens at build time (v2/v3)
-  on a bare cluster.
-- v1.5 SHIPPED 2026-11-22: the clean-out + access layer + hardening
-  (OPS-20/21/22) -- the cluster is BARE and verified, the tailnet is
-  THE access layer (subnet router + serve fronts + API token),
-  good-ssh everywhere, TOTP on both PVE UI identities, and the
-  tier-0 extraction insurance sits on debbie. See
-  [history.md](./history.md).
-- OPS-7 SHIPPED same day (the skeleton): manifest -> CT -> running
-  service proven, idempotent, `make converge`/`make verify` real.
-  A post-skeleton readiness pass swept the last old-fleet residue
-  (55 /tmp debug scripts, 5 stale CT templates, the promtail
-  shipper whose endpoint died with the old loki serve-front) and
-  later a root-owned /home/tom/sources pve-cd-builder checkout
-  from the May-2026 era (no account ever existed; swept
-  2026-11-23 on the operator's word), plus de-staling six story
-  notes + issues item 8 for the build-fresh reality. A full hygiene
-  audit 2026-11-23 then decommissioned the old fleet's LIVE
-  auto-update machinery from all 4 nodes (the hourly
-  pve-reboot-controller WAS ARMED with live pmxcfs flags + a fresh
-  lock -- unattended serialized cluster reboots were minutes away;
-  auto-update.service/timer, the maint + ha-state-watch +
-  renew-pve-tls crons, start-jellyfin + router-syslog-relay units,
-  php packages on the framework node all swept; the new
-  OPS-23 model is the only update system now). KEPT as verified
-  live: the thermaltake GPU stack, laptop screen-off, the NFS
-  self-healing glue (pve-shared-remount + nfs-check), vzdump, and
-  the system disk-hygiene timers. Entering the
-  service stories, the cluster carries
-  exactly: 1 manifest-managed test CT, 1 base template, node glue
-  (proxmoxer), and nothing else.
-- NEXT: v3 -- the media fleet (USER-2) first, then the daily tools and
-  the restored keeps. v2 SHIPPED 2026-11-25 (see the v2 section);
-  carry-forwards are recorded there, not lost.
+- v1 + v1.5 SHIPPED (nodes live, cluster bare, access layer +
+  hardening done; see [history.md](./history.md)).
+- v2 SHIPPED 2026-11-25: the IaC skeleton + the critical five +
+  both sync legs; converge/update/verify green and idempotent.
+- v3 is ACTIVE and mid-flight (its plan is untouched; progress
+  lives in the stories): USER-2 the media fleet SHIPPED 2026-11-26
+  (three services live on thermaltake, metadata restored, GPU
+  transcode proven, converge changed=0 fleet-wide). Next by the
+  numeric-order policy: the rest of the curated list (USER-3, the
+  keeps, the ONCE trio, the personal-content family).
+- v3 also gained two operator-requested side stories, queued but
+  pull-forwardable: OPS-29 (grafana observability; design
+  [design/observability-dashboards.md](./design/observability-dashboards.md))
+  and, with it, USER-20 (superset BI). OPS-28 (router exit node +
+  Proton) is filed and waiting on operator-held facts.
+- Parked, not lost: issues.md item 16 (codeberg 100-repo cap;
+  12 un-mirrored targets), the OPS-9 carried notes (phantom
+  exclude list, 32 DB-only rows, mirror ntfy wiring, the
+  3.54.0 -> 3.56.1 bump), issues item 8 (open).
 - Standing tooling: `docs/` (the live data-to-extract inventory),
   `ansible/inventory/` (LAN plan, host facts),
-  `scripts/revive-node.sh` + the parked future-node tooling
-  (`bootstrap`, `deploy-node-glue`, `setup-qdevice`).
+  `scripts/revive-node.sh` + `reboot-node.sh` + the parked
+  future-node tooling (`bootstrap`, `deploy-node-glue`,
+  `setup-qdevice`).
+
+## Timeline at a glance
+
+Eras are CONDITION-gated, not calendar-gated -- a homelab ships
+when its acceptance criteria are green, not when a date arrives.
+The "size" column is honest rough work (S = a session, M = a few
+sessions, L = an era's backbone).
+
+| Era | State | Opens when | Size | Closes when (Ends-with) |
+|-----|-------|------------|------|------------------------|
+| v0 legacy archive | SHIPPED | - | S | archive + extractor |
+| v1 revival | SHIPPED | - | L | platform alive on the new LAN |
+| v1.5 clean-out | SHIPPED | plan shift (11-22) | M | bare cluster + access layer |
+| v2 IaC skeleton | SHIPPED | - | L | critical five + the loop |
+| v3 curation | ACTIVE (USER-2 shipped) | v2 close | L | curated list running + documented |
+| v4 automation polish | queued | v3 close + OPENING PROTOCOL (below) | L | durability + visibility + automation; runbook-only additions |
+| v5 platform refresh | queued | v4 close, hardware appetite | M/L | router re-platform, QDevice re-role, native balancer |
+| Someday | demand recorded | a real need appears | - | nothing queued silently |
+
+Within-era ordering is the roadmap's job; each era's section
+names its sequence. The OPENING PROTOCOL below is now part of
+"opens when" for every era from v4 onward.
+
+## The era-opening protocol (operator directive 2026-11-26)
+
+Every era after the active one STARTS with an opening phase, not
+with building. v3's pre-flight audit was the prototype; from v4
+this is standing policy:
+
+**Phase 0 -- research + Q&A.** Flesh out the era's design to
+the same page: the operator and the assistant walk the era's
+stories, every design record re-read, open questions answered or
+filed into [issues.md](./issues.md). Scout the CURRENT state of
+what the era touches (the fleet drifts between eras; docs lie
+quietly). GET ACCESS to everything the era needs -- external
+APIs, accounts, hardware, service logins -- and prove each one
+works BEFORE the era builds against it (the v3 lesson: the GPU
+had no driver, the extraction sources were gone, and both were
+found by scouting, not by assuming). Operator-held facts are
+named here and chased to closure.
+
+**Phase 1 -- docs update + cleanup.** The era's docs sweep:
+make verify on the docs themselves, stale claims fixed, the
+standing fleet picture updated. Docs must tell the truth the era
+will inherit.
+
+**Phase 2 -- build.** The era runs in its stated story order,
+numeric policy inside the era, every story ending with something
+running.
+
+An era may not skip the phases; it may compress them when nothing
+is stale and every access is already proven. v3 (already active)
+is exempt retroactively -- its remaining work proceeds as planned.
 
 ## v0: Legacy archive -- SHIPPED 2026-11-06
 
@@ -231,48 +260,63 @@ wherever the corpus is unrecoverable.
 
 ## v4: Automation polish
 
-[OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
-[OPS-13 the auto-update port](./stories/OPS-13-auto-update-port.md),
-[OPS-14 PBS backups](./stories/OPS-14-pbs-backups.md),
-[OPS-15 drift detection](./stories/OPS-15-drift-detection.md),
-[OPS-25 UPS power-loss protection](./stories/OPS-25-ups-power-loss.md)
-(the operator's APC BE600M1 -- NUT on the Pi, grace timer, staged
-clean shutdown; the deliberate standing-rule exception: power-loss
-shutdown is automated, unlike update reboots), and
-[OPS-27 mise as the fleet loop front door](./stories/OPS-27-mise-fleet-loop.md)
-(operator request: converge/update/verify as mise tasks, ansible
-pinned via mise.toml [tools], Makefile deleted; mechanical port
-+ the doc sweep that keeps the docs honest; small enough to pull
-forward into v3 whenever the operator wants), and
-[OPS-28 router tailnet exit node + ProtonVPN egress]
-(./stories/OPS-28-router-exit-proton.md)
-(operator request 2026-11-26: os-tailscale exit-node role on the
-OPNsense box + Proton WireGuard gateway, with the blanket-vs-split
-egress decision recorded in-story; router surgery, operator-held
-facts: Proton plan tier + WG config),
-[OPS-29 Grafana observability -- the dashboard layer]
-(./stories/OPS-29-grafana-dashboards.md)
-(operator request 2026-11-26, full design in
-[design/observability-dashboards.md](./design/observability-dashboards.md):
-THE at-a-glance dashboard + a low-level set per domain, the
-current-collection gap table (pve exporter, SNMP for truenas +
-opnsense, DCGM, blackbox, textfile collectors), dashboards as
-code, and the grafana-vs-superset split rule; pull-forwardable
-into v3 right after USER-2 if the operator wants the fleet
-visible before more services land), and
-[USER-20 personal-data BI -- the Superset layer]
-(./stories/USER-20-personal-data-superset.md)
-(the docs/data.md goal state made concrete: github/codeberg,
-leetcode/neetcode/exercism/codecrafters/pluralsight/udemy,
-privacy.com/cloaked/amazon spend, ollama/opencode, youtube/odysee,
-ActivityWatch local usage; per-source schemas in the analytics
-postgres, pulls as code, export-shaped sources via drop-box).
+SEQUENCED 2026-11-26 (roadmap refinement; every era from here
+opens with the ERA-OPENING PROTOCOL above -- Phase 0 reorders
+this list with evidence, Phase 1 de-stales the docs it inherits):
+
+Order rationale: make the loop pleasant, make the fleet visible,
+then make it durable, then make it self-minding. Specific
+operator-held facts gate three stories (named below); nothing
+starts blind.
+
+1. [OPS-27 mise as the fleet loop front door]
+   (./stories/OPS-27-mise-fleet-loop.md) -- first because it is
+   mechanical, small, and every later story runs through the
+   loop it improves. (Pull-forwardable into v3 at will.)
+2. [OPS-29 Grafana observability]
+   (./stories/OPS-29-grafana-dashboards.md) -- a: close the data
+   gaps, b: THE at-a-glance board, c: the low-level set. The
+   fleet becomes VISIBLE; every later v4 story lands on a
+   dashboard that proves it. (Pull-forwardable; design already
+   filed: [design/observability-dashboards.md].)
+3. The offsite alerting tier
+   ([design/offsite-alerting.md](./design/offsite-alerting.md))
+   -- detection rides the v4 observability stack; delivery +
+   dead-man's switch on a ~$5/mo VPS (the first recurring paid
+   service after B2; provider pick + Gatus-vs-Healthchecks is
+   Phase-0 Q&A). Needs: VPS account + provisioned access.
+4. [USER-20 personal-data BI -- the Superset layer]
+   (./stories/USER-20-personal-data-superset.md) -- rides the
+   analytics habits OPS-29 builds; clean-API sources first.
+   Needs: per-source account/API access verified in Phase 0
+   (github, codeberg, privacy.com, cloaked, exercism,
+   codecrafters, ollama, opencode).
+5. [OPS-14 PBS backups](./stories/OPS-14-pbs-backups.md) --
+   vzdump already covers the fleet; PBS adds granularity + the
+   quarterly restore drill. Needs: PBS storage sized (truenas
+   or elsewhere -- Phase-0 decision).
+6. [OPS-25 UPS power-loss protection]
+   (./stories/OPS-25-ups-power-loss.md) -- hardware-gated: the
+   operator's APC BE600M1 + battery outlets feeding router +
+   Pi (a physical wiring step, not a software one).
+7. [OPS-28 router tailnet exit node + ProtonVPN egress]
+   (./stories/OPS-28-router-exit-proton.md) -- operator facts
+   gate it: Proton plan tier + the WireGuard config + the
+   blanket-vs-split egress decision (recorded in-story).
+8. [OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
+   [OPS-13 the auto-update port]
+   (./stories/OPS-13-auto-update-port.md),
+   [OPS-15 drift detection](./stories/OPS-15-drift-detection.md)
+   -- the self-minding tier, last on purpose: automation is
+   only safe on a fleet that is already visible, durable, and
+   understood.
+
+V4's Phase 0 must also verify: the dead-man's-switch VPS choice,
+PBS storage sizing, the UPS hardware state, router plugin
+maturity on OPNsense 25.7, and the superset source APIs -- each
+one proven reachable before its story builds.
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
-
-Alerting for this era carries the
-[off-site design](./design/offsite-alerting.md) (detection in the
-lab, delivery + dead-man's switch on a VPS).
 
 ## v5: Platform refresh
 
@@ -313,3 +357,11 @@ Numeric order: always complete the lowest incomplete arc before
 starting anything higher. An arc only starts when its blockers
 ([issues.md](./issues.md)) are answered. Deferrals are recorded here,
 never silent.
+
+ADDED 2026-11-26 (operator directive): every era after the active
+one opens with the ERA-OPENING PROTOCOL (top of this file) --
+research + Q&A and same-page design first, access to every
+external/internal system PROVEN before build, then the docs
+sweep, and only then the stories. Within an era, sequence follows
+its section's stated order; the numeric policy governs arcs, not
+sessions.

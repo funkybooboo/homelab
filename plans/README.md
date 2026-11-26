@@ -46,7 +46,13 @@ links to the design records behind it.
 2. The roadmap queues it into an arc; arcs land in numeric order, and
    every arc ends with something running.
 3. Commits reference the story they serve.
-4. When an arc's stories ship, they flip to done and the as-built
+4. Every era after the active one opens with the ERA-OPENING
+   PROTOCOL (defined in [roadmap.md](./roadmap.md)): research +
+   Q&A to a same-page design, access to every external/internal
+   system proven reachable, the docs sweep, and only then the
+   build. v3's pre-flight audit was the prototype; from v4 it is
+   standing policy.
+5. When an arc's stories ship, they flip to done and the as-built
    record lands in [history.md](./history.md) (+ `docs/`, where the
    result becomes documentation).
 
