@@ -1,8 +1,7 @@
 # Verify -- the kick-the-tires checklist
 
-Every check you can run yourself. The "truth" column was captured
-2026-11-23 after the infra batch shipped; expect the same shape
-(guests grow, counts grow).
+Every check you can run yourself. Counts grow with the fleet;
+the counts here are the current fleet.
 
 ## 1. The https fronts (from any tailnet device)
 
@@ -85,10 +84,10 @@ make verify     # read-only drift check, same
 make update     # patch pass; prints REBOOT REQUIRED flags when kernels stack
 ```
 
-Truth: 16 hosts converge green, guests changed=0. The 2026-11-25
-reboot runbook (maintenance.md, executable as
-scripts/reboot-node.sh) cleared the first-pass kernel flags;
-one node at a time, guests recover via onboot, quorum holds.
+Truth: 16 hosts converge green, guests changed=0. When node
+kernels stack up, the reboot runbook
+([scripts/reboot-node.sh](../scripts/reboot-node.sh), one node at
+a time) clears the flags; guests recover via onboot, quorum holds.
 
 ## 7. The cluster (the PVE view)
 
@@ -96,9 +95,9 @@ one node at a time, guests recover via onboot, quorum holds.
 12 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
 105 grafana, 106 loki, 201 vaultwarden, 202 forgejo,
 203 gitea-mirror, 205 jellyfin, 206 navidrome, 207 audiobookshelf),
-5/5 quorate. (204 gitea-mirror-codeberg was
-removed 2026-11-25 after codeberg declined the pull-mirror
-request; the forgejo push chain is the codeberg leg.)
+5/5 quorate. (204 gitea-mirror-codeberg was removed after
+codeberg declined the pull-mirror request; the forgejo push
+chain is the codeberg leg.)
 
 CLI: `source local/pve-api.env` + the storage/guest API calls the
 scripts use; or just `curl -sk -H "Authorization: Bearer ..."`.

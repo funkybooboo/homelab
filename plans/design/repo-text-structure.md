@@ -145,12 +145,12 @@ Pass 4 touches comments only.
 - Spot-check pass: the operator reads README.md, roadmap.md, and
   one rewritten doc and says whether the repo reads clean.
 
-## Open decisions (operator)
+## Decisions (operator, 2026-11-26)
 
-1. "tombstone" as the word for a state:absent manifest: keep as
-   fleet vocabulary, or rename to "absent manifest"?
-2. "deliberate": keep only where it marks an intentional exception
-   to a standing rule (about 9 of 19 uses), or remove everywhere?
+1. Vocabulary: keep domain-standard terms (tombstone, converge,
+   drift). Where a homelab/DevOps convention exists, use it.
+2. "deliberate": keep only where it marks a chosen exception to a
+   standing rule; remove everywhere else.
 
 ## Sequencing
 

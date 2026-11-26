@@ -1,59 +1,44 @@
-# Maintenance: updates, backups, reboots
+# Maintenance: updates, the fleet loop, reboots
 
-The update + maintenance model, decided 2026-11-22 (before the v2
-service build-out; operator-approved). Slim core now, polish (ntfy
-digests, scheduled drift runs) in v4. The full old-fleet port lives
-in [OPS-13](../plans/stories/OPS-13-auto-update-port.md); the v2 core
-is [OPS-23](../plans/stories/OPS-23-update-model.md).
+Companion docs: [backups.md](./backups.md) (what is protected),
+[debugging.md](./debugging.md) (what to do when something breaks),
+[quirks.md](./quirks.md) (known gotchas).
 
 ## Update tiers (blast radius)
 
 | Tier | Who | Automatic | Reboots |
 | --- | --- | --- | --- |
-| A | every CT guest | unattended-upgrades, **security-only**, daily; needrestart live-restarts upgraded services (a 03:30 restart blip is accepted) | never needed: CTs share the host kernel |
-| B | 4 PVE nodes + Pi | unattended-upgrades, **security-only** (Debian security repo; PVE packages wait for the weekly pass -- pve-no-subscription mixes everything, so it never auto-applies) | **never self-reboot**; cluster services restart only with the node |
-| C | truenas, router | nothing; notify-only, applied via UI with a console nearby | manual |
+| A | every CT guest | unattended-upgrades, security-only, daily; needrestart live-restarts upgraded services | never needed: CTs share the host kernel |
+| B | 4 PVE nodes + Pi | unattended-upgrades, security-only; PVE packages wait for the weekly pass (pve-no-subscription mixes everything) | never self-reboot; cluster services restart only with the node |
+| C | truenas, router | nothing; applied via UI with a console nearby | manual |
 
-Why security-only (a 2026-11-22 refinement of the old fleet's
-full-update allowlist): full upgrades happen in the weekly `make
-update` pass where the operator sees the list; unattended stays
-limited to the patch class that is safe to apply blind.
+Unattended stays limited to the security repo (blind-applied
+patches must be the safe class); full upgrades happen in the weekly
+pass where the operator sees the list.
 
-## The maintenance loop
+## The fleet loop
 
 ```
-make converge   # config authority: guests/*.yaml -> running state
-make update     # patch pass: apt dist-upgrade everywhere, tier-gated,
-                #   NEVER reboots; prints reboot-required flags loudly
-make verify     # drift check: --check --diff, read-only
+make converge   # guests/*.yaml -> running state, idempotent
+make update     # tier-gated dist-upgrade pass; never reboots
+make verify     # read-only drift check
 ```
 
-Weekly operator habit (~10 min): `make update` + `make verify` +
-eyeball the reboot-flags. When node kernels stack up, run the node
-reboot runbook below.
+Weekly habit, about ten minutes: `make update`, `make verify`,
+read the reboot flags. When node kernels stack up, run the reboot
+runbook.
 
-## Backups (the other half of maintenance)
+## Node reboot runbook
 
-- vzdump: Sat 21:00, all guests -> pve-backups (snapshot mode;
-  exists since the revival, automatically covers new guests)
-- B2 cloud-sync: truenas datasets -> Backblaze (proven + running)
-- PBS: v4 (OPS-14) -- until the restore drill passes, vzdump is the
-  baseline
-- The old-fleet archive: Nov-21 dumps on pve-backups (187 volumes),
-  untouched
+`scripts/reboot-node.sh` is the runbook, executable. With no
+arguments it reboots every node flagging reboot-required, one at a
+time; name nodes to choose the order. It checks quorum and an idle
+backup window before starting, verifies each node's return, full
+quorum, and every guest's recovery before touching the next node,
+and aborts on any failed gate. It is run by the operator only; it
+is never scheduled. `--dry-run` rehearses the gates without
+rebooting.
 
-## Node reboot runbook (pre-HA)
-
-The runbook is EXECUTABLE: `scripts/reboot-node.sh`. It enforces
-the invariants below in code -- quorate + no vzdump before
-starting, one node at a time, node back + full quorum + every
-guest recovered between nodes, hard abort on any failed gate, ntfy
-carrying the story. It is human-gated by invocation only (never
-scheduled; the never-self-reboot rule stands). Proven live
-2026-11-25 (the Pi). Rehearse any time with `--dry-run`.
-
-Background: HA placement for guests is not wired yet (the OPS-6
-deferral), so a node reboot briefly interrupts the guests on that
-node; they recover via `onboot: true`. Never reboot two nodes at
-once; never schedule reboots; the LRM watchdog stays unarmed for
-guest recovery until HA lands.
+Background: HA placement for guests is not wired yet (OPS-6), so a
+node reboot briefly interrupts the guests on that node; they
+recover via `onboot: true`. Never reboot two nodes at once.

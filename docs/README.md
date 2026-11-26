@@ -1,29 +1,30 @@
 # Documentation index
 
-The tree describes the fleet NOW; the old fleet's docs live in git
-history, not the tree (deleted 2026-11-22 -- retrievable via
-`git log -- docs/` when restore-time reference is ever wanted).
+Each doc answers one question. This index lists each exactly once,
+grouped by what the reader is trying to do.
 
-## Current
+## Run the fleet
 
-- [`access.md`](./access.md) -- the sign-in table for every guest
-  (URLs, credentials, first-use notes)
-- [`data.md`](./data.md) -- the data architecture: one postgres,
-  database-per-service, what centralizes + what deliberately does
-  not, the practices (credentials, migrations, layered backups)
-- [`maintenance.md`](./maintenance.md) -- update tiers, the
-  converge/update/verify loop, the backup baseline, the node reboot
-  runbook
-- [`network.md`](./network.md) -- the LAN + tailnet access layer
-  (mermaid diagrams), boot-order law
-- [`backups.md`](./backups.md) -- vzdump + snapshots + B2 (PBS lands
-  at OPS-14)
-- [`data-to-extract.md`](./data-to-extract.md) -- the extraction
-  reference (`scripts/extract-legacy.sh`); dumps remain on
-  pve-backups so re-extracts stay possible
+- [`maintenance.md`](./maintenance.md) -- how updates, the fleet
+  loop, and node reboots work
+- [`verify.md`](./verify.md) -- is everything working? (the
+  endpoint checklist)
+- [`debugging.md`](./debugging.md) -- something is broken; where to
+  look and what to query
+- [`quirks.md`](./quirks.md) -- the known gotchas of this fleet,
+  and their fixes
 
-## Restore references
+## Get in
 
-- [`data-to-extract.md`](./data-to-extract.md) -- the extraction
-  reference; dumps remain on pve-backups so re-extracts stay
-  possible.
+- [`access.md`](./access.md) -- every guest's URL, sign-in, and
+  first-use notes
+- [`network.md`](./network.md) -- the LAN, the tailnet overlay, and
+  the boot-order law
+
+## What is where
+
+- [`data.md`](./data.md) -- where each service's data lives and why
+- [`backups.md`](./backups.md) -- what is backed up, to where, and
+  the known gaps
+- [`data-to-extract.md`](./data-to-extract.md) -- the legacy dump
+  archive: what old-fleet data still exists and how to pull it

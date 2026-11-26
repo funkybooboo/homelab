@@ -1,95 +1,65 @@
-# Backups & DR
+# Backups
 
-What's backed up, how, where it goes, and the single-box risk that still
-needs an off-box target.
+What is backed up, where it goes, and the gaps that remain.
 
 ```mermaid
 flowchart LR
-    GUESTS["guests<br/>(CT rootfs on NFS)"] -- "live disks" --> SHARED["truenas volume1/pve/shared"]
+    GUESTS["guest CTs<br/>(rootfs on pve-shared)"] -- "live disks" --> SHARED["truenas volume1/pve/shared"]
     NODES["PVE nodes"] -- "vzdump weekly Sat 21:00" --> BACKUPS["truenas volume1/pve/backups"]
-    SHARED -- "snapshot daily 00:00" --> B2(("Backblaze B2<br/>cloud-sync Sunday 00:00<br/>5 tasks"))
-    BACKUPS -- "snapshot daily 00:00" --> B2
-    HOME["volume1/home/nate<br/>volume1/media"] -- "snapshot daily 00:00" --> B2
-    EXTRACT["legacy-extraction/ on debbie<br/>(tier-0 insurance, one-shot)"]:::one
-    classDef one stroke-dasharray: 5
+    SHARED -- "cloud-sync" --> B2(("Backblaze B2<br/>weekly Sunday"))
+    BACKUPS -- "cloud-sync" --> B2
+    HOME["volume1/home/nate<br/>volume1/media"] -- "cloud-sync" --> B2
 ```
 
-Snapshots are crash-consistent (live disks captured mid-write); vzdump
-artifacts are app-consistent. Current verified state: all 5 B2
-cloud-sync tasks SUCCESS at the first post-wind-down schedule
-(2026-11-22 00:00).
+## vzdump
 
-## vzdump (PVE guest backups)
-
-A single cluster-wide `vzdump` job: weekly Saturday 21:00, all guests,
-storage `pve-backups` (the TrueNAS NFS export). Snapshot mode with suspend
-fallback, zstd compression, prune `keep-last=4 keep-monthly=3`.
+One cluster job (id `backup-6b4b8255-4743`): weekly Saturday 21:00,
+all guests, storage `pve-backups` (the truenas NFS export),
+snapshot mode, zstd, prune keep-last=4 keep-monthly=3. New guests
+are covered automatically.
 
 ```sh
-# jobs.cfg has backup-6b4b8255-4743 -- verify on any node:
-pvesh get /cluster/backup-info
-# staging dir on every node (fast local tmp, not over NFS):
-#   /etc/vzdump.conf has tmpdir=/var/tmp/vzdump   (755 perms)
+pvesh get /cluster/backup-info    # verify the job on any node
 ```
 
-A sample CT (101) backed up in ~4s producing a ~98M artifact, so the whole
-set completes in well under an hour.
+Failure notifications go to PVE's notification system, whose only
+target is mail-to-root -- silent unless postfix relays. This is a
+known gap; the fix is a PVE notification target or the v4 alerting
+tier ([OPS-29](../plans/stories/OPS-29-grafana-dashboards.md) design).
 
-## Snapshots (TrueNAS)
+## TrueNAS snapshots
 
-Four periodic snapshot tasks, daily 00:00, `lifetime_value=2 lifetime_unit=WEEK`
-auto-pruned:
+Four periodic snapshot tasks, daily 00:00, two-week lifetime,
+auto-pruned: `volume1/pve/shared`, `volume1/pve/backups`,
+`volume1/home/nate`, `volume1/media`. Snapshots of pve-shared
+capture live disks mid-write: crash-consistent, not app-consistent.
 
-- `volume1/pve/shared` -- live container disks
-- `volume1/pve/backups` -- vzdump artifacts
-- `volume1/home/nate`
-- `volume1/media`
+## Offsite: B2 cloud-sync
 
-Caveat: snapshots of `pve/shared` capture live `*.raw` mid-write, so they are
-**crash-consistent, not app-consistent**. Acceptable for a homelab; not a
-substitute for proper quiesced backups.
+Five tasks (one per leaf dataset), weekly Sunday, PUSH/SYNC,
+contents and file names encrypted, snapshot=True; the pve/shared
+task excludes `/images/**` (live raw disks are crash-inconsistent
+and dominate the byte count; the vzdump artifacts in pve/backups
+are the restorable form). Bucket: `funkybooboo-truenas-backup`.
+The encryption password and salt live only in the TrueNAS
+middleware database; without them the B2 copy is unrecoverable.
 
-## Off-box replication (the DR hole)
+TrueNAS alerts at WARNING and above reach the phone via the ntfy
+alert service (verified live).
 
-TrueNAS currently holds **both** the live container disks (`pve-shared`) **and**
-the vzdump backups (`pve-backups`) on the same pool. If that box/pool dies, you
-lose live + backups + snapshots together. vzdump-to-truenas is only useful for
-guest-migration + config-botched rollback, **not real disaster recovery**.
+## Gaps
 
-The actual off-box attempt today is the TrueNAS **cloud sync** task:
+- **Single pool holds live disks and backups.** If truenas dies,
+  live state, vzdump artifacts, and snapshots go together. The B2
+  copy is the only off-box copy. PBS (OPS-14, v4) adds a second
+  restore path with restore drills.
+- **SYNC means mirror**: locally-deleted files leave B2 on the next
+  run. Retention would need COPY mode or `--backup-dir`.
+- **The restore path is untested end-to-end.** A backup counts only
+  after a quarterly restore drill (OPS-14 acceptance).
 
-- `Backblaze B2 - /mnt/volume1/home//media//pve` -> bucket
-  `funkybooboo-truenas-backup`, SYNC/PUSH, schedule weekly Sunday 00:00.
-- Credentials: TrueNAS credential id=1 (`Backblaze B2`).
+## The old-fleet archive
 
-### Known cloud-sync problems (being fixed in waves)
-
-1. **B2 storage cap exceeded** (job 818 failure). The B2 application key used
-   has a cap; once it's hit, the `403 storage_cap_exceeded` aborts the run.
-   Fix: exclude the live `pve/shared/images/**/*.raw` disks from the sync
-   (they are crash-inconsistent when re-read mid-write anyway, AND they're
-   the bulk of the bytes), and/or raise the B2 key's cap. DO NOT sync live
-   `.raw` images -- direct-publish the vzdump `*.vma.zst` artifacts instead
-   (already app-consistent snapshots from the vzdump job).
-2. **No alerting when the cloud-sync fails.** Previously there was no working
-   alertservice (the Mail one had an empty recipient + no SMTP server). Now
-   wired: TrueNAS `alertservice id=3` type=Slack -> ntfy bridge -> phone push
-   for any alert >= WARNING. See `docs/notifications.md`.
-
-### Better DR options (not yet done)
-
-- Nightly `restic` or `borg` of `pve-backups` (the vzdump `.vma.zst` files)
-  to `middlechild` or a second drive on different hardware.
-- A second PVE storage target on different physical hardware so a TrueNAS
-  failure doesn't take the cluster down.
-- Keep the cloud-sync as the *truly* off-site copy, but only for the vzdump
-  artifacts + user data, NOT the live disks.
-
-## Notifications
-
-Backup failures now (post Jul-2026) push to the ntfy topic -- see
-[`notifications.md`](./notifications.md). vzdump notify is still
-mail-to-root locally (silent unless postfix relays); PVE notification
-endpoint (gotify/SMTP) is a follow-up. The cloud sync job failure will
-fire the TrueNAS `>= WARNING` alert per the alertservice in
-[`notifications.md`](./notifications.md).
+The 187 vzdumps of the old fleet stay on pve-backups untouched.
+What is in them and how to pull data back:
+[data-to-extract.md](./data-to-extract.md).

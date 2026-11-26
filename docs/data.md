@@ -1,8 +1,8 @@
 # Data architecture
 
-Decided 2026-11-22 (issues item 15; the design conversation with the
-operator). Companion docs: [maintenance.md](./maintenance.md) (updates,
-backups, reboots), [network.md](./network.md) (access).
+Where each service's data lives and why. The decision record is
+[issues item 15](../plans/issues.md). Companion docs:
+[maintenance.md](./maintenance.md), [network.md](./network.md).
 
 ## The policy: one engine, database-per-service
 
@@ -53,7 +53,7 @@ one cluster, **one database + one role per service**.
 ## Apache Superset (the goal state)
 
 The reason to centralize: one analytics layer reaches everything.
-Superset (when queued) gets its metadata database in the shared
-cluster + a valkey cache, then registers each per-service database
-as a data source -- cross-service dashboards become possible
-*because* the data lives in one engine.
+Where its data comes from, the grafana-vs-superset split, and the
+source inventory live in one place:
+[the observability design](../plans/design/observability-dashboards.md).
+Story: [USER-20](../plans/stories/USER-20-personal-data-superset.md).

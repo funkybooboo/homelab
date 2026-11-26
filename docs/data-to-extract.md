@@ -1,88 +1,58 @@
-# Data to extract (OPS-1's live deliverable)
+# The legacy dump archive
 
-CORRECTED 2026-11-26 (found live at the operator's --copy 1 run):
-the pve-shared raw images are GONE -- the OPS-20 cleanout removed
-the old-fleet disks, and vmids 101-106 were RECYCLED for the new
-infra guests (their rootfs images sit at the old paths now; the
-extractor skips them with a warning). The vzdump archive in
-pve-backups/dump/ is THE source of record for everything destroyed
-before 2026-11-22: `sudo ./scripts/extract-legacy.sh
---copy-from-dump <ctid>` (newest archive wins). Confirmed present:
-102 jellyfin (newest 2026-09-26), 132 navidrome (2026-09-26),
-133 audiobookshelf (2026-11-21, the eve of the cleanout).
+The old fleet is gone; its vzdump archives remain on truenas and
+are the only restorable source of old-fleet data. This is the
+reference for what exists and how to pull it.
 
-What must come off the old pve-shared rootfs disks as a tier-0
-BACKUP SNAPSHOT before anything destructive ever touches them. Under
-the revival path nothing wipes -- this is insurance, not a
-dependency -- and the tier-0 copy must exist OUTSIDE the truenas pool
-(rule 10). Per CT, in priority order. Everything lives in
-`images/vm-<CTID>-disk-0.raw` on the truenas export
-`/mnt/volume1/pve/shared` EXCEPT the two local-lvm CTs (128, 130) --
-for those, the weekly vzdump artifacts in `/mnt/volume1/pve/backups`
-are the fallback source (the job covered all guests, keep-last=4
-weekly, so the last Saturday 2026-10-17-ish dump of each CT likely
-exists).
+## Where the data is
 
-`scripts/extract-legacy.sh` walks this table. "To locate" = standard
-app default path; the script probes + the report shows what it found
--- paths are proven at extraction time, not trusted from here.
+- `pve-backups/dump/vzdump-lxc-<ctid>-<date>.tar.zst` on truenas:
+  weekly snapshots of every old CT, keep-last rotation. The newest
+  per CT is the relevant one.
+- The raw disk images (`pve-shared/images/`) were removed in the
+  OPS-20 cleanout. Nothing reads them now, and vmids 101-106 are
+  reused by the new fleet's infra guests.
 
-## Tier 0 -- critical (extraction gate; nothing wipes before these land)
+## How to pull
 
-| CT | data | path (to locate unless marked) | notes |
-|----|------|-------------------------------|-------|
-| 109 | vaultwarden db + attachments + RSA keys | `/var/lib/vaultwarden/` | bitwarden.sqlite3, attachments/, rsa_key.* -- THE passwords. First out, verified copy |
-| 108 | postgres PGDATA | `/var/lib/postgresql/` | raw copy restorable at matching PG major (check version file); serves freshrss, linkwarden, omnivore (+ any other DBs) |
-| 106 | n8n workflows + credentials | `~/.n8n/` (root's home, likely `/root/.n8n`) | database.sqlite = workflows; credentials encrypted with a key that lives in `.n8n/config` |
+```sh
+sudo ./scripts/extract-legacy.sh --copy-from-dump <ctid>
+```
 
-## Tier 1 -- high (the curated restores depend on them)
+The script mounts the truenas backup export read-only and extracts
+the newest archive to `legacy-extraction/from-dump-<ctid>/`. Run it
+from the repo root; it needs root for the NFS mount.
 
-| CT | data | path | notes |
-|----|------|------|-------|
-| 102 | jellyfin config + library metadata | `/etc/jellyfin/` + `/var/lib/jellyfin/` | avoids full media re-scan (715 movies et al.); media itself is safe on truenas |
-| 107 | forgejo repos + gitea.db | `/var/lib/forgejo/` + `/etc/forgejo/app.ini` (known) | 50G -- the biggest pull |
-| 132 | navidrome.db | `/var/lib/navidrome/` | music library pointer state |
-| 133 | audiobookshelf metadata + config | `/var/lib/audiobookshelf/` (to locate; possibly `/audiobookshelf`) | progress/reading state |
-| 131 | syncstorage-rs database | `/var/lib/syncstorage-rs/` (to locate; check its systemd unit) | the actual Firefox sync payloads |
-| 104 | freshrss app state | `/opt/freshrss/data/` | OPML is already in-repo (services/freshrss/); DB comes from 108 |
-| 112 | linkwarden app data | `/opt/linkwarden/` + `.env` | DB from 108; .env holds the auth secrets |
+Two facts about the output:
 
-## Tier 2 -- medium (decide during curation, issues item 6)
+- The extracted tree is root-owned with restrictive modes. Ansible
+  runs as nate and cannot read it until you
+  `sudo chown -R nate:nate legacy-extraction`.
+- Service roles pick the extraction up on the next `make converge`:
+  each restore is gated on files being present, runs once, and
+  never overwrites live data.
 
-| CT | data | path | notes |
-|----|------|------|-------|
-| 105 | mirror repos | `/var/lib/forgejo/` | read-only mirror; cheap to skip if forgejo re-mirrors |
-| 113 | opengist gists | `/var/lib/opengist/` | |
-| 118 | jupyter notebooks | `/root/` or `/home/*/` notebooks dir | find `*.ipynb` |
-| 123 | grafana dashboards + datasources | `/var/lib/grafana/` | new grafana gets rebuilt but dashboards port |
-| 125 | bichon mail archive | `/var/lib/bichon/` (to locate) | whole point of bichon; check size before pulling |
-| 126 | protonmail-bridge credentials | `/var/lib/protonmail/bridge/` (to locate) | saves re-login+2FA dance; gpg state |
-| 127 | cronmaster jobs | `/opt/cronmaster/` + `.env` (known: INTERNAL_API_URL) | jobs db + env |
-| 103 | speedtest history | `/opt/speedtest-tracker/` + `.env` | laravel db (sqlite or in 108) |
-| 134 | omnivore app data | `/opt/omnivore/` (to locate) | DB from 108 |
+## What has been consumed
 
-## Tier 3 -- none/low (skip unless trivial)
+| CT | Service | Newest dump | Status |
+| --- | --- | --- | --- |
+| 106 | n8n | 2026-11-21 | extracted (tier 0) |
+| 107 | forgejo hub | 2026-11-21 | restored (OPS-9) |
+| 108 | postgres | 2026-11-21 | restored (OPS-10) |
+| 109 | vaultwarden | 2026-11-21 | restored (USER-1) |
+| 102 | jellyfin | 2026-09-26 | restored (USER-2) |
+| 132 | navidrome | 2026-09-26 | restored (USER-2) |
+| 133 | audiobookshelf | 2026-11-21 | restored (USER-2) |
 
-- 101 alpine-it-tools, 111 adminer, 119 searxng (settings only),
-  120 excalidraw (scenes were browser-local), 121 drawio, 122
-  prometheus (TSDB expires), 124 pve-exporter, 130 loki (logs), all
-  six stopped templates.
-- 128 **ntfy**: user/access db (`/var/lib/ntfy/`) is on framework's
-  LOCAL-LVM -- pull from the newest `vzdump-lxc-128-*.tar.zst` in
-  pve-backups, or skip: creds live in services/ntfy/README.md + the
-  phone, and OPS-8 rebuilds the topic fresh anyway.
+## What remains, by story
 
-## Not extract targets (already safe)
+- USER-5 (firefox sync, CT 131): no dump exists. The story opens
+  with a B2 check; expect a fresh start.
+- USER-7/8/9/10/11/12/13 (linkwarden, omnivore, opengist, jupyter,
+  bichon, protonmail-bridge, speedtest): dumps exist; each story
+  restores from them.
+- CTs 110 and 116 (Sept-26 dumps only): presumed stopped templates;
+  resurrect on demand.
 
-- The media libraries + `/home/nate` -- live truenas datasets, B2-synced,
-  untouched by the rebuild.
-- CT configs (`lxc/<vmid>.conf` mount + device entries) are
-  documentation-of-record; the script copies them (tiny) since they
-  encode the old conventions exactly.
-
-## Verification discipline
-
-Every pulled artifact gets a sha256 in the manifest the script
-writes. Tier-0 counts as "landed" only when a copy exists OUTSIDE the
-truenas pool (debbie) AND the manifest hash matches. Rule 10: extract
-before wipe; B2 never stops.
+Anything not listed here is not coming back unless a story asks
+for it.

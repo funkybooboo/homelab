@@ -192,3 +192,22 @@ personal-content family; OPS-29/USER-20 pull-forwardable).
 
 v4 automation polish, v5 platform refresh -- each appended above
 as its stories flip done.
+
+## Incidents (pre-v3, carried from the debugging runbook)
+
+- framework vanish x3 (Jul/Sep/Nov 2026): USB NIC same-second
+  disconnect + re-enumerate; node up, network dead, no corosync
+  leave. Mitigated with the udev self-heal in node_glue; permanent
+  fix is a PCIe NIC.
+- The old fleet's hourly pve-reboot-controller was found armed with
+  live flags and a fresh lock; unattended serialized cluster reboots
+  were minutes away. Decommissioned; the standing rule since:
+  cluster-level actions stay human-gated.
+- Service crash-loops on fresh CTs traced to packages shipping
+  without data dirs and without journal-group membership
+  (grafana family), plus fs.protected_regular making stale
+  root-owned files poison O_CREAT. Fixed structurally in
+  guest_common.
+- Jinja '\1' regex backrefs in string literals are octal escapes
+  and silently corrupt generated configs; the prometheus target
+  template was rewritten in for-loop form.
