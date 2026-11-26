@@ -13,7 +13,8 @@ the push chain after codeberg's pull-mirror ban; CLOSED
 and CT 204 was decommissioned by manifest -- zero data inside,
 schedule was off, repos ignored; env + vault item + docs swept.
 Remaining note: the 3.54.0->3.56.1 pin bump rides the next
-make update)
+make update; the last 12 codeberg targets are blocked by the
+account's 100-repo cap -- OPEN in issues.md item 16)
 **Arc**: v2
 
 ## Acceptance criteria

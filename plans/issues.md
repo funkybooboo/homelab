@@ -5,7 +5,7 @@ from design/greenfield-rebuild.md when `plans/` was created -- the
 design record keeps the research + traps, this file keeps what is still
 OPEN).
 
-## Questions (answered 2026-11-06, except 8)
+## Questions (answered 2026-11-06, except 8 + 16)
 
 1. **Router box specs** -- ANSWERED 2026-11-06 (order #10610317,
    ordered 2026-10-19, $563.04): **Protectli Vault V1210**, 2-port Intel
@@ -184,6 +184,34 @@ files in git (the repo is the backup). Apache Superset is the
 planned data-viewing layer (own pg metadata db + valkey cache when
 queued); it reaches per-service databases as sources for
 cross-service dashboards.
+
+16. **Codeberg 100-repo cap** -- OPEN 2026-11-25 (operator:
+   leave as-is for now). The push chain mirrors 96/108 repos to
+   codeberg; the last 12 targets cannot be created because the
+   account is at Codeberg's per-user limit of 100 repositories
+   (94 old-fleet pushes + 6 created 2026-11-25 = 100; verified by
+   two full API pages). Repo creation returns HTTP 500 with an
+   EMPTY message -- which cost a day of "rate limit will reset"
+   misdiagnosis before the count was checked. It is a hard cap,
+   not a window.
+
+   The 12 un-mirrored targets (push mirrors pre-wired on the hub,
+   hub+github-only until slots exist): MCWorld, NLP-Command-Line,
+   ChadMcintire-nsegcm, funkybooboo-powerplay, epeterson42-powerplay,
+   program-analysis-6715, ryleeeeeeeeeeeee, SpotifyScraper,
+   funkybooboo-Trabajador, ucollect,
+   funkybooboo-vector-field-analysis,
+   EthanDGee-vector-field-analysis. The chain map is
+   `local/ops-9-audit/push-chain-built.json`.
+
+   Options when revisited (any one closes this):
+   (a) overlap analysis -> drop-list of old codeberg repos verified
+   present elsewhere (the no-data-loss directive applies; nothing
+   unverifiable gets deleted), then create the 12;
+   (b) a support ask to codeberg for a cap raise (mundane next to
+   the mirror request they already declined, Community#3313);
+   (c) accept 96/108 permanently -- nothing breaks; the 12 stay
+   two-legged (hub + github) instead of three-legged.
 
 ## Self-audit notes
 
