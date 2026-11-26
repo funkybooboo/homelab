@@ -1,0 +1,2 @@
+# audiobookshelf role defaults (USER-2)
+audiobookshelf_restore_dir: "{{ playbook_dir | dirname | dirname }}/legacy-extraction"

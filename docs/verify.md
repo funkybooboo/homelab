@@ -14,6 +14,9 @@ https://prometheus.tail54538d.ts.net   -> 302 (redirect to /graph)
 https://vaultwarden.tail54538d.ts.net  -> 200 (password manager UI)
 https://forgejo.tail54538d.ts.net      -> 302 (login redirect)
 https://gitea-mirror.tail54538d.ts.net  -> 200 (sync app UI)
+https://jellyfin.tail54538d.ts.net     -> 200 (media UI)
+https://navidrome.tail54538d.ts.net     -> 302 (login redirect)
+https://audiobookshelf.tail54538d.ts.net -> 200 (media UI)
 ```
 
 Real LE certs (padlock in the browser). If a front 502s: the guest's
@@ -82,17 +85,18 @@ make verify     # read-only drift check, same
 make update     # patch pass; prints REBOOT REQUIRED flags when kernels stack
 ```
 
-Truth: 16 hosts converge green, guests changed=0. The 4 x86 nodes
-flagged reboot-required after the first update pass (PVE kernels) --
-the runbook is [maintenance.md](./maintenance.md) (one node at a time,
-guests recover via onboot, quorum holds).
+Truth: 16 hosts converge green, guests changed=0. The 2026-11-25
+reboot runbook (maintenance.md, executable as
+scripts/reboot-node.sh) cleared the first-pass kernel flags;
+one node at a time, guests recover via onboot, quorum holds.
 
 ## 7. The cluster (the PVE view)
 
 `https://192.168.1.3:8006` (or the tailnet front) -> Datacenter:
-9 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
+12 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
 105 grafana, 106 loki, 201 vaultwarden, 202 forgejo,
-203 gitea-mirror), 5/5 quorate. (204 gitea-mirror-codeberg was
+203 gitea-mirror, 205 jellyfin, 206 navidrome, 207 audiobookshelf),
+5/5 quorate. (204 gitea-mirror-codeberg was
 removed 2026-11-25 after codeberg declined the pull-mirror
 request; the forgejo push chain is the codeberg leg.)
 

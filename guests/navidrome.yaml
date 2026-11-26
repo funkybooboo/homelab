@@ -1,0 +1,20 @@
+# navidrome.yaml -- USER-2: the music server. Music library is a
+# read-only NFS bind; navidrome's own db (play counts, playlists)
+# is pointer state, restored if the old dump exists, re-derived
+# otherwise.
+name: navidrome
+vmid: 206
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 1024
+disk: 6
+ip: 192.168.1.56
+role: navidrome
+tailnet: true
+tailnet_serve: 4533   # https://navidrome.tail54538d.ts.net
+mounts:
+  - { mp: /media/music, src: /mnt/media/music }

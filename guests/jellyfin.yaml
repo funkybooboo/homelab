@@ -1,0 +1,24 @@
+# jellyfin.yaml -- USER-2: the media fleet's movie/TV server, on
+# the GPU node (NVIDIA transcode is the whole reason it lives on
+# thermaltake). Metadata is derived state (docs/data.md: the FILES
+# on NFS are the data), so rootfs rides pve-shared like the rest of
+# the fleet -- a rebuild re-derives from the same files.
+name: jellyfin
+vmid: 205
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 4
+memory: 2048
+swap: 2048
+disk: 10              # app + transcode cache + library metadata
+ip: 192.168.1.55
+role: jellyfin
+tailnet: true
+tailnet_serve: 8096   # https://jellyfin.tail54538d.ts.net
+gpu: true             # -> node_glue driver; guests.yml devnode lines
+mounts:               # node-level NFS binds (no in-CT NFS)
+  - { mp: /media/movies, src: /mnt/media/movies }
+  - { mp: /media/tvshows, src: /mnt/media/tvshows }
+features: [nesting]

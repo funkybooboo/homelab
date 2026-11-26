@@ -1,0 +1,4 @@
+# node_glue role defaults
+# (the GPU driver pin lives in group_vars/all.yml -- shared with the
+# jellyfin role's CT-side userspace install, so host module and CT
+# libs can never diverge)

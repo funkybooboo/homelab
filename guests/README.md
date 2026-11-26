@@ -20,7 +20,11 @@ swap: 512             # MB
 disk: 4               # GB rootfs
 ip: 192.168.1.50      # static at pct level (never DHCP, issues 7)
 role: test_service    # ansible role applied inside the guest
-mounts: []            # pct mpX entries: {mp, storage|src, size?}
+mounts: []            # pct mpX entries: {mp, src} -- node-level
+                       # paths bind-mounted into the CT (USER-2)
+gpu: false             # true = NVIDIA devnode passthrough into the
+                       # CT (guests.yml writes the lxc lines; the
+                       # node's driver is node_glue's job)
 features: []           # e.g. [nesting] for docker-style services
 ```
 

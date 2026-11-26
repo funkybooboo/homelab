@@ -2,3 +2,9 @@
   ansible.builtin.service:
     name: promtail
     state: restarted
+- name: start uvm devnodes
+  ansible.builtin.systemd:
+    name: nvidia-uvm-devnodes
+    state: started
+    enabled: true
+    daemon_reload: true

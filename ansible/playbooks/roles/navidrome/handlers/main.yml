@@ -1,0 +1,4 @@
+- name: restart navidrome
+  ansible.builtin.service:
+    name: navidrome
+    state: restarted

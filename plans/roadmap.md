@@ -243,7 +243,13 @@ shutdown is automated, unlike update reboots), and
 (operator request: converge/update/verify as mise tasks, ansible
 pinned via mise.toml [tools], Makefile deleted; mechanical port
 + the doc sweep that keeps the docs honest; small enough to pull
-forward into v3 whenever the operator wants).
+forward into v3 whenever the operator wants), and
+[OPS-28 router tailnet exit node + ProtonVPN egress]
+(./stories/OPS-28-router-exit-proton.md)
+(operator request 2026-11-26: os-tailscale exit-node role on the
+OPNsense box + Proton WireGuard gateway, with the blanket-vs-split
+egress decision recorded in-story; router surgery, operator-held
+facts: Proton plan tier + WG config).
 
 Ends with: rebuild-a-node and add-a-service are runbook-only.
 

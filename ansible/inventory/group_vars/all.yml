@@ -23,6 +23,30 @@ reserved:
   pbs: 192.168.1.12                 # OPS-14 PBS VM
   subnetrouter: 192.168.1.13        # OPS-7 tailscale subnet router
 
+# truenas media exports (verified live 2026-11-26 via the truenas
+# API): mounted on every guest-capable (amd64) node at the SAME
+# path (docs/network.md planned model: guest mobility), then bind-
+# mounted into CTs via pct mp entries -- no in-CT NFS. Export ACL
+# notes: movies/tvshows/podcasts use mapall root; the home/nate/*
+# sync dirs use empty mapall + world-readable default ACLs (the
+# container-readers pattern from the old fleet -- keep o::r-x).
+media_nfs_server: 192.168.1.10
+# NVIDIA driver pin (USER-2): the 580 branch is the LAST series
+# supporting the GTX 1060 (Pascal); the .run installer is the only
+# remaining source (Debian's 550 cannot build against kernel 7.x;
+# NVIDIA's CUDA repo rotated past 580). node_glue installs it on the
+# host with --dkms; the jellyfin role installs userspace-only inside
+# the CT (--no-kernel-module) -- SAME PIN both places, host module
+# and CT libs must never diverge or NVENC fails to initialize.
+nvidia_run_version: "580.142"
+media_mounts:
+  - { name: movies, export: /mnt/volume1/media/movies }
+  - { name: tvshows, export: /mnt/volume1/media/tvshows }
+  - { name: music, export: /mnt/volume1/home/nate/Music }
+  - { name: audiobooks, export: /mnt/volume1/home/nate/Audiobooks }
+  - { name: books, export: /mnt/volume1/home/nate/Books }
+  - { name: podcasts, export: /mnt/volume1/home/nate/Podcasts }
+
 # --- ansible connection model (v2 skeleton, OPS-7) ---
 # Humans operate; assistants help under the same identity. NO root
 # login anywhere: ansible connects as the operator's key-only

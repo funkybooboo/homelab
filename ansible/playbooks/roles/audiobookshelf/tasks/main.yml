@@ -1,0 +1,170 @@
+# audiobookshelf -- USER-2: audiobooks + books + podcasts server.
+# Repo-installed (the vendor's own flat apt repo -- GitHub release
+# binaries no longer exist, checked 2026-11-26; the repo is the
+# official Debian path per their docs), rides `make update` like
+# every repo-installed app.
+- name: gnupg present (key dearmor)
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+
+- name: Audiobookshelf repo key
+  ansible.builtin.get_url:
+    url: https://advplyr.github.io/audiobookshelf-ppa/KEY.gpg
+    dest: /usr/local/src/audiobookshelf-KEY.gpg
+    mode: "0644"
+
+- name: key dearmored into the keyring
+  ansible.builtin.command:
+    argv: [/usr/bin/gpg, --dearmor, -o, /etc/apt/keyrings/audiobookshelf.gpg,
+           /usr/local/src/audiobookshelf-KEY.gpg]
+    creates: /etc/apt/keyrings/audiobookshelf.gpg
+
+- name: Audiobookshelf flat repo (the vendor's documented line, verbatim)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/audiobookshelf.list
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # managed by make converge (audiobookshelf role, USER-2)
+      deb [signed-by=/etc/apt/keyrings/audiobookshelf.gpg] https://advplyr.github.io/audiobookshelf-ppa ./
+  notify: restart audiobookshelf
+
+- name: Audiobookshelf installed (forced refresh -- repo just added)
+  ansible.builtin.apt:
+    name: audiobookshelf
+    state: present
+    update_cache: true
+
+# ---- the metadata restore (tier-1 dump: listening progress +
+# ---- config). The old CT's data lived at ONE of two documented
+# ---- alternates (/var/lib/audiobookshelf or /audiobookshelf --
+# ---- binary-era vs deb-era layout); the tarball that exists tells
+# ---- us which, and the service paths follow the data. Marker-
+# ---- gated ONCE, same contract as the other media roles.
+- name: restore marker present? (once-only gate)
+  ansible.builtin.stat:
+    path: /var/lib/audiobookshelf/homelab-restore.done
+  register: _abs_restored
+
+- name: stop for the restore window (fresh install auto-started it)
+  when: not _abs_restored.stat.exists
+  ansible.builtin.service:
+    name: audiobookshelf
+    state: stopped
+
+- name: controller holds a 133 dump? (either documented alternate)
+  when: not _abs_restored.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ audiobookshelf_restore_dir }}/133-audiobookshelf-data-audiobookshelf.tar.gz"
+  register: _abs_src_alt
+  delegate_to: localhost
+
+- name: controller holds the 133 var/lib dump?
+  when: not _abs_restored.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ audiobookshelf_restore_dir }}/133-audiobookshelf-data-var_lib_audiobookshelf.tar.gz"
+  register: _abs_src_vl
+  delegate_to: localhost
+
+- name: legacy data restored (dest / -- each tarball carries its own
+        full path prefix, so the archive lands where the old CT had it)
+  when:
+    - not _abs_restored.stat.exists
+    - (_abs_src_alt.stat.exists | default(false)) or (_abs_src_vl.stat.exists | default(false))
+  ansible.builtin.unarchive:
+    src: "{{ audiobookshelf_restore_dir }}/{{ '133-audiobookshelf-data-audiobookshelf.tar.gz' if (_abs_src_alt.stat.exists | default(false)) else '133-audiobookshelf-data-var_lib_audiobookshelf.tar.gz' }}"
+    dest: /
+  notify: restart audiobookshelf
+
+# ---- service paths: follow the data (restored binary-era layout
+# ---- wins; fresh install uses /var/lib)
+- name: where does the app data live? (probe the two eras)
+  ansible.builtin.stat:
+    path: /audiobookshelf/config
+  register: _abs_layout
+  changed_when: false
+
+- name: set_fact -- the config base that is real
+  ansible.builtin.set_fact:
+    audiobookshelf_base: "{{ '/audiobookshelf' if _abs_layout.stat.exists | default(false) else '/var/lib/audiobookshelf' }}"
+
+- name: service environment (the deb reads /etc/default; paths follow
+        the data layout above)
+  ansible.builtin.copy:
+    dest: /etc/default/audiobookshelf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # managed by make converge (audiobookshelf role, USER-2)
+      METADATA_PATH={{ audiobookshelf_base }}/metadata
+      CONFIG_PATH={{ audiobookshelf_base }}/config
+      PORT=13378
+  notify: restart audiobookshelf
+
+# ---- library pre-seed: only when the app never onboarded (no
+# ---- config.json); a restored config is never touched -- its
+# ---- library paths may point at the old fleet's mount names, which
+# ---- the story verify pass reconciles after the restore.
+- name: app config present? (restored or onboarded)
+  ansible.builtin.stat:
+    path: "{{ audiobookshelf_base }}/config/config.json"
+  register: _abs_cfg
+
+- name: fresh config dir + pre-seeded libraries (verify-first)
+  when: not _abs_cfg.stat.exists | default(false)
+  block:
+    - name: config + metadata dirs present
+      ansible.builtin.file:
+        path: "{{ audiobookshelf_base }}/{{ item }}"
+        state: directory
+        owner: audiobookshelf
+        group: audiobookshelf
+        mode: "0750"
+      loop: [config, metadata]
+
+    - name: config.json pre-seeded (books/podcasts/audiobooks binds)
+      ansible.builtin.copy:
+        dest: "{{ audiobookshelf_base }}/config/config.json"
+        owner: audiobookshelf
+        group: audiobookshelf
+        mode: "0644"
+        content: |
+          {
+            "MetadataPath": "{{ audiobookshelf_base }}/metadata",
+            "audiobooks": "/media/audiobooks",
+            "books": "/media/books",
+            "podcasts": "/media/podcasts"
+          }
+      notify: restart audiobookshelf
+
+- name: restore marker written (window closed either way)
+  when: not _abs_restored.stat.exists
+  ansible.builtin.copy:
+    dest: /var/lib/audiobookshelf/homelab-restore.done
+    owner: audiobookshelf
+    group: audiobookshelf
+    mode: "0644"
+    content: |
+      Managed by make converge (audiobookshelf role, USER-2).
+      If written WITHOUT a restore, the tier-1 extraction had not
+      been run yet at that converge -- see docs/data-to-extract.md.
+
+- name: audiobookshelf running + enabled
+  ansible.builtin.service:
+    name: audiobookshelf
+    state: started
+    enabled: true
+
+- name: verify -- the server answers
+  ansible.builtin.uri:
+    url: http://localhost:13378/
+    status_code: [200]
+  register: _abs_check
+  retries: 12
+  delay: 10
+  until: _abs_check.status == 200

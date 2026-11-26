@@ -117,6 +117,85 @@
       loop_control:
         label: "{{ item.name }}"
 
+    - name: Apply missing mp entries (USER-2 media binds; verify-first
+            -- pct config grep before every pct set, so converge is
+            honest-idempotent; a present entry is never touched)
+      when:
+        - item.state | default('present') == 'present'
+        - item.mounts | default([]) | length > 0
+      ansible.builtin.shell: |
+        set -eu
+        C={{ item.vmid }}
+        CHANGED=0
+        {% for m in item.mounts %}
+        if ! pct config $C | grep -q "^mp{{ loop.index0 }}: {{ m.src }},mp={{ m.mp }}"; then
+          pct set $C --mp{{ loop.index0 }} {{ m.src }},mp={{ m.mp }}
+          CHANGED=1
+        fi
+        {% endfor %}
+        test $CHANGED -eq 0 || echo APPLIED
+      register: _mp_apply
+      delegate_to: "{{ item.node }}"
+      changed_when: "'APPLIED' in _mp_apply.stdout"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item.name }}"
+
+    - name: GPU devnode passthrough (pct has no --dev option; the
+            lxc lines are written directly, each guarded so re-runs
+            are silent; uvm major is DYNAMIC -- read from
+            /proc/devices at apply time, never hardcode)
+      when:
+        - item.state | default('present') == 'present'
+        - item.gpu | default(false)
+      ansible.builtin.shell: |
+        set -eu
+        CONF=/etc/pve/lxc/{{ item.vmid }}.conf
+        CHANGED=0
+        UVM=$(grep -w nvidia-uvm /proc/devices | awk '{print $1}')
+        if [ -z "$UVM" ]; then
+          echo "nvidia-uvm missing from /proc/devices (driver not loaded)"
+          exit 1
+        fi
+        ensure() { grep -qF "$1" "$CONF" || { printf '%s\n' "$1" >> "$CONF"; CHANGED=1; } }
+        ensure "lxc.cgroup2.devices.allow: c 195:* rwm"
+        ensure "lxc.cgroup2.devices.allow: c $UVM:* rwm"
+        ensure "lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file"
+        ensure "lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file"
+        ensure "lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file"
+        ensure "lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file"
+        test $CHANGED -eq 0 || echo APPLIED
+      register: _dev_apply
+      delegate_to: "{{ item.node }}"
+      changed_when: "'APPLIED' in _dev_apply.stdout"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item.name }}"
+
+    - name: Restart guests whose mounts/devnodes changed this run
+            (binds + devices apply at CT start, never live)
+      when:
+        - item.state | default('present') == 'present'
+        - ((item.mounts | default([]) | length > 0) or item.gpu | default(false))
+        - >-
+          ((_mp_apply.results[idx].stdout | default('')
+          ~ _dev_apply.results[idx].stdout | default('')) is search('APPLIED'))
+      community.proxmox.proxmox:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        validate_certs: false
+        vmid: "{{ item.vmid }}"
+        node: "{{ item.node }}"
+        state: restarted
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: idx
+        label: "{{ item.name }}"
+
     - name: Probe bootstrap state inside each guest
       when: item.state | default('present') == 'present'
       ansible.builtin.command:

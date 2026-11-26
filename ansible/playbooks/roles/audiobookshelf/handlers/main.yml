@@ -1,0 +1,4 @@
+- name: restart audiobookshelf
+  ansible.builtin.service:
+    name: audiobookshelf
+    state: restarted

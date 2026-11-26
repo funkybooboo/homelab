@@ -172,6 +172,138 @@
       ACTION=="add", SUBSYSTEM=="net", KERNEL=="nic0", RUN+="/usr/local/sbin/usb-nic-recover.sh"
     mode: "0644"
 
+# --- truenas media mounts (USER-2): same path on every guest-
+# --- capable node, so any guest can land anywhere. fstab +
+# --- nofail: a dead truenas degrades the media fleet, it never
+# --- hangs a node boot (boot-order law: truenas boots first)
+- name: nfs-common on guest-capable nodes (Debian's NFS client name;
+        the pve-shared storage plugin already depends on it -- this
+        task makes the dependency explicit for fstab mounts)
+  when: arch | default('') == 'amd64'
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+- name: media exports mounted (fstab + live; state:mounted is idempotent)
+  when: arch | default('') == 'amd64'
+  ansible.posix.mount:
+    src: "{{ media_nfs_server }}:{{ item.export }}"
+    path: /mnt/media/{{ item.name }}
+    fstype: nfs
+    opts: _netdev,nofail
+    state: mounted
+  loop: "{{ media_mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# --- GPU (thermaltake; USER-2). The GTX 1060 (Pascal) has NO
+# --- apt-managed driver left anywhere (found live 2026-11-25):
+# ---   * Debian trixie = nvidia-driver 550.x, which does NOT
+# ---     compile against PVE kernel 7.0 (VMA_LOCK_OFFSET +
+# ---     mmap_lock API drift -- dkms build fails in nv-mmap.c)
+# ---   * NVIDIA's CUDA apt repo rotated past the 580 branch
+# ---     entirely; 590+ dropped Maxwell/Pascal/Volta support
+# --- So: the .run installer's 580 branch -- the LAST Pascal-
+# --- capable series -- managed the vaultwarden way: pinned
+# --- version, marker-gated, --dkms so future kernels rebuild it.
+- name: headers for the running kernel (PVE renamed its kernel
+        packages -- proxmox-headers-* provides linux-headers-*; the
+        apt module's own idempotence beats substring-matching raw
+        apt-get output)
+  when: gpu | default(false)
+  ansible.builtin.apt:
+    name: "proxmox-headers-{{ ansible_kernel }}"
+    state: present
+
+- name: dkms build tooling present
+  when: gpu | default(false)
+  ansible.builtin.apt:
+    name: [dkms, build-essential]
+    state: present
+
+- name: installed driver marker
+  when: gpu | default(false)
+  ansible.builtin.slurp:
+    src: /usr/local/share/nvidia-run-version
+  register: _nv_marker
+  failed_when: false
+
+- name: set_fact -- installed driver version
+  when: gpu | default(false)
+  ansible.builtin.set_fact:
+    nvidia_run_installed: "{{ (_nv_marker.content | default('') | b64decode).strip() }}"
+
+- name: pinned .run installer downloaded
+  when: gpu | default(false) and nvidia_run_installed != nvidia_run_version
+  ansible.builtin.get_url:
+    url: https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_run_version }}/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+    dest: /usr/local/src/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+    mode: "0755"
+
+- name: driver installed (silent + dkms-registered; first build
+        takes ~10 min, later kernels rebuild via dkms on update)
+  when: gpu | default(false) and nvidia_run_installed != nvidia_run_version
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - /usr/local/src/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+      - --silent
+      - --dkms
+  register: _nv_install
+  changed_when: _nv_install.rc == 0
+
+- name: version marker written
+  when: gpu | default(false) and nvidia_run_installed != nvidia_run_version
+  ansible.builtin.copy:
+    dest: /usr/local/share/nvidia-run-version
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ nvidia_run_version }}"
+
+- name: kernel module loaded now (probe is idempotent)
+  when: gpu | default(false)
+  ansible.builtin.command:
+    argv: [modprobe, nvidia]
+  changed_when: false
+  failed_when: false
+
+- name: UVM devnode boot unit (nvidia-modprobe -c -- ctl+uvm, mode 0666;
+        the CT passthrough needs world-open devnodes at boot)
+  when: gpu | default(false)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nvidia-uvm-devnodes.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # managed by make converge (node_glue, USER-2): /dev/nvidia*
+      # + /dev/nvidia-uvm exist with 0666 at boot. nvidia-uvm is NOT
+      # created by module load alone (the old fleet hit this) --
+      # nvidia-modprobe must run after the module is up.
+      [Unit]
+      Description=NVIDIA UVM device nodes (homelab)
+      After=multi-user.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/nvidia-modprobe -c -u -m
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: start uvm devnodes
+
+- name: verify -- GPU answers (driver + module + devnodes)
+  when: gpu | default(false)
+  ansible.builtin.command:
+    argv: [nvidia-smi, --query-gpu=name, "--format=csv,noheader"]
+  register: _gpu_check
+  changed_when: false
+  retries: 3
+  delay: 10
+  until: _gpu_check.rc == 0
+
 # --- the update plan (OPS-23), tier B ---
 - name: unattended-upgrades
   ansible.builtin.apt:

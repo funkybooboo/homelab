@@ -1,0 +1,165 @@
+# navidrome -- USER-2: the music server. Single static binary from
+# GitHub releases, story-time pinned (vaultwarden pattern: version
+# marker gates the install steps). The library is a read-only NFS
+# bind (/media/music); navidrome's db is pointer state -- restored
+# from the tier-1 dump when present, re-derived otherwise.
+- name: installed version marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/navidrome-version
+  register: _nd_marker
+  failed_when: false
+
+- name: set_fact -- installed version
+  ansible.builtin.set_fact:
+    navidrome_installed: "{{ (_nd_marker.content | default('') | b64decode).strip() }}"
+
+- name: release tarball downloaded
+  when: navidrome_installed != navidrome_version
+  ansible.builtin.get_url:
+    url: https://github.com/navidrome/navidrome/releases/download/v{{ navidrome_version }}/navidrome_{{ navidrome_version }}_linux_amd64.tar.gz
+    dest: /usr/local/src/navidrome-{{ navidrome_version }}.tar.gz
+    mode: "0644"
+
+- name: binary dir present
+  ansible.builtin.file:
+    path: /usr/local/src/navidrome-unpack
+    state: directory
+    mode: "0755"
+
+- name: release extracted
+  when: navidrome_installed != navidrome_version
+  ansible.builtin.command:
+    argv: [tar, -xzf, "/usr/local/src/navidrome-{{ navidrome_version }}.tar.gz", -C, /usr/local/src/navidrome-unpack]
+  changed_when: true
+
+- name: binary installed
+  when: navidrome_installed != navidrome_version
+  ansible.builtin.copy:
+    src: /usr/local/src/navidrome-unpack/navidrome
+    dest: /usr/local/bin/navidrome
+    mode: "0755"
+    remote_src: true
+  notify: restart navidrome
+
+- name: version marker written
+  when: navidrome_installed != navidrome_version
+  ansible.builtin.copy:
+    dest: /usr/local/share/navidrome-version
+    content: "{{ navidrome_version }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+# ---- runtime user + config
+- name: navidrome user
+  ansible.builtin.user:
+    name: navidrome
+    system: true
+    home: /var/lib/navidrome
+    shell: /usr/sbin/nologin
+
+- name: data directory
+  ansible.builtin.file:
+    path: /var/lib/navidrome
+    state: directory
+    owner: navidrome
+    group: navidrome
+    mode: "0750"
+
+- name: config file
+  ansible.builtin.copy:
+    dest: /etc/navidrome.toml
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # managed by make converge (navidrome role, USER-2)
+      Address = "0.0.0.0"
+      Port = 4533
+      MusicFolder = "/media/music"
+      DataFolder = "/var/lib/navidrome"
+  notify: restart navidrome
+
+# ---- the pointer-state restore (tier-1 dump: play counts,
+# ---- playlists, faves). Marker-gated ONCE, same contract as the
+# ---- jellyfin role: absent tarball = skip, live db = never clobber.
+- name: restore marker present? (once-only gate)
+  ansible.builtin.stat:
+    path: /var/lib/navidrome/homelab-restore.done
+  register: _nd_restored
+
+- name: controller holds the 132 dump? (stat on debbie)
+  when: not _nd_restored.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ navidrome_restore_dir }}/132-navidrome-data-var_lib_navidrome.tar.gz"
+  register: _nd_src
+  delegate_to: localhost
+
+- name: legacy db restored (only while unmarked AND the dump exists)
+  when:
+    - not _nd_restored.stat.exists
+    - _nd_src.stat.exists | default(false)
+  ansible.builtin.unarchive:
+    src: "{{ navidrome_restore_dir }}/132-navidrome-data-var_lib_navidrome.tar.gz"
+    dest: /var/lib/navidrome
+    owner: navidrome
+    group: navidrome
+  notify: restart navidrome
+
+- name: restore marker written (window closed either way)
+  when: not _nd_restored.stat.exists
+  ansible.builtin.copy:
+    dest: /var/lib/navidrome/homelab-restore.done
+    owner: navidrome
+    group: navidrome
+    mode: "0644"
+    content: |
+      Managed by make converge (navidrome role, USER-2).
+      If written WITHOUT a restore, the tier-1 extraction had not
+      been run yet at that converge -- see docs/data-to-extract.md.
+
+# ---- the service
+- name: systemd unit
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/navidrome.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Navidrome (music server)
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=navidrome
+      ExecStart=/usr/local/bin/navidrome --configfile /etc/navidrome.toml
+      Restart=on-failure
+      RestartSec=5
+      NoNewPrivileges=true
+      ProtectSystem=strict
+      ReadWritePaths=/var/lib/navidrome
+      PrivateTmp=true
+      ProtectHome=true
+      RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart navidrome
+
+- name: navidrome running + enabled
+  ansible.builtin.systemd:
+    name: navidrome
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: verify -- the server answers
+  ansible.builtin.uri:
+    url: http://localhost:4533/
+    status_code: [200]
+  register: _nd_check
+  retries: 12
+  delay: 10
+  until: _nd_check.status == 200

@@ -1,0 +1,172 @@
+# jellyfin -- USER-2: the movie/TV server, on the GPU node.
+# Repo-installed (the ONLY app tier with an apt repo: jellyfin rides
+# `make update` like grafana/tailscale -- no story-time pinning; the
+# binary-pin pattern is for apps without a repo). The trixie suite
+# exists since 2026-11-23 (v12.4).
+# GPU: the devnode passthrough is guests.yml's job (manifest gpu:
+# true); the driver + UVM unit are node_glue's on thermaltake.
+- name: Jellyfin repo key (moved 2026 -- jellyfin.gpg.key 404s now;
+        jellyfin_team.gpg.key is the current name)
+  ansible.builtin.get_url:
+    url: https://repo.jellyfin.org/jellyfin_team.gpg.key
+    dest: /etc/apt/keyrings/jellyfin.asc
+    mode: "0644"
+
+- name: Jellyfin repo (deb822, trixie suite)
+  ansible.builtin.deb822_repository:
+    name: jellyfin
+    types: [deb]
+    uris: https://repo.jellyfin.org/debian
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
+    components: [main]
+    signed_by: /etc/apt/keyrings/jellyfin.asc
+    state: present
+
+- name: Jellyfin installed (forced refresh -- repo just added)
+  ansible.builtin.apt:
+    name: jellyfin
+    state: present
+    update_cache: true
+
+# ---- CT-side NVIDIA userspace (NVENC/NVDEC libs + nvidia-smi).
+# The devnodes alone are NOT enough: the host .run installs its
+# userspace on the HOST only; the CT needs matching libs at the
+# same version or hardware transcode cannot initialize. The
+# classic LXC recipe: the same .run, --no-kernel-module. Same pin
+# as the host (group_vars), so module and libs never diverge.
+- name: installed CT driver marker
+  ansible.builtin.slurp:
+    src: /usr/local/share/nvidia-run-version
+  register: _nv_ct_marker
+  failed_when: false
+
+- name: set_fact -- installed CT driver version
+  ansible.builtin.set_fact:
+    nvidia_ct_installed: "{{ (_nv_ct_marker.content | default('') | b64decode).strip() }}"
+
+- name: pinned .run downloaded (same pin as the host's)
+  when: nvidia_ct_installed != nvidia_run_version
+  ansible.builtin.get_url:
+    url: https://us.download.nvidia.com/XFree86/Linux-x86_64/{{ nvidia_run_version }}/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+    dest: /usr/local/src/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+    mode: "0755"
+
+- name: userspace-only driver installed (--no-kernel-module; the
+        kernel side is the host's, via the devnode passthrough)
+  when: nvidia_ct_installed != nvidia_run_version
+  ansible.builtin.command:
+    argv:
+      - /bin/sh
+      - /usr/local/src/NVIDIA-Linux-x86_64-{{ nvidia_run_version }}.run
+      - --silent
+      - --no-kernel-module
+  register: _nv_ct_install
+  changed_when: _nv_ct_install.rc == 0
+
+- name: CT driver marker written
+  when: nvidia_ct_installed != nvidia_run_version
+  ansible.builtin.copy:
+    dest: /usr/local/share/nvidia-run-version
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ nvidia_run_version }}"
+
+- name: verify -- the GPU answers FROM INSIDE the CT (devnodes +
+        matching userspace -- the whole transcode stack present)
+  ansible.builtin.command:
+    argv: [nvidia-smi, --query-gpu=name, "--format=csv,noheader"]
+  register: _nv_ct_check
+  changed_when: false
+  failed_when: _nv_ct_check.rc != 0
+
+- name: Media-wait boot drop-in (the old fleet's boot-race fix,
+        ported -- if truenas is slow/dead at CT start, wait 60s for
+        the binds, then start ANYWAY -- a degraded jellyfin beats a
+        dead one, and the CT restarts on the next node converge)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/jellyfin.service.d/50-homelab-media-wait.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # managed by make converge (jellyfin role, USER-2)
+      [Service]
+      ExecStartPre=/bin/sh -c 'i=0; until mountpoint -q /media/movies && mountpoint -q /media/tvshows; do i=$$((i+1)); [ $$i -ge 12 ] && exit 0; sleep 5; done; exit 0'
+  notify: restart jellyfin
+
+# ---- the metadata restore (tier-1 dump: 715-movie library DB +
+# ---- watched state). Marker-gated ONCE: converge is idempotent
+# ---- forever after; a live library is never clobbered. Absent
+# ---- tarball (extraction not run yet) = skip silently -- the
+# ---- empty server serves while it waits.
+- name: restore marker present? (once-only gate)
+  ansible.builtin.stat:
+    path: /var/lib/jellyfin/homelab-restore.done
+  register: _jf_restored
+
+- name: stop for the restore window (fresh install auto-started it)
+  when: not _jf_restored.stat.exists
+  ansible.builtin.service:
+    name: jellyfin
+    state: stopped
+
+- name: controller holds the 102 config+metadata dump? (stat on debbie;
+        gates on the TARBALL, not the extraction dir -- the dir exists
+        from earlier tiers while the media tarballs wait for the
+        operator's --copy 1 run)
+  when: not _jf_restored.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-etc_jellyfin.tar.gz"
+  register: _jf_src
+  delegate_to: localhost
+
+- name: restore config + library metadata (only while the marker is
+        absent AND the dump exists -- fresh-state otherwise; never
+        clobbers, never re-runs)
+  when:
+    - not _jf_restored.stat.exists
+    - _jf_src.stat.exists | default(false)
+  block:
+    - name: legacy /etc/jellyfin restored
+      ansible.builtin.unarchive:
+        src: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-etc_jellyfin.tar.gz"
+        dest: /
+        owner: jellyfin
+        group: jellyfin
+
+    - name: legacy /var/lib/jellyfin restored
+      ansible.builtin.unarchive:
+        src: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-var_lib_jellyfin.tar.gz"
+        dest: /
+        owner: jellyfin
+        group: jellyfin
+
+- name: restore marker written (marks the window closed either way)
+  when: not _jf_restored.stat.exists
+  ansible.builtin.copy:
+    dest: /var/lib/jellyfin/homelab-restore.done
+    owner: jellyfin
+    group: jellyfin
+    mode: "0644"
+    content: |
+      Managed by make converge (jellyfin role, USER-2).
+      If written WITHOUT a restore, the tier-1 extraction had not
+      been run yet at that converge -- see docs/data-to-extract.md.
+
+- name: Jellyfin running + enabled
+  ansible.builtin.service:
+    name: jellyfin
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: verify -- the server answers (first boot runs migrations)
+  ansible.builtin.uri:
+    url: http://localhost:8096/health
+    status_code: [200]
+  register: _jf_check
+  retries: 12
+  delay: 10
+  until: _jf_check.status == 200

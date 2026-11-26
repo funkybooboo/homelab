@@ -19,6 +19,9 @@ tailscale.
 | vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | restored (USER-1); sign-in on phone + laptop verified 2026-11-23 |
 | forgejo | https://forgejo.tail54538d.ts.net | `nate` / `funkybooboo`; API tokens in `local/forgejo-*.env` | the git hub (349 repos); sync legs: gitea-mirror nightly -> hub, push mirrors -> codeberg |
 | gitea-mirror | https://gitea-mirror.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-api.env` | github -> hub sync app; nightly 22:00 |
+| jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | USER-2; GPU transcode via the host's NVIDIA 580.142; libraries land with the metadata restore |
+| navidrome | https://navidrome.tail54538d.ts.net | first-run wizard (operator account) | USER-2; music at /media/music; pointer state restores from dump 132 when extracted |
+| audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | USER-2; audiobooks/books/podcasts pre-seeded; progress restores from dump 133 when extracted |
 
 ## The underlying rules
 

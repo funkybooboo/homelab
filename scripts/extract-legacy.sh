@@ -168,7 +168,14 @@ mount_ct() { # mount_ct <ctid> -> echo mountpoint or empty; mounts raw or uses s
 fmt_bytes() { du -sh "$1" 2>/dev/null | cut -f1; }
 
 copy_one() { # copy_one <ctid> <mnt> <path> <tag> -- non-fatal by design
-  local id="$1" mnt="$2" path="$3" tag="$4" tarball="$OUT/${id}-${tag}.tar.gz"
+  local id="$1" mnt="$2" path="$3" tag="$4"
+  # per-PATH tarball names: multi-path probes (102 etc.) would
+  # otherwise copy each path to the SAME filename and only the last
+  # would survive (found in review 2026-11-26, before any tier-1
+  # media run used it)
+  local slug
+  slug="$(printf '%s' "$path" | sed 's,^/,,; s,/,_,g')"
+  local tarball="$OUT/${id}-${tag}-${slug}.tar.gz"
   # tar failures are WARNINGS, not aborts (set -e would otherwise kill the
   # whole walk); stderr goes to a log so the reason is never hidden again
   # (2026-11-22: a silent 45-byte empty gzip + instant abort taught this).

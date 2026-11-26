@@ -1,0 +1,21 @@
+# audiobookshelf.yaml -- USER-2: audiobooks + books + podcasts.
+# All three libraries are read-only NFS binds; progress state lives
+# in the CT rootfs (restored from the old dump when present).
+name: audiobookshelf
+vmid: 207
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 1024
+disk: 6
+ip: 192.168.1.57
+role: audiobookshelf
+tailnet: true
+tailnet_serve: 13378 # https://audiobookshelf.tail54538d.ts.net
+mounts:
+  - { mp: /media/audiobooks, src: /mnt/media/audiobooks }
+  - { mp: /media/books, src: /mnt/media/books }
+  - { mp: /media/podcasts, src: /mnt/media/podcasts }

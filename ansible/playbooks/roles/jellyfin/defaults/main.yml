@@ -1,0 +1,4 @@
+# jellyfin role defaults (USER-2)
+# The extraction dir on the controller (debbie): the tier-1 tarballs
+# produced by scripts/extract-legacy.sh --copy 1 (operator-run).
+jellyfin_restore_dir: "{{ playbook_dir | dirname | dirname }}/legacy-extraction"
