@@ -54,31 +54,44 @@
     name: audiobookshelf
     state: stopped
 
-- name: controller holds a 133 dump? (either documented alternate)
+- name: controller holds the 133 dump? (stat on debbie; the vzdump
+        extraction -- the image-walk source died with the cleanout;
+        whichever era-path the dump carries, the restore follows)
   when: not _abs_restored.stat.exists
   become: false
   ansible.builtin.stat:
-    path: "{{ audiobookshelf_restore_dir }}/133-audiobookshelf-data-audiobookshelf.tar.gz"
-  register: _abs_src_alt
-  delegate_to: localhost
-
-- name: controller holds the 133 var/lib dump?
-  when: not _abs_restored.stat.exists
-  become: false
-  ansible.builtin.stat:
-    path: "{{ audiobookshelf_restore_dir }}/133-audiobookshelf-data-var_lib_audiobookshelf.tar.gz"
+    path: "{{ audiobookshelf_restore_dir }}/from-dump-133/var/lib/audiobookshelf"
   register: _abs_src_vl
   delegate_to: localhost
 
-- name: legacy data restored (dest / -- each tarball carries its own
-        full path prefix, so the archive lands where the old CT had it)
+- name: controller holds the 133 alt-path dump?
+  when: not _abs_restored.stat.exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ audiobookshelf_restore_dir }}/from-dump-133/audiobookshelf"
+  register: _abs_src_alt
+  delegate_to: localhost
+
+- name: legacy data restored (dest / -- the dump's own path structure
+        decides where it lands; the service-path probe below follows)
   when:
     - not _abs_restored.stat.exists
-    - (_abs_src_alt.stat.exists | default(false)) or (_abs_src_vl.stat.exists | default(false))
-  ansible.builtin.unarchive:
-    src: "{{ audiobookshelf_restore_dir }}/{{ '133-audiobookshelf-data-audiobookshelf.tar.gz' if (_abs_src_alt.stat.exists | default(false)) else '133-audiobookshelf-data-var_lib_audiobookshelf.tar.gz' }}"
-    dest: /
+    - (_abs_src_vl.stat.exists | default(false)) or (_abs_src_alt.stat.exists | default(false))
+  ansible.builtin.copy:
+    src: "{{ audiobookshelf_restore_dir }}/from-dump-133/{{ 'var/lib/audiobookshelf' if (_abs_src_vl.stat.exists | default(false)) else 'audiobookshelf' }}"
+    dest: "{{ '/var/lib/' if (_abs_src_vl.stat.exists | default(false)) else '/' }}"
   notify: restart audiobookshelf
+
+- name: restored data owned by the service (the dump preserves the
+        old CT's ownership; this one owns its data dir)
+  when:
+    - not _abs_restored.stat.exists
+    - (_abs_src_vl.stat.exists | default(false)) or (_abs_src_alt.stat.exists | default(false))
+  ansible.builtin.file:
+    path: "{{ '/var/lib/audiobookshelf' if (_abs_src_vl.stat.exists | default(false)) else '/audiobookshelf' }}"
+    owner: audiobookshelf
+    group: audiobookshelf
+    recurse: true
 
 # ---- service paths: follow the data (restored binary-era layout
 # ---- wins; fresh install uses /var/lib)

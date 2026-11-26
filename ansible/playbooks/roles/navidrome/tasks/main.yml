@@ -88,11 +88,13 @@
     path: /var/lib/navidrome/homelab-restore.done
   register: _nd_restored
 
-- name: controller holds the 132 dump? (stat on debbie)
+- name: controller holds the 132 dump? (stat on debbie; the vzdump
+        extraction, not the image-walk tarballs -- those died with
+        the OPS-20 cleanout)
   when: not _nd_restored.stat.exists
   become: false
   ansible.builtin.stat:
-    path: "{{ navidrome_restore_dir }}/132-navidrome-data-var_lib_navidrome.tar.gz"
+    path: "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome"
   register: _nd_src
   delegate_to: localhost
 
@@ -100,9 +102,9 @@
   when:
     - not _nd_restored.stat.exists
     - _nd_src.stat.exists | default(false)
-  ansible.builtin.unarchive:
-    src: "{{ navidrome_restore_dir }}/132-navidrome-data-var_lib_navidrome.tar.gz"
-    dest: /var/lib/navidrome
+  ansible.builtin.copy:
+    src: "{{ navidrome_restore_dir }}/from-dump-132/var/lib/navidrome"
+    dest: /var/lib/
     owner: navidrome
     group: navidrome
   notify: restart navidrome

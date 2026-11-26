@@ -95,11 +95,15 @@
       ExecStartPre=/bin/sh -c 'i=0; until mountpoint -q /media/movies && mountpoint -q /media/tvshows; do i=$$((i+1)); [ $$i -ge 12 ] && exit 0; sleep 5; done; exit 0'
   notify: restart jellyfin
 
-# ---- the metadata restore (tier-1 dump: 715-movie library DB +
-# ---- watched state). Marker-gated ONCE: converge is idempotent
-# ---- forever after; a live library is never clobbered. Absent
-# ---- tarball (extraction not run yet) = skip silently -- the
-# ---- empty server serves while it waits.
+# ---- the metadata restore (tier-1: 715-movie library DB +
+# ---- watched state). SOURCE = the vzdump extraction
+# ---- (--copy-from-dump 102; the old raw images died with the
+# ---- OPS-20 cleanout, and vmid 102 is now the new adminer). The
+# ---- extracted tree is the full rootfs; restore copies pick the
+# ---- two dirs out of it. Marker-gated ONCE: converge is
+# ---- idempotent forever after; a live library is never
+# ---- clobbered. Absent source (extraction not run yet) = skip
+# ---- silently -- the empty server serves while it waits.
 - name: restore marker present? (once-only gate)
   ansible.builtin.stat:
     path: /var/lib/jellyfin/homelab-restore.done
@@ -111,14 +115,12 @@
     name: jellyfin
     state: stopped
 
-- name: controller holds the 102 config+metadata dump? (stat on debbie;
-        gates on the TARBALL, not the extraction dir -- the dir exists
-        from earlier tiers while the media tarballs wait for the
-        operator's --copy 1 run)
+- name: controller holds the 102 dump? (stat on debbie; gates on the
+        actual extraction tree, not the dir that holds all of them)
   when: not _jf_restored.stat.exists
   become: false
   ansible.builtin.stat:
-    path: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-etc_jellyfin.tar.gz"
+    path: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin"
   register: _jf_src
   delegate_to: localhost
 
@@ -130,18 +132,26 @@
     - _jf_src.stat.exists | default(false)
   block:
     - name: legacy /etc/jellyfin restored
-      ansible.builtin.unarchive:
-        src: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-etc_jellyfin.tar.gz"
-        dest: /
+      ansible.builtin.copy:
+        src: "{{ jellyfin_restore_dir }}/from-dump-102/etc/jellyfin"
+        dest: /etc/
         owner: jellyfin
         group: jellyfin
 
     - name: legacy /var/lib/jellyfin restored
-      ansible.builtin.unarchive:
-        src: "{{ jellyfin_restore_dir }}/102-jellyfin-config-meta-var_lib_jellyfin.tar.gz"
-        dest: /
+      ansible.builtin.copy:
+        src: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin"
+        dest: /var/lib/
         owner: jellyfin
         group: jellyfin
+
+    - name: restored config writable by the service (dump preserves
+            root ownership from the old CT's rsync era)
+      ansible.builtin.file:
+        path: /etc/jellyfin
+        owner: jellyfin
+        group: jellyfin
+        recurse: true
 
 - name: restore marker written (marks the window closed either way)
   when: not _jf_restored.stat.exists

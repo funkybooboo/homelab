@@ -1,5 +1,16 @@
 # Data to extract (OPS-1's live deliverable)
 
+CORRECTED 2026-11-26 (found live at the operator's --copy 1 run):
+the pve-shared raw images are GONE -- the OPS-20 cleanout removed
+the old-fleet disks, and vmids 101-106 were RECYCLED for the new
+infra guests (their rootfs images sit at the old paths now; the
+extractor skips them with a warning). The vzdump archive in
+pve-backups/dump/ is THE source of record for everything destroyed
+before 2026-11-22: `sudo ./scripts/extract-legacy.sh
+--copy-from-dump <ctid>` (newest archive wins). Confirmed present:
+102 jellyfin (newest 2026-09-26), 132 navidrome (2026-09-26),
+133 audiobookshelf (2026-11-21, the eve of the cleanout).
+
 What must come off the old pve-shared rootfs disks as a tier-0
 BACKUP SNAPSHOT before anything destructive ever touches them. Under
 the revival path nothing wipes -- this is insurance, not a

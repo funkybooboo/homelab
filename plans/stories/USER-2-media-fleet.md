@@ -102,3 +102,13 @@ only per-service configs/metadata would restore from dumps if wanted
   per-path slugs now. The lxc-confs copy never existed (the old
   confs lived in /etc/pve, lost with the old cluster) -- the
   devnode lines were rebuilt from standard LXC practice instead.
+- **The NFS-image source is DEAD for the old fleet** (found at the
+  operator's --copy 1 run): OPS-20 removed the old disks, and the
+  v2 fleet recycled vmids 101-106 -- the probe path now sees the
+  NEW guests' rootfs images. The extractor warns + skips recycled
+  vmids; docs/data-to-extract.md carries the correction. THE
+  SOURCE OF RECORD = the vzdump archive (--copy-from-dump),
+  confirmed present for 102 (Sep 26), 132 (Sep 26), 133 (Nov 21).
+  All three roles now restore from the from-dump rootfs trees
+  (directory copies, never-clobber, marker-gated, ownership
+  fixed post-restore).

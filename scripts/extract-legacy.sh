@@ -44,6 +44,14 @@ DUMP_CTID=""
 
 # Probe table: "ctid:tier:alternates(space-sep):tag"
 # Tiers per docs/data-to-extract.md.
+# 2026-11-26 REALITY: the old-fleet raw images are GONE from
+# pve-shared (removed in the OPS-20 cleanout), and the v2 fleet
+# RECYCLED vmids 101-106 for its infra guests -- their rootfs
+# images sit at the old paths now. The image walk below therefore
+# only ever sees NEW disks; the OLD fleet lives in the vzdump
+# archive (--copy-from-dump), which is the source of record for
+# everything destroyed before 2026-11-22.
+CURRENT_VMIDS=$(grep -h '^vmid:' "$(dirname "$0")/../guests/"*.yaml 2>/dev/null | awk '{print $2}' | tr '\n' ' ')
 PROBES=(
   "109:0:/var/lib/vaultwarden:vaultwarden-data"
   "108:0:/var/lib/postgresql:pgdata"
@@ -213,6 +221,10 @@ fi
 last_id=""
 for entry in "${PROBES[@]}"; do
   IFS=: read -r id tier paths tag <<< "$entry"
+  if [[ " $CURRENT_VMIDS " == *" $id "* ]]; then
+    echo "CT $id: vmid RECYCLED by the current fleet (guests/*.yaml) -- the pve-shared image is the NEW guest's rootfs, not old-fleet data. Old fleet source = --copy-from-dump $id" | tee -a "$REPORT"
+    continue
+  fi
   vol="$(ct_volume "$id")"
   if [ -z "$vol" ]; then
     echo "CT $id: NO volume in pve-shared (local-lvm? use --copy-from-dump $id)" | tee -a "$REPORT"
@@ -251,5 +263,6 @@ umount "$CT_MNT_PREFIX-$last_id" 2>/dev/null || true
 echo "" | tee -a "$REPORT"
 echo "== done. report: $REPORT ; manifest: $MANIFEST ==" | tee -a "$REPORT"
 if [ "$COPY_TIER" -ge 0 ]; then
-  echo "Verify tier-0 landed: manifest lines for 109/108/106 with a copy OUTSIDE the truenas pool." | tee -a "$REPORT"
+  echo "NOTE: the NFS-image source only ever showed NEW-guest disks after the 2026-11-22 cleanout; old-fleet data comes from the dumps:" | tee -a "$REPORT"
+  echo "  sudo ./scripts/extract-legacy.sh --copy-from-dump <ctid>  (per old-fleet CT; newest archive wins)" | tee -a "$REPORT"
 fi
