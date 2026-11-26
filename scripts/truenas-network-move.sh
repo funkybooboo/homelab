@@ -151,7 +151,7 @@ cat <<EOF
   - on debbie:  sudo ip addr del 192.168.8.99/24 dev enp0s13f0u2u4
   - web UI:     https://192.168.1.10
   - if the console shows a shell, verify with:  ip -br addr show $IFACE
-  IMPORTANT -- TRUENAS FAIL-SAFE (learned live 2026-11-21): interface
+  IMPORTANT -- TRUENAS FAIL-SAFE: interface
   changes STAGE and REVERT to the last-good config unless confirmed.
   If the web UI shows a "save network changes" prompt, CLICK SAVE --
   without it the move rolls back after a grace window.

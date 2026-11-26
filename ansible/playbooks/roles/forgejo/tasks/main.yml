@@ -263,7 +263,7 @@
   # blockinfile's END marker. A blockfile here can therefore only
   # ever be a BOOTSTRAP: re-applying it every converge = rewrite +
   # restart + forgejo re-normalizes = changed-loop forever (found by
-  # the 2026-11-25 idempotence audit). So: verify normally, apply
+  # the idempotence audit). So: verify normally, apply
   # only when the verify fails.
   ansible.builtin.shell: >-
     grep -q '^\[metrics\]' /etc/forgejo/app.ini

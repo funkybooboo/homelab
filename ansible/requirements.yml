@@ -8,7 +8,6 @@ collections:
   - name: community.general   # misc (packages, files, cron)
   - name: ansible.posix       # authorized_key + sysctl for guest_common
   - name: oxlorg.opnsense
-    # TRAP (2026-11-05 research): each oxlorg release is pinned to ONE
-    # OPNsense version; the router runs 25.7. Verify the matching
-    # release (latest known: 1.2.16) BEFORE any router-as-code playbook
-    # runs -- never upgrade OPNsense ahead of the collection.
+    # each oxlorg release is pinned to one OPNsense version (the
+    # router runs 25.7); verify the matching release before any
+    # router-as-code playbook runs. docs/quirks.md

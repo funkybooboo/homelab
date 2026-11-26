@@ -1,6 +1,6 @@
 #!/bin/sh
 # console-setup-operator.sh -- THE ONLY THING THE OPERATOR TYPES AT EACH
-# NODE'S CONSOLE during the revival evening (2026-11-21 decisions:
+# NODE'S CONSOLE (the identity model: one operator account,
 # least privilege always, no root ssh ever, humans operate --
 # assistants help). Log in as root at the node's PHYSICAL console
 # (PVE 8), then paste the one-liner below.

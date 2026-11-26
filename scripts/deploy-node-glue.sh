@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # deploy-node-glue.sh -- OPS-5 phase 2: push each node's per-node glue
-# (the old fleet's hand-placed files, now codified) from this repo to
+# (hand-placed files, now codified) from this repo to
 # the node, over ssh from debbie. Runs AFTER bootstrap.sh (needs the
 # admin key in place).
 #

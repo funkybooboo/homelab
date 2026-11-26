@@ -2,7 +2,7 @@
 ansible_host: 192.168.1.6
 arch: amd64
 role: pve-node
-mac: 00:e0:4c:68:a4:fa              # carried from the old fleet
+mac: 00:e0:4c:68:a4:fa            
 hardware: laptop
 glue:
   - renew-pve-tls.sh + cron

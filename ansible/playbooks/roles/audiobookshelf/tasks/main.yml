@@ -1,8 +1,7 @@
 # audiobookshelf -- USER-2: audiobooks + books + podcasts server.
-# Repo-installed (the vendor's own flat apt repo -- GitHub release
-# binaries no longer exist, checked 2026-11-26; the repo is the
-# official Debian path per their docs), rides `make update` like
-# every repo-installed app.
+# Repo-installed (the vendor's flat apt repo; GitHub release
+# binaries no longer exist), rides make update like every
+# repo-installed app.
 - name: gnupg present (key dearmor)
   ansible.builtin.apt:
     name: gnupg
@@ -54,10 +53,9 @@
     name: audiobookshelf
     state: stopped
 
-- name: which era does the 133 dump carry, with REAL content?
-        (files, not bare dirs -- interrupted extractions leave
-        empties; found live 2026-11-26. deb-era = the old CT's
-        vendor-default /usr/share layout, confirmed at extraction)
+- name: which era does the 133 dump carry, with real content?
+        (files, not bare dirs; restore gates check content --
+        docs/quirks.md)
   when: not _abs_restored.stat.exists
   become: false
   ansible.builtin.command:
@@ -124,8 +122,7 @@
     - /var/lib/audiobookshelf/config
     - /audiobookshelf/config
 
-- name: set_fact -- the config base that is real (deb-era first; it
-        is what the old CT actually used, confirmed 2026-11-26)
+- name: set_fact -- the config base that is real (deb-era first)
   ansible.builtin.set_fact:
     audiobookshelf_base: "{{ '/usr/share/audiobookshelf' if (_abs_layout.results[0].stat.exists | default(false)) else
                               ('/var/lib/audiobookshelf' if (_abs_layout.results[1].stat.exists | default(false)) else
@@ -147,7 +144,7 @@
 
 # ---- library pre-seed: only when the app never onboarded (no
 # ---- config.json); a restored config is never touched -- its
-# ---- library paths may point at the old fleet's mount names, which
+# ---- library paths may point at legacy mount names, which
 # ---- the story verify pass reconciles after the restore.
 - name: app config present? (restored or onboarded)
   ansible.builtin.stat:

@@ -2,7 +2,7 @@
 ansible_host: 192.168.1.3
 arch: amd64
 role: pve-node
-mac: 4c:ed:fb:bf:ab:7d              # carried from the old fleet
+mac: 4c:ed:fb:bf:ab:7d            
 hardware: desktop; the only node with an NVIDIA GPU (GTX 1060 6GB)
 gpu: true                          # node_glue: nvidia driver + UVM
                                    # devnodes (jellyfin transcode,

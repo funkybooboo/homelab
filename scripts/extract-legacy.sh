@@ -19,11 +19,10 @@
 # sha256 manifest. Tier-0 data counts as "landed" only when the copy
 # exists OUTSIDE the truenas pool (rule 10: extract before wipe).
 #
-# Depends: nfs-utils on the runner (mount.nfs). util-linux 2.41+
-# tries a native NFS mount path when mount.nfs is absent and the
-# kernel rejects it ("fsconfig() failed: NFS: mount program didn't
-# pass remote address") -- debbie hit exactly this 2026-11-22
-# (dotfiles migration 000588 installs nfs-utils).
+# Depends: nfs-utils on the runner (mount.nfs). Without it,
+# util-linux tries a native NFS mount path the kernel rejects
+# ("fsconfig() failed: NFS: mount program didn't pass remote
+# address").
 #
 # Env overrides: TRUENAS (default 192.168.1.10), OUT (default
 # ./legacy-extraction), TIER_MAX implicit from --copy.
@@ -44,13 +43,11 @@ DUMP_CTID=""
 
 # Probe table: "ctid:tier:alternates(space-sep):tag"
 # Tiers per docs/data-to-extract.md.
-# 2026-11-26 REALITY: the old-fleet raw images are GONE from
-# pve-shared (removed in the OPS-20 cleanout), and the v2 fleet
-# RECYCLED vmids 101-106 for its infra guests -- their rootfs
-# images sit at the old paths now. The image walk below therefore
-# only ever sees NEW disks; the OLD fleet lives in the vzdump
-# archive (--copy-from-dump), which is the source of record for
-# everything destroyed before 2026-11-22.
+# The old-fleet raw images are gone from pve-shared (removed in
+# the OPS-20 cleanout), and the v2 fleet recycled vmids 101-106:
+# the image walk below only ever sees NEW disks. The OLD fleet
+# lives in the vzdump archive (--copy-from-dump), the source of
+# record for everything destroyed before the cleanout.
 CURRENT_VMIDS=$(grep -h '^vmid:' "$(dirname "$0")/../guests/"*.yaml 2>/dev/null | awk '{print $2}' | tr '\n' ' ')
 PROBES=(
   "109:0:/var/lib/vaultwarden:vaultwarden-data"
@@ -106,9 +103,9 @@ done
 mkdir -p "$OUT"
 MANIFEST="$OUT/manifest.txt"
 REPORT="$OUT/inventory.txt"
-# The walk rewrites report+manifest fresh each run; --copy-from-dump runs
-# are per-CT appends -- truncating there wiped earlier dumps' evidence
-# (2026-11-22: three sequential dump runs kept only the last line).
+# The walk rewrites report+manifest fresh each run;
+# --copy-from-dump runs are per-CT appends (they must not wipe
+# earlier dumps' evidence).
 if [ -z "$DUMP_CTID" ]; then
   : > "$MANIFEST"
   : > "$REPORT"
@@ -141,9 +138,8 @@ fi
 
 ct_volume() { # echo the volume path for a ctid (raw image or subvol dir), or empty
   local id="$1" cand
-  # Live layout (discovered on the first real run 2026-11-22): volumes
-  # nest under per-CTID dirs, images/<id>/vm-<id>-disk-0.raw; the flat
-  # candidates stay for anything created the usual PVE way.
+  # Volumes nest under per-CTID dirs, images/<id>/vm-<id>-disk-0.raw;
+  # the flat candidates stay for anything created the usual PVE way.
   for cand in "$SHARED_MNT/images/${id}/vm-${id}-disk-0.raw" \
               "$SHARED_MNT/images/${id}/vm-${id}-disk-0" \
               "$SHARED_MNT/images/vm-${id}-disk-0.raw" \
@@ -161,10 +157,9 @@ mount_ct() { # mount_ct <ctid> -> echo mountpoint or empty; mounts raw or uses s
     mount --bind "$vol" "$mnt" && mount -o remount,ro,bind "$mnt"
     MOUNTED+=("$mnt")
   else
-    # Dirty-journal tolerance FIRST: the fleet died mid-write on 2026-10-19,
-    # so every ext4 image carries an unrecovered journal; a plain -o ro
-    # loop mount "succeeds" but reads of journal-affected paths misbehave
-    # (2026-11-22: probes listed dirs fine, tar got ENOENT on children).
+    # Dirty-journal tolerance first: the images carry unrecovered
+    # journals; a plain -o ro loop mount succeeds but reads of
+    # journal-affected paths misbehave.
     mount -o loop,ro,norecovery "$vol" "$mnt" 2>/dev/null \
       || mount -o loop,ro "$vol" "$mnt" 2>/dev/null \
       || mount -o loop,ro,offset=1048576 "$vol" "$mnt" 2>/dev/null \
@@ -177,16 +172,13 @@ fmt_bytes() { du -sh "$1" 2>/dev/null | cut -f1; }
 
 copy_one() { # copy_one <ctid> <mnt> <path> <tag> -- non-fatal by design
   local id="$1" mnt="$2" path="$3" tag="$4"
-  # per-PATH tarball names: multi-path probes (102 etc.) would
-  # otherwise copy each path to the SAME filename and only the last
-  # would survive (found in review 2026-11-26, before any tier-1
-  # media run used it)
+  # per-PATH tarball names: multi-path probes would otherwise copy
+  # each path to the same filename and only the last would survive.
   local slug
   slug="$(printf '%s' "$path" | sed 's,^/,,; s,/,_,g')"
   local tarball="$OUT/${id}-${tag}-${slug}.tar.gz"
-  # tar failures are WARNINGS, not aborts (set -e would otherwise kill the
-  # whole walk); stderr goes to a log so the reason is never hidden again
-  # (2026-11-22: a silent 45-byte empty gzip + instant abort taught this).
+  # tar failures are warnings, not aborts; stderr goes to a log so
+  # the reason is never hidden.
   if ! tar -C "$mnt" -czf "$tarball" "$path" 2>>"$OUT/tar-errors.log"; then
     rm -f "$tarball"
     echo "    copy FAILED: $path (reason in $OUT/tar-errors.log)" | tee -a "$REPORT"
@@ -203,8 +195,8 @@ copy_one() { # copy_one <ctid> <mnt> <path> <tag> -- non-fatal by design
 
 if [ -n "$DUMP_CTID" ]; then
   # local-lvm CT path: pull the newest vzdump of this CT wholesale
-  # newest non-.notes dump (the *.tar.* glob also matches the .notes
-  # sidecar files, which are not archives -- 2026-11-22 lesson)
+  # newest non-.notes dump (the *.tar.* glob also matches the
+  # .notes sidecar files, which are not archives)
   dump="$(ls -1t "$BACKUPS_MNT/dump/vzdump-lxc-${DUMP_CTID}-"*.tar.* 2>/dev/null | grep -v '\.notes$' | head -1 || true)"
   [ -n "$dump" ] || die "no vzdump for CT $DUMP_CTID in pve-backups/dump/"
   dest="$OUT/from-dump-${DUMP_CTID}"
@@ -263,6 +255,6 @@ umount "$CT_MNT_PREFIX-$last_id" 2>/dev/null || true
 echo "" | tee -a "$REPORT"
 echo "== done. report: $REPORT ; manifest: $MANIFEST ==" | tee -a "$REPORT"
 if [ "$COPY_TIER" -ge 0 ]; then
-  echo "NOTE: the NFS-image source only ever showed NEW-guest disks after the 2026-11-22 cleanout; old-fleet data comes from the dumps:" | tee -a "$REPORT"
+  echo "NOTE: the NFS-image source only ever shows NEW-guest disks; old-fleet data comes from the dumps:" | tee -a "$REPORT"
   echo "  sudo ./scripts/extract-legacy.sh --copy-from-dump <ctid>  (per old-fleet CT; newest archive wins)" | tee -a "$REPORT"
 fi

@@ -2,26 +2,10 @@
 ansible_host: 192.168.1.4
 arch: amd64
 role: pve-node
-mac: 9c:bf:0d:01:4c:d6              # carried from the old fleet
+mac: 9c:bf:0d:01:4c:d6
 hardware: Framework mainboard in a desktop case; ethernet via the
   Framework expansion card (internally USB-C), USB-C power adapter
-history:
-  - offline 2026-07-18..26 (cause never diagnosed)
-  - vanished 2026-09-27 after a reboot-controller cycle; the old docs
-    blamed the "flaky USB NIC" -- operator correction (2026-11-21) --
-    the label was circumstantial; leading suspects are USB power
-    management sleeping the expansion card, or a warm-reboot power
-    state issue. No hardware fix required.
 constraints:
-  - revived WITHOUT a hardware fix (operator call, 2026-11-21); apply
-    the USB autosuspend hardening below and WATCH the journals for
-    link/USB suspend events; a few days of verified uptime before it
-    hosts HA-managed guests again (cheap insurance given the two
-    unexplained offline events, whatever their cause)
-glue:
-  - renew-pve-tls.sh + cron
-  - pve-shared-nfs-remount helper
-  - USB autosuspend OFF for the ethernet expansion card (create after
-    revival under /etc/udev/rules.d/... setting "on" for the card's
-    USB device + kernel usbcore.autosuspend=-1 in cmdline if the card
-    was the sleep victim)
+  - the USB NIC drops off intermittently (r8152 autosuspend is the
+    suspect; see docs/quirks.md). Mitigated by the udev keep-awake
+    rule + node_glue's self-heal. No hardware fix required.

@@ -1,6 +1,6 @@
 #!/bin/bash
 # usb-nic-recover -- self-heal after the RTL8156 drops off the bus.
-# Root cause of framework vanish events #1-3 (2026-07/09/11): the
+# Framework's USB NIC vanish (see docs/quirks.md): the
 # USB NIC does a bus-level disconnect + immediate re-enumeration;
 # the kernel registers a NEW netdev, but vmbr0 keeps the stale port
 # and the node sits network-dead until a human power-cycles it.

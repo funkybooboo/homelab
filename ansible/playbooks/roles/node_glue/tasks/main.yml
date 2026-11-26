@@ -65,7 +65,7 @@
     signed_by: /etc/apt/keyrings/grafana.asc
     state: present
 
-- name: Old-fleet manual node_exporter absent (it shadows :9100 and
+- name: Manual node_exporter absent (it shadows :9100 and
         apt never updates it; the Debian package replaces it)
   ansible.builtin.systemd:
     name: node_exporter
@@ -96,11 +96,9 @@
     group: nogroup   # the package user's primary group
     mode: "0755"
 
-- name: Old-fleet promtail fossils absent (ROOT-OWNED files only --
-        the LIVE positions.yaml belongs to promtail and must survive;
-        the August-era root-owned ones crash-loop the service via
-        fs.protected_regular until swept; fixed 2026-11-23 after the
-        greedy pattern deleted the live state file every run)
+- name: Root-owned promtail leftovers absent (only the root-owned
+        ones; the live positions.yaml belongs to promtail and must
+        survive -- see docs/quirks.md)
   ansible.builtin.shell: |
     found=$(find /var/lib/promtail -maxdepth 1 \( -name 'positions.yaml*' -o -name '.positions.yaml*' \) -user root 2>/dev/null)
     if [ -n "$found" ]; then
@@ -152,11 +150,10 @@
     enabled: true
   loop: [prometheus-node-exporter, promtail]
 
-- name: USB-NIC self-heal script (framework's vanish root cause --
-        the RTL8156 drops off the bus + re-enumerates; vmbr0 keeps
-        the stale port and the node sits network-dead until a human
-        intervenes; events Jul/Sep/Nov 2026 -- re-applying the
-        network config when the device returns heals it)
+- name: USB-NIC self-heal script (the RTL8156 drops off the bus and
+        re-enumerates; vmbr0 keeps the stale port and the node sits
+        network-dead; re-applying the network config when the device
+        returns heals it -- see docs/quirks.md)
   ansible.builtin.copy:
     src: usb-nic-recover.sh
     dest: /usr/local/sbin/usb-nic-recover.sh
@@ -196,16 +193,10 @@
   loop_control:
     label: "{{ item.name }}"
 
-# --- GPU (thermaltake; USER-2). The GTX 1060 (Pascal) has NO
-# --- apt-managed driver left anywhere (found live 2026-11-25):
-# ---   * Debian trixie = nvidia-driver 550.x, which does NOT
-# ---     compile against PVE kernel 7.0 (VMA_LOCK_OFFSET +
-# ---     mmap_lock API drift -- dkms build fails in nv-mmap.c)
-# ---   * NVIDIA's CUDA apt repo rotated past the 580 branch
-# ---     entirely; 590+ dropped Maxwell/Pascal/Volta support
-# --- So: the .run installer's 580 branch -- the LAST Pascal-
-# --- capable series -- managed the vaultwarden way: pinned
-# --- version, marker-gated, --dkms so future kernels rebuild it.
+# --- GPU (thermaltake; USER-2). The GTX 1060 has no apt-managed
+# --- driver: the full situation is in docs/quirks.md. The .run
+# --- 580.142 series is pinned in group_vars and marker-gated here,
+# --- with --dkms so future kernels rebuild it.
 - name: headers for the running kernel (PVE renamed its kernel
         packages -- proxmox-headers-* provides linux-headers-*; the
         apt module's own idempotence beats substring-matching raw
@@ -279,7 +270,7 @@
     content: |
       # managed by make converge (node_glue, USER-2): /dev/nvidia*
       # + /dev/nvidia-uvm exist with 0666 at boot. nvidia-uvm is NOT
-      # created by module load alone (the old fleet hit this) --
+      # created by module load alone --
       # nvidia-modprobe must run after the module is up.
       [Unit]
       Description=NVIDIA UVM device nodes (homelab)

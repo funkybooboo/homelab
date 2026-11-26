@@ -77,7 +77,7 @@ api() { # api METHOD PATH [JSON_BODY]
   local method="$1" path="$2" body="${3:-}"
   local url="https://${OPNSENSE_HOST}/api/${path}"
   echo "--> $method $url${body:+ (body: $body)}" >&2
-  # TRAP (learned live 2026-11-21): a bodyless GET with
+  # a bodyless GET with
   # Content-Type: application/json makes OPNsense parse the empty
   # body -> 400 "Invalid JSON syntax". Only send the header WITH a
   # body.

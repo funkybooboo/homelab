@@ -42,7 +42,7 @@
     dest: /tmp/pgdata-108.tar.gz
     mode: "0600"
 
-- name: Restore the old fleet's PGDATA (17/main from dump 108)
+- name: Restore the legacy PGDATA (17/main from dump 108)
   when: pgdata_staged and not _pgdata_done.stat.exists
   block:
     - name: stop postgres for the swap

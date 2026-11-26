@@ -1,7 +1,6 @@
 - name: restart sshd
-  # restart, never reload: the SIGHUP re-exec died on CT 204
-  # ('Cannot bind any address' + missing /run/sshd); restart re-runs
-  # RuntimeDirectory=sshd + ExecStartPre and always heals
+  # restart, never reload (the SIGHUP re-exec cannot rebind; see
+  # docs/quirks.md)
   ansible.builtin.service:
     name: ssh
     state: restarted

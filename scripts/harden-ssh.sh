@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # harden-ssh.sh -- the good-ssh pass for a revived PVE node (operator
-# decisions 2026-11-21: least privilege always, no root ssh ever,
+# the standing rules: least privilege always, no root ssh ever,
 # good ssh practices first). Run from debbie after the node is revived
 # + verified:  scripts/harden-ssh.sh <node-name>
 #
@@ -39,7 +39,7 @@ ssh -o BatchMode=yes "$SSH_USER@$IP" sudo bash -s <<'REMOTE'
   set -e
   mkdir -p /etc/ssh/sshd_config.d
   cat > /etc/ssh/sshd_config.d/50-harden.conf <<'EOF'
-# good-ssh pass 2026-11-21: passwords die everywhere; root ssh is
+# the good-ssh state: passwords die everywhere; root ssh is
 # key-only (PVE inter-node ops need it -- see scripts/harden-ssh.sh).
 # LogLevel VERBOSE per the Mozilla OpenSSH guidelines: logs key
 # fingerprints on login -- the audit trail for the one-identity model.

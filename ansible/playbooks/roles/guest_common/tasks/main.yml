@@ -31,10 +31,9 @@
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
 
-- name: sshd hardening drop-in (the good-ssh contract; restart-notify
-        not reload because the SIGHUP re-exec is a tripwire -- CT 204
-        died on its first-converge reload; a restart re-runs
-        RuntimeDirectory=sshd + ExecStartPre and always heals)
+- name: sshd hardening drop-in (the good-ssh contract; see
+        docs/quirks.md for why the handler restarts instead of
+        reloading)
   ansible.builtin.copy:
     dest: /etc/ssh/sshd_config.d/50-homelab.conf
     content: |
@@ -72,10 +71,9 @@
   ansible.builtin.copy:
     dest: /etc/apt/apt.conf.d/51homelab-security-only
     content: |
-      // managed by make converge (guest_common, OPS-23)
-      // v2 refinement of the old fleet's full-update allowlist:
-      // full upgrades happen in the weekly `make update` pass,
-      // unattended stays limited to what is safe to apply blind.
+      // managed by make converge (guest_common)
+      // security-only by design: full upgrades happen in the
+      // weekly make update pass.
       Unattended-Upgrade::Origins-Pattern {
               "origin=Debian,codename=${distro_codename}-security";
               "origin=Debian,codename=${distro_codename},label=Debian-Security";
@@ -146,9 +144,8 @@
       # managed by make converge (guest_common)
       server:
         http_listen_port: 9080
-        grpc_listen_port: 0   # DISABLED: the default 9095 collides with
-                             # loki's own gRPC (found live in the loki
-                             # guest 2026-11-23 -- boot-race crash-loops)
+        grpc_listen_port: 0   # disabled: the default 9095 collides with
+                             # loki's own gRPC
       positions:
         filename: /var/lib/promtail/positions.yaml
       clients:
@@ -173,7 +170,7 @@
     state: started
     enabled: true
 
-# --- the access layer, model B (issues item 4, revised 2026-11-22):
+# --- the access layer, model B (issues item 4):
 # every guest enrolls in the tailnet; a manifest tailnet_serve port
 # gets an https serve front (https://<name>.tail54538d.ts.net) ---
 - name: Tailscale apt repo (official, per-release)
@@ -213,10 +210,9 @@
     group: root
     mode: "0755"
 
-- name: tailscaled never rate-limits (apt's auto-start crashes 5x before
-        the env file exists -- no tun in unprivileged CTs -- and the
-        default 10s start limit then blocks this role's own start task;
-        found live on forgejo 2026-11-23, the other seven were timing-lucky)
+- name: tailscaled never rate-limits (apt's auto-start crashes before
+        the env file exists, and the default start limit would block
+        this role's own start task; see docs/quirks.md)
   ansible.builtin.copy:
     dest: /etc/systemd/system/tailscaled.service.d/50-homelab-nolimit.conf
     content: |

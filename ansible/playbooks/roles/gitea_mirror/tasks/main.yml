@@ -71,7 +71,7 @@
 
 - name: bunx symlink (the release zip ships ONLY bun; upstream's own
         installer symlinks bunx to it -- the build scripts call bunx and
-        fail with command-not-found otherwise, found live 2026-11-23)
+        fail with command-not-found otherwise)
   ansible.builtin.file:
     src: /usr/local/bin/bun
     dest: /usr/local/bin/bunx

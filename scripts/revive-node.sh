@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # revive-node.sh -- OPS-18: revive an existing PVE 8 node in place on
 # the new 192.168.1.0/24 LAN, without reinstalling anything (issues.md
-# item 8, revised 2026-11-21). Run FROM DEBBIE over ssh AS THE
+# item 8). Run FROM DEBBIE over ssh AS THE
 # OPERATIONS USER `nate` (least privilege, no root ssh; humans operate
 # -- an AI assistant may run these steps on the operator's behalf).
 # The operator ran scripts/console-setup-operator.sh at the node's physical

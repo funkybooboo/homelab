@@ -22,7 +22,7 @@
 #   8. optional cluster join
 # Follow with: scripts/deploy-node-glue.sh <node-name>
 #
-# NOTE (2026-11-21): this script predates the operations-identity model and
+# NOTE: this script predates the operations-identity model and
 # still logs in as root over ssh (fresh installs begin with a root
 # password from the ISO). For any FUTURE use, run
 # scripts/console-setup-operator.sh at the node's console first and pass

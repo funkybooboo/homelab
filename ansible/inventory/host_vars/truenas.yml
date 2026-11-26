@@ -2,7 +2,7 @@
 ansible_host: 192.168.1.10
 arch: amd64
 role: storage
-mac: 6c:bf:b5:04:d9:97              # carried from the old fleet
+mac: 6c:bf:b5:04:d9:97            
 hardware: TrueNAS 25.10 appliance; root ssh enabled, nate (uid 3000)
   has no sudo -- midclt writes need root
 constraints:

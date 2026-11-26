@@ -4,10 +4,9 @@
 # deploy-node-glue.sh, setup-qdevice.sh (bash parsers -- keep the
 # top-level key format stable) + the v2 ansible skeleton (OPS-7).
 #
-# Old-fleet lesson (docs/legacy/network.md): no host is ever
-# DHCP-pinned again -- infra hosts are static at the OS, guests static
-# at pct level (plans/issues.md item 7), only true clients live in
-# the pool.
+# No host is ever DHCP-pinned: infra hosts are static at the OS,
+# guests static at pct level (issues item 7); only true clients
+# live in the pool.
 
 lan:
   subnet: 192.168.1.0/24
@@ -23,13 +22,11 @@ reserved:
   pbs: 192.168.1.12                 # OPS-14 PBS VM
   subnetrouter: 192.168.1.13        # OPS-7 tailscale subnet router
 
-# truenas media exports (verified live 2026-11-26 via the truenas
-# API): mounted on every guest-capable (amd64) node at the SAME
-# path (docs/network.md planned model: guest mobility), then bind-
-# mounted into CTs via pct mp entries -- no in-CT NFS. Export ACL
-# notes: movies/tvshows/podcasts use mapall root; the home/nate/*
-# sync dirs use empty mapall + world-readable default ACLs (the
-# container-readers pattern from the old fleet -- keep o::r-x).
+# truenas media exports: mounted on every guest-capable (amd64)
+# node at the same path (guest mobility), then bind-mounted into
+# CTs via pct mp entries -- no in-CT NFS. ACL notes: movies/
+# tvshows/podcasts use mapall root; the home/nate/* sync dirs use
+# empty mapall + world-readable default ACLs (keep o::r-x).
 media_nfs_server: 192.168.1.10
 # NVIDIA driver pin (USER-2): the 580 branch is the LAST series
 # supporting the GTX 1060 (Pascal); the .run installer is the only

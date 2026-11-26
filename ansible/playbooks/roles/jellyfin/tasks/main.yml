@@ -1,12 +1,10 @@
 # jellyfin -- USER-2: the movie/TV server, on the GPU node.
-# Repo-installed (the ONLY app tier with an apt repo: jellyfin rides
-# `make update` like grafana/tailscale -- no story-time pinning; the
-# binary-pin pattern is for apps without a repo). The trixie suite
-# exists since 2026-11-23 (v12.4).
-# GPU: the devnode passthrough is guests.yml's job (manifest gpu:
-# true); the driver + UVM unit are node_glue's on thermaltake.
-- name: Jellyfin repo key (moved 2026 -- jellyfin.gpg.key 404s now;
-        jellyfin_team.gpg.key is the current name)
+# Repo-installed; rides make update like grafana/tailscale. GPU
+# notes: the devnode passthrough is guests.yml's job (manifest
+# gpu: true); the driver + UVM unit are node_glue's; the full
+# driver situation is in docs/quirks.md.
+- name: Jellyfin repo key (jellyfin_team.gpg.key; the older
+        jellyfin.gpg.key name no longer exists)
   ansible.builtin.get_url:
     url: https://repo.jellyfin.org/jellyfin_team.gpg.key
     dest: /etc/apt/keyrings/jellyfin.asc
@@ -80,8 +78,8 @@
   changed_when: false
   failed_when: _nv_ct_check.rc != 0
 
-- name: Media-wait boot drop-in (the old fleet's boot-race fix,
-        ported -- if truenas is slow/dead at CT start, wait 60s for
+- name: Media-wait boot drop-in (boot-race guard -- if truenas is
+        slow or down at CT start, wait 60s for
         the binds, then start ANYWAY -- a degraded jellyfin beats a
         dead one, and the CT restarts on the next node converge)
   ansible.builtin.copy:
@@ -95,15 +93,12 @@
       ExecStartPre=/bin/sh -c 'i=0; until mountpoint -q /media/movies && mountpoint -q /media/tvshows; do i=$$((i+1)); [ $$i -ge 12 ] && exit 0; sleep 5; done; exit 0'
   notify: restart jellyfin
 
-# ---- the metadata restore (tier-1: 715-movie library DB +
-# ---- watched state). SOURCE = the vzdump extraction
-# ---- (--copy-from-dump 102; the old raw images died with the
-# ---- OPS-20 cleanout, and vmid 102 is now the new adminer). The
-# ---- extracted tree is the full rootfs; restore copies pick the
-# ---- two dirs out of it. Marker-gated ONCE: converge is
-# ---- idempotent forever after; a live library is never
-# ---- clobbered. Absent source (extraction not run yet) = skip
-# ---- silently -- the empty server serves while it waits.
+# ---- the metadata restore (the 715-movie library DB + watched
+# ---- state). Source: the vzdump extraction, from-dump-102 (see
+# ---- docs/data-to-extract.md). The extracted tree is the full
+# ---- rootfs; the restore copies the two dirs out of it.
+# ---- Marker-gated once: converge is idempotent after, and a live
+# ---- library is never clobbered. An absent source skips silently.
 - name: restore marker present? (once-only gate)
   ansible.builtin.stat:
     path: /var/lib/jellyfin/homelab-restore.done
@@ -115,10 +110,8 @@
     name: jellyfin
     state: stopped
 
-- name: controller holds a REAL 102 dump? (files, not a bare dir --
-        an interrupted extraction leaves empty dirs behind, and the old
-        existence-gate "restored" nothing from one and burned the
-        once-only marker; found live 2026-11-26)
+- name: controller holds a real 102 dump? (files, not a bare dir;
+        restore gates check content -- see docs/quirks.md)
   when: not _jf_restored.stat.exists
   become: false
   ansible.builtin.command:
@@ -142,9 +135,8 @@
         owner: jellyfin
         group: jellyfin
 
-    - name: legacy /var/lib/jellyfin restored (rsync -- 12.9k files
-            over the ansible copy module would take an hour of
-            per-file SFTP round trips; found live 2026-11-26)
+    - name: legacy /var/lib/jellyfin restored (rsync; the copy
+            module is too slow for large trees -- docs/quirks.md)
       ansible.posix.synchronize:
         src: "{{ jellyfin_restore_dir }}/from-dump-102/var/lib/jellyfin/"
         dest: /var/lib/jellyfin/

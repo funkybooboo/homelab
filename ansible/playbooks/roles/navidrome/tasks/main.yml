@@ -88,9 +88,8 @@
     path: /var/lib/navidrome/homelab-restore.done
   register: _nd_restored
 
-- name: controller holds a REAL 132 dump? (files, not a bare dir --
-        an interrupted extraction leaves empty dirs; found live
-        2026-11-26 on the sibling 102 pull)
+- name: controller holds a real 132 dump? (files, not a bare dir;
+        restore gates check content -- docs/quirks.md)
   when: not _nd_restored.stat.exists
   become: false
   ansible.builtin.command:
