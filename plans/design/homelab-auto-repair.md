@@ -1,5 +1,11 @@
 # Idea: Homelab Auto-Repair System
 
+> **STATUS: SUPERSEDED IN PART** -- OPS-16 owns the build and
+> its direction is ntfy-alert -> n8n-flow repair, not these
+> deterministic scripts; framework's nic-watchdog (2026-11-27)
+> is the shipped node-local instance of the pattern. The design
+> stays as the reasoning record.
+
 > A self-healing layer for this homelab: deterministic playbooks triggered by
 > ntfy alerts, with optional human-in-the-loop approval via ntfy action
 > buttons. LLM diagnosis is a non-load-bearing assistant, never the

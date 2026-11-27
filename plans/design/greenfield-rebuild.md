@@ -1,6 +1,9 @@
 # Greenfield homelab rebuild: infrastructure as code from scratch
 
-> **STATUS: PROPOSAL** -- research complete 2026-11-05, nothing built yet.
+> **STATUS: BUILT** -- the skeleton shipped as OPS-7 and every era
+> since converges from it. This document stays as the design
+> record (research + traps + reasoning); it is not a plan for
+> future work.
 > Reorganized 2026-11-06: the demand + queue now live in
 > [`../roadmap.md`](../roadmap.md) and [`../stories/`](../stories/); the open
 > questions live in [`../issues.md`](../issues.md). This document stays as the

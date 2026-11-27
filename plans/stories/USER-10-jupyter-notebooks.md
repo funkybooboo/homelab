@@ -24,3 +24,14 @@ This is the one old-fleet service whose DATA PATH was never
 proven ("to locate" in the archive notes) -- the extraction
 step is exploratory: walk the dump's home dirs for *.ipynb before
 writing the role. Notebooks are small; the CT is tiny.
+
+## Re-baseline (2026-11-28)
+
+The body above was written against the old cluster. For the
+current build: the deployment target is the CURRENT cluster via
+a guest manifest + role (or container_guest where an official
+digest-pinned image exists -- see USER-3's mechanism); old-CT
+IDs above name the DUMP or extraction source, not a machine to
+revive; node placement is picked at story-open with the guest
+rotation in view (framework is re-entering it). The data
+restoration intent of the acceptance criteria stands unchanged.

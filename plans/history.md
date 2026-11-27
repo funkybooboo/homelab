@@ -416,3 +416,33 @@ Two scanner findings on the public repo, both closed same-day:
   login 303 with the new, 200-rejection with the old) and the doc
   now points at the Proton Pass vault. The grafana row also no
   longer states the stale default credential.
+
+## 2026-11-28: the network era's close (v3 first half done)
+
+- USER-3 daily tools CLOSED (operator-verified: freshrss reads
+  208 feeds / 32k entries; excalidraw live). Five container
+  guests, the mechanism the ONCE trio inherits; searxng tuned to
+  a daily-usable engine spread.
+- OPS-28 CLOSED: the house rides Proton end to end (blanket
+  directive, issues #17), the router is the tailnet's exit node +
+  subnet router (issues #18), WAN auto-failover armed. Operator
+  verified in-house and away-from-home.
+- The secrets incident is fully closed: searxng key rotated,
+  forgejo web password rotated + vaulted, gitleaks full-history
+  clean, GitHub alert resolved as false-positive. Doctrine
+  recorded: rotate + resolve-as-revoked beats history rewrite;
+  anything the converge renders gets the same tracked/untracked
+  decision as any other artifact.
+- framework's USB-NIC outage closed with a postmortem + a
+  self-heal package (MAC-matched udev rule, udevd reload, and the
+  one-minute watchdog ladder), proven by a live drill: NIC killed
+  on purpose, node back in 3.5 minutes with zero human action.
+  Hardware stays as-is (operator decision); no PCIe and no
+  firmware path exist on this board, so the watchdog IS the fix.
+- The five daily-tools CTs ride on thermaltake pending re-homing;
+  framework re-enters guest rotation (docs updated, migration is
+  the next build action).
+- Docs + plans re-baselined to the present (this pass): roadmap,
+  network picture, issues ledger, the two next-build stories
+  rewritten from scratch (USER-5, OPS-24), and the
+  browser-off-cloud map filed as their design context.

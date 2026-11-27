@@ -215,6 +215,29 @@ cross-service dashboards.
 
 ## Self-audit notes
 
+17. **Blanket Proton over the policy-split** -- DECIDED
+   2026-11-28 (operator directive, supersedes the split design):
+   "all traffic through this VPN, in the house or out of the
+   house." The recommended design was a fail-closed policy-split
+   (service-class IPs via Proton, gaming/streaming/tailnet/B2 raw
+   WAN, kill-switch) -- the operator chose simplicity of posture
+   over the split's blast-radius arguments. What shipped:
+   Proton WG IS the default gateway with WAN auto-failover
+   (gateway switching), whole-LAN SNAT to the tunnel. Accepted
+   costs, on the record: a Proton flap is a household-wide event
+   (mitigated by the WAN tier-2 failover + dpinger monitoring),
+   and away-from-home exit traffic carries the household exit.
+   The split design text survives inside OPS-28 as the
+   recommended-not-chosen record; the built reality is in
+   [../docs/network.md](../docs/network.md).
+
+18. **Router owns the tailnet** -- DECIDED + SHIPPED 2026-11-28:
+   the os-tailscale plugin runs on the router (exit node
+   advertised; subnet route 192.168.1.0/24 approved + primary;
+   tailscale serve relay); thermaltake's advertisement
+   decommissioned. Answers item 4's 2026-11-22 follow-up ("plugin
+   viable, decision pending") -- decided, built, verified.
+
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md) -- they

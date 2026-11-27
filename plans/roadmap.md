@@ -10,23 +10,31 @@ next.
 
 ## Where we stand
 
-- v3 is ACTIVE. USER-2 (the media fleet) is shipped: three
-  services live on thermaltake, metadata restored, converge
-  idempotent. Next by the numeric policy: the rest of the curated
-  list (USER-3, the keeps, the ONCE trio, the personal-content
-  family).
-- Two side stories are queued and pull-forwardable at will:
-  OPS-29 (grafana observability) and USER-20 (superset BI). OPS-28
-  (router exit node + Proton) waits on operator-held facts: the
-  Proton plan tier, the WireGuard config, and the
-  blanket-vs-split egress decision.
-- OPS-30 (repo text + structure) is SHIPPED: every file one
-  topic, current, plainly written; the traps live in
-  [../docs/quirks.md](../docs/quirks.md).
+- v3 is ACTIVE and its first half is shipped: USER-2 (media
+  fleet) and USER-3 (daily tools, container-guest mechanism)
+  are live and operator-verified; OPS-28 (Proton blanket + the
+  router as tailnet exit node/subnet router) is shipped,
+  operator-verified away-from-home, and CLOSED. The secrets
+  incident is fully closed (rotate + resolve-as-revoked;
+  gitleaks-clean; see history.md).
+- The daily-tools CTs live on thermaltake (evacuated there the
+  night framework's USB NIC died). Decision: framework re-enters
+  guest rotation -- some of the five re-home there, the split
+  picked at migration time. That move is the first build action
+  after the current docs pass.
+- Next by operator directive (2026-11-28), both from scratch:
+  USER-5 firefox sync and OPS-24 cronmaster -- their stories are
+  rewritten against the current cluster, and
+  [design/browser-off-cloud.md](./design/browser-off-cloud.md)
+  maps the full get-the-browser-off-the-cloud scope they belong
+  to.
+- Side stories queued and pull-forwardable: OPS-29 (grafana
+  observability) and USER-20 (superset BI).
 - Parked items (see [issues.md](./issues.md)): item 16 (the
-  codeberg 100-repo cap; 12 un-mirrored targets), the OPS-9
-  carried notes (phantom exclude list, 32 DB-only rows, mirror
-  ntfy wiring, the 3.54.0 -> 3.56.1 bump), item 8 (open).
+  codeberg 100-repo cap; 12 un-mirrored targets) and item 8
+  (open). The OPS-9 carried notes are RESOLVED: roll-pins now
+  handles the gitea-mirror version (and every pinned release +
+  container digest) on every `make update`.
 
 ## Timeline at a glance
 
@@ -77,6 +85,16 @@ runs on the GPU node. Old services with recoverable data each get
 their own story; the ONCE trio are the first container guests
 (official images pinned by digest; the vendor's self-updating
 installer is rejected).
+
+Order from here (operator directive 2026-11-28): the
+re-homing of some daily-tools CTs to framework (the node's
+re-entry into guest rotation; the split picked at migration
+time), then USER-5 firefox sync and OPS-24 cronmaster -- both
+STARTED FROM SCRATCH, their stories re-baselined against the
+current cluster -- then the keeps, the ONCE trio, and the
+personal-content family in numeric order. The browser-off-cloud
+map ([design/browser-off-cloud.md](./design/browser-off-cloud.md))
+is the design context for USER-5 and any story that follows it.
 
 - [USER-3 daily tools](./stories/USER-3-daily-tools.md) -- the
   tier-3 browser tools + the curation decision (five container

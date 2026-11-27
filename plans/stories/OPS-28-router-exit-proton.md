@@ -5,8 +5,9 @@ EXIT NODE, and its egress to ride ProtonVPN, so that away-from-home
 devices can travel through the house AND everything leaves via
 Proton rather than the ISP.
 
-**Status**: shipped 2026-11-28 (blanket directive -- see below);
-the phone away-from-home test is the operator's last click
+**Status**: done (shipped + closed 2026-11-28; operator-verified
+in-house and away-from-home; the blanket directive + full build
+record are in the sections below)
 **Arc**: v3 (network tier; router stays bare-metal until OPS-3)
 
 ## Design sketch (2026-11-26, pre-build)

@@ -21,3 +21,14 @@ living on-cluster.
 Self-contained and cheap: one binary + one data dir + sqlite --
 the vaultwarden shape, no postgres dependency. Reads live over
 https on the tailnet front.
+
+## Re-baseline (2026-11-28)
+
+The body above was written against the old cluster. For the
+current build: the deployment target is the CURRENT cluster via
+a guest manifest + role (or container_guest where an official
+digest-pinned image exists -- see USER-3's mechanism); old-CT
+IDs above name the DUMP or extraction source, not a machine to
+revive; node placement is picked at story-open with the guest
+rotation in view (framework is re-entering it). The data
+restoration intent of the acceptance criteria stands unchanged.
