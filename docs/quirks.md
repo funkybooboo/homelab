@@ -108,11 +108,34 @@ where the fix lives. Code comments link here instead of retelling.
 
 ## Hardware
 
-- **framework's USB NIC drops off** (same-second disconnect and
-  re-enumerate; node stays up, network dies, no corosync leave).
-  node_glue installs a udev self-heal that re-applies the network
-  config when `nic0` returns. Permanent fix is a PCIe NIC
-  (operator-hardware decision).
+- **framework's USB NIC drops off** (spontaneous bus-level
+  reset; node stays up, network dies, no corosync leave).
+  2026-11-27 postmortem: the death is an RTL8156 firmware-level
+  flake -- NOT autosuspend (the keep-awake rule was active and
+  it died anyway; rule deployed 36 s before the event). The
+  11-hour outage was SOFTWARE: the heal rule matched
+  `KERNEL=="nic0", ACTION=="add"` -- but a fresh USB netdev
+  ADDs as `eth0` and only later MOVEs to nic0, so the rule
+  matched NO event, and the rules file had not been armed
+  anyway (udevd caches rulesets; a copy without
+  `udevadm control --reload` is inert). The heal package
+  (node_glue, gated by `usb_nic: true` in host_vars) is now:
+  MAC-matched udev rule on add|move + the udevd reload + a
+  one-minute watchdog ladder (ifreload -> bus replug via
+  authorized toggle -> guarded reboot, max one per 30 min).
+  LIVE DRILL PROOF (2026-11-27): deauthorized the NIC at
+  12:21 -- watchdog noticed in 45 s, replugged at rung 3,
+  udev heal re-enslaved, node back in 3.5 min, zero human.
+  The drill script pattern (authorized-toggle + T+8 safety
+  net) is the sanctioned way to re-verify after any change.
+  Hardware notes: this is a laptop mainboard (11th-gen i7,
+  USB-C power) in a desktop case -- NO PCIe slots exist, a
+  PCIe NIC is impossible; the ethernet card is not on LVFS
+  (fwupd survey: 19 devices, no NIC), so no firmware update
+  path exists either. Operator decision 2026-11-27: keep the
+  hardware, let the watchdog absorb the flake (revisit only
+  if the journal shows frequent events); a generic USB-C
+  dongle swap stays available as a data-driven fallback.
 
 ## Tooling
 

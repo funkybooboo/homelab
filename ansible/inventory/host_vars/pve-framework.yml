@@ -6,6 +6,11 @@ mac: 9c:bf:0d:01:4c:d6
 hardware: Framework mainboard in a desktop case; ethernet via the
   Framework expansion card (internally USB-C), USB-C power adapter
 constraints:
-  - the USB NIC drops off intermittently (r8152 autosuspend is the
-    suspect; see docs/quirks.md). Mitigated by the udev keep-awake
-    rule + node_glue's self-heal. No hardware fix required.
+  - the USB NIC spontaneously bus-resets at the firmware level
+    (r8152; NOT autosuspend -- the keep-awake rule was active and
+    it died anyway, 2026-11-27 postmortem in docs/quirks.md).
+    Mitigated in three layers -- keep-awake rule, MAC-matched udev
+    self-heal (add|move), and the one-minute uplink watchdog
+    (ifreload -> bus replug -> guarded reboot). Permanent fix is
+    a PCIe NIC (operator hardware decision).
+usb_nic: true   # arms the node_glue self-heal package

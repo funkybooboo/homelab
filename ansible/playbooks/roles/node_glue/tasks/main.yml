@@ -150,24 +150,124 @@
     enabled: true
   loop: [prometheus-node-exporter, promtail]
 
-- name: USB-NIC self-heal script (the RTL8156 drops off the bus and
-        re-enumerates; vmbr0 keeps the stale port and the node sits
-        network-dead; re-applying the network config when the device
-        returns heals it -- see docs/quirks.md)
+- name: USB-NIC autosuspend defeated (r8152 power/control on)
+  when: usb_nic | default(false)
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/71-usb-nic-keepawake.rules
+    content: |
+      # managed by make converge (node_glue): keep the USB 2.5GbE
+      # NIC (RTL8156) from autosuspending.
+      ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="8156", TEST=="power/control", ATTR{power/control}="on"
+    mode: "0644"
+
+- name: USB-NIC self-heal script
+  when: usb_nic | default(false)
   ansible.builtin.copy:
     src: usb-nic-recover.sh
     dest: /usr/local/sbin/usb-nic-recover.sh
     mode: "0755"
 
-- name: udev rule -- nic0 returning triggers the self-heal
+# The 2026-11-27 postmortem (docs/quirks.md): the fresh device's
+# ADD event carries the kernel's initial name (eth0); the rename
+# to nic0 arrives later as a MOVE event. A rule matching
+# KERNEL=="nic0" + ACTION=="add" fires on NOTHING -- the outage
+# sat dead 11 h with the old rule on disk. MAC-matched + add|move
+# fires on both events.
+- name: udev rule -- fresh device (add OR rename) triggers the heal
+  when: usb_nic | default(false)
   ansible.builtin.copy:
     dest: /etc/udev/rules.d/72-usb-nic-recover.rules
     content: |
       # managed by make converge (node_glue): if the USB NIC
       # re-enumerates, re-apply the network config so vmbr0
       # re-enslaves the fresh device instead of sitting dead.
-      ACTION=="add", SUBSYSTEM=="net", KERNEL=="nic0", RUN+="/usr/local/sbin/usb-nic-recover.sh"
+      # MAC + add|move because the ADD event names the device
+      # eth0; only the later MOVE carries nic0.
+      ACTION=="add|move", SUBSYSTEM=="net", ATTR{address}=="{{ mac }}", RUN+="/usr/local/sbin/usb-nic-recover.sh"
     mode: "0644"
+
+# A rules-file copy arms nothing: udevd caches the ruleset and
+# only re-reads it on an explicit reload. The outage-night deploy
+# missed this -- the rule landed 36 s before the NIC died and
+# udevd never knew it existed.
+- name: udevd picks the ruleset up (copy alone arms nothing)
+  when: usb_nic | default(false)
+  ansible.builtin.command:
+    argv: [udevadm, control, --reload]
+  changed_when: false
+
+# --- the uplink watchdog (the "detect and fix itself" layer):
+# a one-minute timer whose ladder escalates ifreload -> bus
+# replug -> guarded reboot. Covers the case udev cannot (the
+# NIC vanishes and never re-enumerates).
+- name: watchdog script
+  when: usb_nic | default(false)
+  ansible.builtin.copy:
+    src: usb-nic-watchdog.sh
+    dest: /usr/local/sbin/usb-nic-watchdog.sh
+    mode: "0755"
+
+- name: watchdog service + timer units
+  when: usb_nic | default(false)
+  ansible.builtin.copy:
+    dest: "{{ item.dest }}"
+    content: "{{ item.content }}"
+    mode: "0644"
+  loop:
+    - dest: /etc/systemd/system/nic-watchdog.service
+      content: |
+        # managed by make converge (node_glue): uplink probe
+        [Unit]
+        Description=USB-NIC uplink watchdog probe (homelab)
+        After=network-online.target
+
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/sbin/usb-nic-watchdog.sh
+    - dest: /etc/systemd/system/nic-watchdog.timer
+      content: |
+        # managed by make converge (node_glue): probe every minute;
+        # OnBootSec=2min so the boot-time interface churn cannot
+        # fire false rungs.
+        [Unit]
+        Description=Probe the USB-NIC uplink every minute
+
+        [Timer]
+        OnBootSec=2min
+        OnUnitActiveSec=1min
+
+        [Install]
+        WantedBy=timers.target
+
+- name: watchdog timer active
+  when: usb_nic | default(false)
+  ansible.builtin.systemd:
+    name: nic-watchdog.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: USB-NIC heal package absent on nodes without the NIC
+  when: not (usb_nic | default(false))
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/udev/rules.d/71-usb-nic-keepawake.rules
+    - /etc/udev/rules.d/72-usb-nic-recover.rules
+    - /usr/local/sbin/usb-nic-recover.sh
+    - /usr/local/sbin/usb-nic-watchdog.sh
+    - /etc/systemd/system/nic-watchdog.service
+    - /etc/systemd/system/nic-watchdog.timer
+
+- name: stray watchdog timer stopped on nodes without the NIC
+  when: not (usb_nic | default(false))
+  ansible.builtin.systemd:
+    name: nic-watchdog.timer
+    state: stopped
+    enabled: false
+    daemon_reload: true
+  failed_when: false   # absent unit is fine
 
 # --- truenas media mounts (USER-2): same path on every guest-
 # --- capable node, so any guest can land anywhere. fstab +
