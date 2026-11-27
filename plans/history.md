@@ -392,3 +392,23 @@ forward-looking now; this is the last of the shipped narrative):
 - The completeness audit: every old-fleet service accounted as
   live, planned (USER-6..13, OPS-24, the ONCE trio), or
   consciously deferred (USER-5 with its data warning).
+
+## The secrets incident (2026-11-28)
+
+Two scanner findings on the public repo, both closed same-day:
+
+- The searxng settings secret_key was committed in the manifest
+  (6f50292, an operator tool flagged it): real, exposed, low
+  impact (tailnet-only service, limiter off). ROTATED the same
+  hour; manifests now carry a placeholder token the
+  container_guest role replaces from local/searxng-secret.env
+  at deploy time (fail-loud when absent). The exposed value is
+  dead.
+- GitHub secret-scanning alert 1 (tailscale_api_key): the
+  `tskey-paste-token-here` placeholder in the old example
+  template's history -- never a real key, resolved as
+  false-positive via the API.
+- Standing observation, operator's call: docs/access.md carries
+  the forgejo web password in cleartext, and it matches the
+  operator's broader identity naming. The repo is public; the
+  access doc may want to reference the pass vault instead.

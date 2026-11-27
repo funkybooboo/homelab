@@ -121,10 +121,13 @@
     group: root
     mode: "0755"
 
-- name: config files deployed (manifest container config_files)
+- name: config files deployed (manifest container config_files;
+        the SEARXNG_SECRET_KEY_PLACEHOLDER token is replaced from
+        the controller env at deploy time -- local/searxng-secret.env,
+        sourced by make. Secrets never land in the tracked manifest)
   when: app_container.config_files is defined
   ansible.builtin.copy:
-    content: "{{ item.content }}"
+    content: "{{ item.content | replace('SEARXNG_SECRET_KEY_PLACEHOLDER', lookup('ansible.builtin.env', 'SEARXNG_SECRET_KEY') | default('')) }}"
     dest: "/opt/app/config/{{ item.dest }}"
     owner: root
     group: root
@@ -133,6 +136,14 @@
   loop_control:
     label: "{{ item.dest }}"
   notify: restart app compose
+
+- name: placeholder used without the secret env (fail loud)
+  when:
+    - app_container.config_files is defined
+    - (app_container.config_files | map(attribute='content') | join('')) is search('SEARXNG_SECRET_KEY_PLACEHOLDER')
+    - (lookup('ansible.builtin.env', 'SEARXNG_SECRET_KEY') | default('')) | length == 0
+  ansible.builtin.fail:
+    msg: "searxng needs SEARXNG_SECRET_KEY -- create local/searxng-secret.env (SEARXNG_SECRET_KEY=<hex>)"
 
 - name: compose file deployed
   ansible.builtin.template:

@@ -28,7 +28,7 @@ container:
         use_default_settings: true
         server:
           limiter: false
-          secret_key: "ae9d078a2d5d2bb2be277eecb390613b"
+          secret_key: "SEARXNG_SECRET_KEY_PLACEHOLDER"
           public_instance: false
         search:
           formats: [html, json]
