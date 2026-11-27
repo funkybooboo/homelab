@@ -131,3 +131,15 @@ where the fix lives. Code comments link here instead of retelling.
   database and audiobookshelf metadata resolve files with zero
   database surgery. A fresh install would prefer `/media/<library>`;
   changing the bind paths later requires migrating the databases.
+
+## Browser playback
+
+- **H.264/AAC unplayable in the browser while MP3/FLAC services
+  play fine**: Firefox-family browsers on Linux decode H.264 and
+  AAC through GStreamer (gst-libav), not the ffmpeg CLI. A
+  browser without it truthfully reports the codecs unsupported;
+  jellyfin's web client then requests a transcode and its own HLS
+  engine rejects the fallback manifest
+  (manifestIncompatibleCodecsError). The jellyfin web console
+  names it in one line. Fix: gst-libav on the browsing machine
+  (dotfiles migration 000601) + a full browser restart.
