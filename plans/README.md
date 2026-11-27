@@ -32,9 +32,11 @@ The prefix names the role the story serves:
   (vaultwarden, media, rss, sync)
 - **OPS-nn** -- the operator: cluster, network, storage, backups,
   alerting, the IaC layer itself
-- **LEARN-nn** -- the craft: professional-development experiments that
-  earn their place by what they teach, never by crowding out the other
-  two roles
+
+The LEARN class is retired: every story must carry a use case that
+fits a daily workflow, whichever prefix it files under. Craft value
+is welcome; it rides on top of a real use case, never instead of
+one.
 
 A story carries the story ("As a ..., I want ..., so that ..."), its
 acceptance criteria, a status (planned / doing / done), its arc, and

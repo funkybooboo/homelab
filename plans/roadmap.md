@@ -39,7 +39,7 @@ sessions, L = an era's backbone.
 | v3 curation | ACTIVE (USER-2 shipped) | - | L | the curated list running and documented |
 | v4 automation polish | queued | v3 close + the opening protocol | L | durability + visibility + automation |
 | v5 platform refresh | queued | v4 close, hardware appetite | M/L | router re-platform, QDevice re-role, native balancer |
-| Someday | demand recorded | a real need appears | - | nothing queued silently |
+| Backlog | demand recorded | a named trigger fires | - | nothing queued silently |
 
 The opening protocol below is part of "opens when" for every
 queued era.
@@ -101,7 +101,12 @@ installer is rejected).
   via tailnet, backed as tier-0 where the corpus is unrecoverable):
   [USER-17 knowledge base](./stories/USER-17-knowledge-base.md),
   [USER-18 books library](./stories/USER-18-books-library.md),
-  [USER-19 youtube queue](./stories/USER-19-youtube-queue.md)
+  [USER-19 youtube queue](./stories/USER-19-youtube-queue.md),
+  [USER-21 immich](./stories/USER-21-immich.md) (the photo
+  library; phone uploads + the Proton Drive photos export),
+  [USER-22 offline docs library](./stories/USER-22-offline-docs-library.md),
+  [USER-23 paperless](./stories/USER-23-paperless.md)
+  (hardware-gated: the operator's scanner)
 - Amendments: [USER-5 firefox sync](./stories/USER-5-firefox-sync.md)
   carries the data-loss warning (no dump exists for old CT 131; the
   B2 check is its opening move). Old CTs 110 and 116 are presumed
@@ -146,9 +151,15 @@ reorders this list with evidence and settles the open picks.
 7. [OPS-28 router exit node + ProtonVPN egress]
    (./stories/OPS-28-router-exit-proton.md) -- operator facts
    gate it (see Where we stand).
-8. [OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
+8. [USER-4 monero node](./stories/USER-4-monero-node.md)
+   (design: [design/monero-node.md](./design/monero-node.md)) --
+   the operator is getting into Monero; the node is the wallet's
+   private validator. Chain storage sizing is Phase 0.
+9. [OPS-12 push-to-apply](./stories/OPS-12-push-to-apply.md),
    [OPS-13 auto-update port](./stories/OPS-13-auto-update-port.md),
-   [OPS-15 drift detection](./stories/OPS-15-drift-detection.md) --
+   [OPS-15 drift detection](./stories/OPS-15-drift-detection.md),
+   [OPS-16 auto-repair via n8n]
+   (./stories/OPS-16-homelab-auto-repair.md) --
    the self-minding tier, last on purpose: automation is only safe
    on a fleet that is already visible, durable, and understood.
 
@@ -158,28 +169,30 @@ Ends with: rebuild-a-node and add-a-service are runbook-only.
 
 The router re-platform onto Proxmox (OPS-3), the Pi's QDevice
 re-role (OPS-6), the native Dynamic Load Balancer replacing manual
-placement, and the PVE rolling-upgrade criteria that survived
-OPS-17's evaporation. Only after v3-v4 keep the running fleet
-boring.
+placement, the PVE rolling-upgrade criteria that survived
+OPS-17's evaporation, [OPS-19 the NAS re-platform]
+(./stories/OPS-19-nas-replatform.md) (TrueNAS becomes a Proxmox
+guest -- the operator's confirmed want), and [USER-24 stalwart]
+(./stories/USER-24-stalwart-mail.md) (the own-mail experiment).
+Only after v3-v4 keep the running fleet boring.
 
-## Someday (demand recorded, not queued)
+## Backlog (named triggers, not queued)
 
-- [OPS-19 NAS re-platform](./stories/OPS-19-nas-replatform.md) --
-  Proxmox on the NAS hardware, storage as a guest
-- [USER-4 monero node](./stories/USER-4-monero-node.md)
-  (design: [design/monero-node.md](./design/monero-node.md))
-- [USER-5 firefox sync](./stories/USER-5-firefox-sync.md)
-  (design: [design/firefox-sync-server.md](./design/firefox-sync-server.md))
-- [LEARN-1 distributed llama.cpp inference]
-  (./stories/LEARN-1-llama-rpc.md)
-  (design: [design/llama-rpc-inference.md](./design/llama-rpc-inference.md))
-- [OPS-16 homelab auto-repair](./stories/OPS-16-homelab-auto-repair.md)
-  (design: [design/homelab-auto-repair.md](./design/homelab-auto-repair.md))
-- [design/offline-docs-library.md](./design/offline-docs-library.md)
-  -- DevDocs-first private reference library
+Nothing here is queued; each entry names the trigger that files
+its story.
+
+- **frigate** (NVR) -- trigger: the operator buys cameras. Wants
+  GPU passthrough first.
+- **ollama + openwebui** -- trigger: the operator buys AI-capable
+  hardware. The use case: the household's own assistant on the
+  LAN.
+- **headscale** (self-hosted tailscale control plane) -- trigger:
+  the operator decides to migrate off the hosted tailnet. Known
+  cost recorded in the backlog design: serve fronts and some
+  managed features must be re-validated.
 - [design/future-services-backlog.md](./design/future-services-backlog.md)
-  -- the community-scripts triage; nothing joins a converge
-  without its own story
+  -- the reference triage; decided dispositions are recorded
+  there; nothing joins a converge without its own story
 
 ## Policy
 

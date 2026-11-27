@@ -58,3 +58,21 @@ take the documented container-exception path.
 
 Backlog items earn stories when the operator asks for them ("one
 story per service" precedent). Nothing here silently joins a converge.
+
+## Dispositions (operator decisions)
+
+- paperless-ngx: STORY FILED (USER-23; scanner on order).
+- immich: STORY FILED (USER-21, v3 personal-content).
+- stalwart: STORY FILED (USER-24, v5; experiment scope).
+- frigate: BACKLOG (trigger: cameras purchased; GPU passthrough
+  first).
+- ollama + openwebui: BACKLOG (trigger: AI-capable hardware).
+- headscale: BACKLOG (trigger: the migration decision; serve
+  fronts must be re-validated).
+- rustfs: folded into OPS-14 + OPS-29 Phase 0 as a backend option
+  (loki store, PBS target) -- not a standalone service.
+- nextcloud + onlyoffice: REMOVED (operator decision; no collab
+  workflow).
+- LEARN-1 llama.cpp inference: REMOVED with the LEARN class
+  (every story must carry a daily-workflow use case); the ollama
+  backlog entry carries the actual intent.

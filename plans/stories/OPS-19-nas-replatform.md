@@ -4,8 +4,8 @@ As the operator, I want the NAS hardware eventually running Proxmox with
 the storage function as a guest, so the box joins the managed fleet
 instead of being a separate appliance OS.
 
-**Status**: someday
-**Arc**: unqueued (deliberately post-v5; storage stability is king)
+**Status**: planned (operator-confirmed)
+**Arc**: v5 (platform refresh: TrueNAS becomes a Proxmox guest)
 
 ## Notes
 
