@@ -2,7 +2,7 @@
 
 Where each service's data lives and why. The decision record is
 [issues item 15](../plans/issues.md). Companion docs:
-[maintenance.md](./maintenance.md), [network.md](./network.md).
+[maintenance.md](./maintenance.md), [diagrams.md](./diagrams.md).
 
 ## The policy: one engine, database-per-service
 

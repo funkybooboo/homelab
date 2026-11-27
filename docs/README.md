@@ -18,11 +18,10 @@ grouped by what the reader is trying to do.
 
 - [`access.md`](./access.md) -- every guest's URL, sign-in, and
   first-use notes
-- [`network.md`](./network.md) -- the LAN, the tailnet overlay, and
-  the boot-order law
-- [`diagrams.md`](./diagrams.md) -- the visual atlas: the whole
-  homelab in five current pictures (physical, packet path,
-  placement, tailnet, backup flow)
+- [`diagrams.md`](./diagrams.md) -- the network and the fleet as
+  pictures: physical, packet path (the Proton blanket + Quad9),
+  service placement, tailnet, backup flow, plus the narrative
+  (boot order, directives) behind them
 
 ## What is where
 
