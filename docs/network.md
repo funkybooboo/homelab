@@ -12,14 +12,14 @@ flowchart TB
     RT --- SW["unmanaged switch<br/>192.168.1.0/24 flat, no VLANs"]
 
     subgraph NODES["PVE cluster, 5/5 quorate"]
-        TT["pve-thermaltake .3<br/>GTX 1060; media + interim daily tools"]
-        FW["pve-framework .4<br/>USB-NIC self-heal (quirks.md)<br/>re-entering guest rotation"]
+        TT["pve-thermaltake .3<br/>GTX 1060; media + infra hub"]
+        FW["pve-framework .4<br/>daily-tools tier; USB-NIC self-heal (quirks.md)"]
         A15["pve-aspiree15 .5"]
         ASP["pve-aspires .6"]
         RPI["raspberrypi .11<br/>quorum member, no guests by policy"]
     end
 
-    GUESTS["17 guests: infra .14-.19 + .51-.53<br/>media .55-.57 (thermaltake)<br/>daily tools .61-.65"]
+    GUESTS["17 guests: infra .14-.19 + .51-.53<br/>media .55-.57 (thermaltake)<br/>daily tools .61-.65 (framework)"]
     TN["truenas .10 -- NFS to every node + B2"]
     DEB["debbie .120 -- ops workstation"]
     CLIENTS["client devices -- DHCP .100-.249"]
@@ -70,6 +70,14 @@ operator chose blanket over the recommended policy-split (the
 split design + the reversal are on record in OPS-28 and
 issues.md). Away devices that select the router's exit node
 inherit the same Proton exit.
+
+**DNS rides the same posture** (2026-11-28, operator
+directive): the router's unbound forwards to Quad9 (9.9.9.9)
+over DNS-over-TLS, cert-pinned to dns.quad9.net -- the whole
+house resolves through one no-log, malware-filtering party;
+the ISP sees only the WireGuard stream, and a WAN failover
+keeps the DNS leg TLS-encrypted. Verified by resolver-identity
+lookup (whoami.akamai.net returns Quad9 egress).
 
 ## Boot order (a law, identity rule 7)
 

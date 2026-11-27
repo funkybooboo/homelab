@@ -265,3 +265,14 @@ where the fix lives. Code comments link here instead of retelling.
   the preAuthKey slot exists but did not consume a key.
 - **The Proton conf's PrivateKey is redacted on re-download**
   ("*****"); it exists only in the creation popup.
+
+## The OPNsense API surface (additions)
+
+- **The mutable-settings POST shape needs the top-level model
+  key**: `/api/unbound/settings/set` with a FLAT payload
+  returns `"saved"` and persists NOTHING (silent no-op);
+  `{"unbound":{"forwarding":{...}}}` is the real shape. Always
+  re-GET after every set to prove the field landed.
+- The template-cache converge check can time out (5 s) on a
+  node busy after a CT migration wave -- transient; a re-run
+  passes. Do not chase it.

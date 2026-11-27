@@ -446,3 +446,22 @@ Two scanner findings on the public repo, both closed same-day:
   network picture, issues ledger, the two next-build stories
   rewritten from scratch (USER-5, OPS-24), and the
   browser-off-cloud map filed as their design context.
+
+## 2026-11-28 (later): the tools tier lands + Quad9
+
+- RE-HOMING SHIPPED: all five daily-tools CTs (.61-.65, vmids
+  211-215) moved thermaltake -> framework (pmxcfs conf moves,
+  disks already on pve-shared). Framework is the tools tier and
+  the landing zone for USER-5 + OPS-24; thermaltake keeps the
+  media fleet + the infra hub. Tailnet fronts verified
+  (200/302), CT-reboot drill green (it-tools back unattended in
+  40 s), fleet converge changed=0 after the manifest updates.
+  One transient: thermaltake's template check timed out under
+  post-migration load; re-run clean.
+- DNS: the house resolver (router unbound) now forwards to
+  Quad9 over DoT (9.9.9.9, verify=dns.quad9.net) per operator
+  directive -- no-log upstream, malware-filtered, encrypted end
+  to end, riding the Proton tunnel; ISP sees only WireGuard.
+  Before this the router recursed from the root servers (also
+  ISP-blind; the directive trades query-spread for one
+  accountable no-log party).

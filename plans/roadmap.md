@@ -87,9 +87,10 @@ their own story; the ONCE trio are the first container guests
 installer is rejected).
 
 Order from here (operator directive 2026-11-28): the
-re-homing of some daily-tools CTs to framework (the node's
-re-entry into guest rotation; the split picked at migration
-time), then USER-5 firefox sync and OPS-24 cronmaster -- both
+re-homing SHIPPED the same day -- all five daily-tools CTs now
+live on framework (the tools tier and the landing zone for the
+next builds; pmxcfs moves, tailnet fronts verified, CT-reboot
+drill green). Then USER-5 firefox sync and OPS-24 cronmaster -- both
 STARTED FROM SCRATCH, their stories re-baselined against the
 current cluster -- then the keeps, the ONCE trio, and the
 personal-content family in numeric order. The browser-off-cloud

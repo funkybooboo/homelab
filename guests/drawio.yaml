@@ -3,7 +3,7 @@
 name: drawio
 vmid: 214
 state: present
-node: pve-thermaltake
+node: pve-framework
 template: debian-13-standard_13.6-1_amd64.tar.zst
 storage: pve-shared
 cores: 1
