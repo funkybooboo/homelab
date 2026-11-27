@@ -245,6 +245,16 @@ its story.
   Day-one behavior note for the household: their devices ride
   the Proton blanket + Quad9 today; broken-site reports are
   NetShield/blanket suspects, not their device.
+  ROUTER FACT (verified from the live router 2026-11-28, not
+  recall): the Protectli V1210 has exactly TWO physical ports --
+  igc0 = lan (192.168.1.1), igc1 = wan. So rung 20 is a
+  router-on-a-stick build: the LAN port becomes an 802.1Q trunk
+  (VLAN 10 native/untagged so the current flat LAN is
+  byte-identical, VLAN 20 tagged); the switch uplink port
+  mirrors it. igc0 advertises hardware VLAN tagging
+  (vlan_hwtagging), so the Atom does not pay per-packet tag
+  processing. A dedicated cable per VLAN was floated in chat
+  and is NOT possible on this hardware.
   END-STATE (operator directive 2026-11-28: "level 2 now,
   eventually level 3"): the household VLAN is rung 2 of a
   reserved ladder, so every later rung is additive with zero
