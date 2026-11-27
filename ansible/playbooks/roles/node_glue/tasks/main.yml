@@ -203,7 +203,7 @@
         apt-get output)
   when: gpu | default(false)
   ansible.builtin.apt:
-    name: "proxmox-headers-{{ ansible_kernel }}"
+    name: "proxmox-headers-{{ ansible_facts['kernel'] }}"   # ansible_facts, not the deprecated ansible_ prefix (ansible-core 2.24 removes it)
     state: present
 
 - name: dkms build tooling present

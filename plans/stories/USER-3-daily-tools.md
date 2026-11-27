@@ -13,13 +13,18 @@ freshrss data restore waits on one operator extraction)
 - [x] Curated list decided from the old ~28 (lean: ~12-15 total
       resurrected; the rest stay stopped + documented in the
       curation list)
-- [ ] Each service: manifest + role, data extracted from old rootfs,
+- [x] Each service: manifest + role, data extracted from old rootfs,
       verified, THEN old rootfs archived
-      (four stateless tools + freshrss built as container guests;
-      the freshrss dump extraction is the remaining operator step)
+      (freshrss: dump 104 extracted, data dir restored marker-gated,
+      208 feeds / 32,160 entries verified live in the postgres
+      `freshrss` database; the stateless tools carry no data)
 - [x] Postgres-backed services (linkwarden, omnivore if kept) point
-      at OPS-10's instance (freshrss keeps its sqlite data dir --
-      it was sqlite in the old fleet and restores verbatim)
+      at OPS-10's instance
+      (freshrss IS postgres-backed and its restored DSN points at
+      the live cluster -- the old fleet already ran it that way;
+      corrected in-flight: first assumed sqlite, the restored
+      config.php said pgsql. The DSN uses the LAN IP, not MagicDNS
+      -- guests do not resolve MagicDNS names, docs/quirks.md)
 
 ## The curation list (operator decisions 2026-11-27)
 
@@ -45,7 +50,11 @@ resurrect on demand). Nothing else remains uncategorized -- the
 whole old fleet is keep / superseded / gone.
 
 Operator decisions: (1) freshrss kept; (2) one guest per service;
-(3) node placement pve-aspiree15.
+(3) node placement -- built on pve-aspiree15, moved to
+pve-framework, and the same evening relocated to pve-thermaltake
+when framework's USB NIC died (the offline-node recipe in
+docs/quirks.md); framework re-homes them after its fix if it
+proves reliable.
 
 ## The container-guest mechanism (shipped here, ONCE trio inherits)
 

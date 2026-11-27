@@ -1,8 +1,16 @@
 # nodes.yml -- cluster-level node glue: what every live PVE node
 # needs to be ansible-managed. Runs BEFORE the guest lifecycle; the
 # IaC contract is "the nodes converge too", not just the guests.
+#
+# ignore_unreachable: an offline node (hardware down, USB-NIC
+# vanished) must not abort the converge before the guests play --
+# the rest of the fleet keeps converging; the offline node reports
+# unreachable and the operator sees it in the recap. Cost: a node
+# that is MERELY slow to answer ssh also gets skipped this run
+# instead of retried -- re-run converge when it answers again.
 - name: Node glue for the IaC skeleton
   hosts: pve
   become: true
+  ignore_unreachable: true
   roles:
     - node_glue

@@ -26,7 +26,7 @@ tailscale.
 | searxng | https://searxng.tail54538d.ts.net | open | the self-hosted metasearch; default settings |
 | excalidraw | https://excalidraw.tail54538d.ts.net | open | the whiteboard; scenes live in browser storage |
 | drawio | https://drawio.tail54538d.ts.net | open | the diagrams tool; diagrams live in browser storage (use File > Export for keepers) |
-| freshrss | https://freshrss.tail54538d.ts.net | the old account returns with the dump 104 restore | until the extraction runs the front shows a fresh-install wizard -- do NOT set it up by hand; run `sudo ./scripts/extract-legacy.sh --copy-from-dump 104` + the chown, then `make converge` (the old account + 214 feeds come back) |
+| freshrss | https://freshrss.tail54538d.ts.net | the old account + password (restored with the data) | the RSS reader, postgres-backed (database `freshrss` on the hub cluster; 208 feeds / 32k entries); the data dir restored verbatim incl. favicons; feeds refresh on the container's built-in cron (CRON_MIN 13,43) |
 
 ## The underlying rules
 

@@ -1,13 +1,16 @@
-# searxng.yaml -- the self-hosted metasearch (USER-3 daily
-# tools). Stateless; official image, digest-pinned.
+# searxng.yaml -- the self-hosted metasearch (USER-3 daily tools).
+# Stateless; official image, digest-pinned. The settings drop-in
+# (limiter off -- the tailnet is private; JSON format on -- the
+# base image 403s it) rides the container_guest config_files
+# mechanism; 2 cores/1G for snappy aggregation bursts.
 name: searxng
 vmid: 212
 state: present
-node: pve-aspiree15
+node: pve-thermaltake
 template: debian-13-standard_13.6-1_amd64.tar.zst
 storage: pve-shared
-cores: 1
-memory: 512
+cores: 2
+memory: 1024
 swap: 512
 disk: 8
 ip: 192.168.1.62
@@ -17,6 +20,17 @@ container:
   digest: "sha256:d1595bd9cf464bd84e30a07f4199e2cf2cddfbb633aed966b9c8458f6df62018"
   port: 8080
   target: 8080
+  volumes:
+    - "/opt/app/config/settings.yml:/etc/searxng/settings.yml"
+  config_files:
+    - dest: settings.yml
+      content: |
+        use_default_settings: true
+        server:
+          limiter: false
+          secret_key: "ae9d078a2d5d2bb2be277eecb390613b"
+        search:
+          formats: [html, json]
 tailnet: true
 tailnet_serve: 8080      # https://searxng.tail54538d.ts.net
 mounts: []

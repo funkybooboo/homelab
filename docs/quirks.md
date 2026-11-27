@@ -177,3 +177,39 @@ where the fix lives. Code comments link here instead of retelling.
   this five at once. Not worth serializing -- the run finishes in
   tens of minutes -- but expect a slow node during any
   multi-CT package wave.
+
+## Guest-to-guest service access uses LAN IPs
+
+- **MagicDNS names do not resolve inside guests.** CT resolv.conf
+  comes from the node (the router at 192.168.1.1); tailscaled
+  answers 443 serve traffic but does not provide the resolver.
+  A restored config pointing at a MagicDNS host name (the old
+  fleet's freshrss used `postgresql.tail54538d.ts.net`) fails
+  with "could not translate host name". Guest-to-guest uses the
+  manifest IPs (postgres = 192.168.1.14, the adminer pattern);
+  MagicDNS names are for tailnet DEVICES.
+
+## Moving a CT off an offline node
+
+- **Framework's USB-NIC death made the recipe relevant the same
+  week the fleet grew.** With the source node unreachable and
+  the rootfs on shared storage, relocating a guest is a pmxcfs
+  config move: `mv /etc/pve/nodes/<down-node>/lxc/<vmid>.conf
+  /etc/pve/nodes/<target>/lxc/` then `pct start <vmid>` on the
+  target. Valid here because HA is idle BY DESIGN (no CRM to
+  fight) and every disk lives on pve-shared. Update the
+  manifest's `node:` to match or the next converge fights it.
+  pct migrate cannot run against an offline node.
+
+## LibreWolf on debbie
+
+- **The profile lives at `~/.config/librewolf`** (XDG layout),
+  not the documented `~/.librewolf` -- grep the right tree.
+- **"LibreWolf is already running, but is not responding" with
+  no live process = stale profile locks.** A wedged instance
+  can exit without cleaning `.parentlock`/`lock` under
+  `~/.config/librewolf/librewolf/<profile>/`; delete both files
+  and the browser opens. The same wedge is what made webapps
+  (excalidraw among them) misbehave -- a full close/reopen
+  cures canvas apps in LibreWolf; only media playback is
+  hardware-blocked (the codec build policy above).

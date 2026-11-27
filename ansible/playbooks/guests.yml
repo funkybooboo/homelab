@@ -222,6 +222,28 @@
       loop_control:
         label: "{{ item.name }}"
 
+    - name: Apply manifest resources (cores/memory/swap -- the
+            creation module never updates an existing CT; live-apply,
+            no restart needed)
+      when:
+        - item.state | default('present') == 'present'
+        - item.cores is defined
+      ansible.builtin.shell: |
+        set -eu
+        C={{ item.vmid }}
+        CHANGED=0
+        check() { pct config $C | grep -q "^$1: $2$" || { pct set $C --$1 $2; CHANGED=1; } }
+        check cores {{ item.cores }}
+        check memory {{ item.memory }}
+        check swap {{ item.swap | default(512) }}
+        test $CHANGED -eq 0 || echo APPLIED
+      register: _res_apply
+      delegate_to: "{{ item.node }}"
+      changed_when: "'APPLIED' in _res_apply.stdout"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
     - name: Restart container guests whose apparmor changed this run
             (profile rules apply at CT start, never live)
       when:
@@ -289,12 +311,15 @@
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Stage the operator's key on every node (pct push reads it there)
+    - name: Stage the operator's key on nodes that host a guest
+            (pct push reads it there; a DOWN node hosts nothing to
+            bootstrap -- data-driven from the manifests, so an
+            offline node cannot abort the converge)
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/keys/admin.ed25519.pub"
         dest: /tmp/homelab-admin.ed25519.pub
         mode: "0644"
-      loop: "{{ groups['pve'] }}"
+      loop: "{{ hostvars['localhost']['guests'] | map(attribute='node') | unique }}"
       delegate_to: "{{ item }}"
       loop_control:
         label: "{{ item }}"

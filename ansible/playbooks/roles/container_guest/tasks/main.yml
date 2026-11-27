@@ -26,6 +26,12 @@
 # ---- optional legacy data restore (before the container first
 # ---- boots with a digest change, so a restore never needs a
 # ---- second restart): marker-gated once, content-gated source
+- name: rsync installed (the restore block's synchronize needs it
+        on BOTH ends; tiny package, every container guest gets it)
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+
 - name: restore marker present? (once-only gate)
   when: app_restore.src is defined
   ansible.builtin.stat:
@@ -51,12 +57,16 @@
     - not _cg_restored.stat.exists
     - (_cg_src.stdout | default('') | length) > 0
   block:
-    - name: the copy (numeric owner 33 -- the container's www-data)
-      ansible.builtin.copy:
-        src: "{{ container_restore_base }}/{{ app_restore.src }}"
-        dest: "{{ app_restore.dest_parent }}"
-        owner: "33"
-        group: "33"
+    - name: the copy (synchronize -- the copy module crawls at
+            ~0.5 files/s over ssh+NFS and a restore tree is thousands
+            of small files; the jellyfin lesson applies. Numeric owner
+            33, the container's www-data. Merge semantics, no --delete
+            (the container may hold live state during a re-run)
+      ansible.posix.synchronize:
+        src: "{{ container_restore_base }}/{{ app_restore.src }}/"
+        dest: "{{ app_restore.dest_parent }}data/"
+        rsync_opts:
+          - "--chown=33:33"
       notify: restart app compose
 
     - name: restore marker written (INSIDE the block -- only when
@@ -101,6 +111,28 @@
     owner: root
     group: root
     mode: "0755"
+
+- name: config dir present (manifest config_files land here and
+        bind into the container)
+  ansible.builtin.file:
+    path: /opt/app/config
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: config files deployed (manifest container config_files)
+  when: app_container.config_files is defined
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "/opt/app/config/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ app_container.config_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  notify: restart app compose
 
 - name: compose file deployed
   ansible.builtin.template:
