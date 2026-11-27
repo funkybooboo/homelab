@@ -134,12 +134,17 @@ where the fix lives. Code comments link here instead of retelling.
 
 ## Browser playback
 
-- **H.264/AAC unplayable in the browser while MP3/FLAC services
-  play fine**: Firefox-family browsers on Linux decode H.264 and
-  AAC through GStreamer (gst-libav), not the ffmpeg CLI. A
-  browser without it truthfully reports the codecs unsupported;
-  jellyfin's web client then requests a transcode and its own HLS
-  engine rejects the fallback manifest
-  (manifestIncompatibleCodecsError). The jellyfin web console
-  names it in one line. Fix: gst-libav on the browsing machine
-  (dotfiles migration 000601) + a full browser restart.
+- **H.264/AAC video spins forever in the browser while MP3/FLAC
+  services play fine**: check which BROWSER first, then the
+  machine's codecs. Two separate causes, same symptom:
+  1. **LibreWolf upstream builds ship without the patented codec
+     decoders** (H264/HEVC/AAC) -- deliberate upstream policy;
+     about:support -> Media shows them "Unsupported" forever, and
+     no package or pref adds back a decoder the build lacks. The
+     web client then asks for a VideoCodecNotSupported transcode
+     and its own HLS engine rejects the fallback manifest
+     (manifestIncompatibleCodecsError). Media playback belongs in
+     a codec-capable browser (plain Firefox on debbie).
+  2. **A codec-capable Firefox-family browser still needs the
+     system GStreamer set**: gst-libav on the browsing machine
+     (dotfiles migration 000601) + a full browser restart.
