@@ -20,6 +20,9 @@ grouped by what the reader is trying to do.
   first-use notes
 - [`network.md`](./network.md) -- the LAN, the tailnet overlay, and
   the boot-order law
+- [`diagrams.md`](./diagrams.md) -- the visual atlas: the whole
+  homelab in five current pictures (physical, packet path,
+  placement, tailnet, backup flow)
 
 ## What is where
 

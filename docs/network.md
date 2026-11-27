@@ -6,45 +6,15 @@ the picture, not the data.
 
 ## The LAN
 
-```mermaid
-flowchart TB
-    ISP((Internet)) --> RT["OPNsense V1210<br/>192.168.1.1<br/>bare-metal router, Proton WG default"]
-    RT --- SW["unmanaged switch<br/>192.168.1.0/24 flat, no VLANs"]
-
-    subgraph NODES["PVE cluster, 5/5 quorate"]
-        TT["pve-thermaltake .3<br/>GTX 1060; media + infra hub"]
-        FW["pve-framework .4<br/>daily-tools tier; USB-NIC self-heal (quirks.md)"]
-        A15["pve-aspiree15 .5"]
-        ASP["pve-aspires .6"]
-        RPI["raspberrypi .11<br/>quorum member, no guests by policy"]
-    end
-
-    GUESTS["17 guests: infra .14-.19 + .51-.53<br/>media .55-.57 (thermaltake)<br/>daily tools .61-.65 (framework)"]
-    TN["truenas .10 -- NFS to every node + B2"]
-    DEB["debbie .120 -- ops workstation"]
-    CLIENTS["client devices -- DHCP .100-.249"]
-
-    SW --- TT & FW & A15 & ASP & RPI & TN & DEB & CLIENTS
-    NODES --- GUESTS
-    TN -. "NFS: rootfs, backups, media" .-> NODES
-```
-
-Reserved: `.12` (future PBS), `.13` (optional future subnet-router
-guest). The DHCP pool `.100-.249` is for clients only; infra is
-static everywhere.
+One flat subnet, one router, one unmanaged switch; reserved
+`.12` (future PBS) and `.13`; the DHCP pool `.100-.249` is for
+clients only, infra is static everywhere. The picture:
+[diagrams.md](./diagrams.md) (1. the physical network).
 
 ## The tailnet overlay
 
-```mermaid
-flowchart LR
-    PHONE["operator phone<br/>(away: exit node on)"] --> SR
-    LAP["laptops"] --> SR
-    subgraph TAILNET["tailnet tail54538d.ts.net"]
-        SR["opnsense router<br/>exit node + subnet router<br/>+ serve relay"]
-    end
-    SR -- "tailscale serve<br/>HTTPS + LE cert" --> PVEUI["https fronts<br/>&lt;name&gt;.tail54538d.ts.net"]
-    SR -- "approved route<br/>192.168.1.0/24" --> LAN["the whole LAN: UIs, ssh, services"]
-```
+The pictures: [diagrams.md](./diagrams.md) (4. the tailnet
+overlay). In words:
 
 The ROUTER owns the tailnet's LAN presence: exit node advertised
 (away devices route ALL their traffic through the house, exiting
