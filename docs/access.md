@@ -11,6 +11,7 @@ tailscale.
 | Guest | URL | Sign-in | First-use notes |
 | --- | --- | --- | --- |
 | postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here |
+| opnsense (the router) | tailnet `opnsense.tail54538d.ts.net`; UI at `https://192.168.1.1` | router admin; API key in `local/opnsense-api.env` | the tailnet exit node + subnet router (192.168.1.0/24); every away device selecting it gets home LAN + the Proton exit; the house rides Proton with automatic WAN failover (gateway switching) |
 | adminer | https://adminer.tail54538d.ts.net | server `192.168.1.14:5432`, user `nate`, same password | the DB admin UI; pick a database from the dropdown |
 | ntfy | https://ntfy.tail54538d.ts.net | open (topics are the access control) | subscribe from the phone app: add server, topic `homelab`; alert wiring lands with the service stories |
 | prometheus | https://prometheus.tail54538d.ts.net | open (read-only) | Status > Targets should show the whole fleet UP (incl. the forgejo-app job) |

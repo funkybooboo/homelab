@@ -5,7 +5,8 @@ EXIT NODE, and its egress to ride ProtonVPN, so that away-from-home
 devices can travel through the house AND everything leaves via
 Proton rather than the ISP.
 
-**Status**: planned
+**Status**: shipped 2026-11-28 (blanket directive -- see below);
+the phone away-from-home test is the operator's last click
 **Arc**: v3 (network tier; router stays bare-metal until OPS-3)
 
 ## Design sketch (2026-11-26, pre-build)
@@ -97,3 +98,33 @@ there:
 - [ ] Secrets in the pass vault; OPNsense changes recorded as
       API/CLI commands in the repo (the router is an appliance --
       its state is commands-of-record, not manifests)
+
+## The blanket directive (2026-11-28, supersedes the split design)
+
+Mid-build the operator chose BLANKET: "all my traffic through
+this VPN, in the house or out of the house." The shipped
+architecture, as built and verified:
+
+- Proton WG (NetShield ads+trackers variant, US-UT#42) is the
+  house DEFAULT gateway (defaultgw flag, priority 1, dpinger
+  monitoring 10.2.0.1). Every device -- laptops, nodes, CTs --
+  exits via 74.63.204.212 (verified from debbie + CTs).
+- WAN auto-failover: "Gateway switching" enabled; the WAN stays
+  tier-2 behind Proton. Election triggers on startup/interface
+  events (the router reboot that armed this was also the
+  boot-order drill: router booted with tunnel + failover + the
+  whole house intact).
+- Source NAT translates the LAN to the tunnel address.
+- The os-tailscale plugin runs on the router: exit node
+  ADVERTISED and offered; subnet route 192.168.1.0/24 approved
+  and primary (thermaltake's old advertisement decommissioned);
+  a tailnet-transit pass rule on the TAILSCALE interface lets
+  away devices reach router + LAN + internet. Away traffic
+  exits via the router's default = Proton.
+- The vpn_services/kill-switch split-mode rules were built first,
+  then REMOVED when the blanket directive landed -- the default
+  route IS the blanket; the split design stays above as the
+  record of what was recommended and superseded.
+- The router's own DNS rides the tunnel via the default; the
+  NetShield resolver upstream refinement is optional follow-up
+  (the router's DNS settings are a UI-only surface).

@@ -213,3 +213,32 @@ where the fix lives. Code comments link here instead of retelling.
   (excalidraw among them) misbehave -- a full close/reopen
   cures canvas apps in LibreWolf; only media playback is
   hardware-blocked (the codec build policy above).
+
+## The OPNsense API surface (OPS-28 build notes)
+
+- **Four surfaces are UI-only on OPNsense 25.7**: interface
+  assignment (wg0/tailscale0), gateway groups, System > Settings
+  > General ("Gateway switching"), and the DNS settings pages.
+  Everything else (wireguard instance+peer, gateways, aliases,
+  rules, source NAT, the tailscale plugin) drives via the API
+  with /api/... routes -- the oxlorg collection's module files
+  are the reliable route-name map when guessing fails.
+- **This build selects the default gateway by the classic
+  `defaultgw` flag, not the docs' newer "upstream + priority"
+  model.** The election only happens at a trigger (startup /
+  interface event) -- after flag changes, a router reboot is the
+  clean trigger (and doubles as the boot-order drill).
+- **Model field trivia that cost rounds**: alias `content` is
+  newline-separated, not comma; the WG *peer's* AllowedIPs must
+  be 0.0.0.0/0 + ::/0 (the conf's [Peer] section) or nothing
+  routes through the tunnel; SNAT translation target wants a
+  literal address (10.2.0.2), not an unassigned interface label
+  -- `opt1` as target left pf with "no IP address found" and the
+  ruleset fell back to the last good one.
+- **os-tailscale**: settings are API-settable but the daemon's
+  flag template (rc.conf.d) regenerates only through the plugin
+  UI's Save/Apply -- API sets stage the model, the UI click
+  applies it. Enrollment is the AuthURL flow (status page);
+  the preAuthKey slot exists but did not consume a key.
+- **The Proton conf's PrivateKey is redacted on re-download**
+  ("*****"); it exists only in the creation popup.
