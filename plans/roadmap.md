@@ -255,6 +255,32 @@ its story.
   (vlan_hwtagging), so the Atom does not pay per-packet tag
   processing. A dedicated cable per VLAN was floated in chat
   and is NOT possible on this hardware.
+  SWITCH SELECTED (research completed 2026-11-28, operator's
+  values brief: open software/open hardware): Zyxel GS1900-24E
+  (~$104) FLASHED TO OPENWRT before it ever joins the LAN --
+  stock firmware carries an unauthenticated-root-RCE CVE on
+  its record, so the flash happens on the bench, serial
+  console (FTDI adapter + jumpers, ~$22) wired as insurance.
+  OpenWrt kills the earlier "first non-automatable config"
+  cost: the switch becomes an SSH/UCI host, config files are
+  text in git, snmpd pollable by prometheus (16MiB flash is
+  tight: snmpd yes, LuCI no; mirroring via tc mirred rules, a
+  quirk to record). Verify the exact OpenWrt version at flash
+  time via firmware-selector.openwrt.org (research named
+  25.12.6; trust the selector + release notes, and check the
+  board-revision label A1/B1 before flashing). Answers to the
+  research's five config questions, from the fleet plan:
+  uplink = port 1 (trunk, native 10, tagged 20-50); ports
+  2-11 homelab (untagged 10), 12-21 household (untagged 20)
+  -- final physical map surveyed at install; management IP
+  192.168.1.2 (static, next to the router's .1); OPNsense
+  keeps ALL DHCP/DNS (the switch runs neither); mirror
+  destination = port 24. Trunk-saturation note corrected: at
+  this fleet's scale the trunk carries only household
+  internet + allow-listed media (tens of Mbps); the
+  "certain under load" claim is true only for a future
+  cameras rung, re-surveyed then (the -24E may lack SFP --
+  the research's SFP mitigation is unverified).
   END-STATE (operator directive 2026-11-28: "level 2 now,
   eventually level 3"): the household VLAN is rung 2 of a
   reserved ladder, so every later rung is additive with zero
