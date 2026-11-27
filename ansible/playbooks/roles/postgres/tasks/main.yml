@@ -1,6 +1,6 @@
 # postgres -- the shared DB layer. Fresh PG 17 from Debian; PGDATA
-# restores from the tier-0 extraction when the operator stages it
-# (scripts/stage-pgdata.sh -> local/staging/pgdata-108.tar.gz).
+# restores from the staged tarball at
+# local/staging/pgdata-108.tar.gz when the operator puts it there.
 # Without the tarball: a fresh empty cluster (still fully usable).
 - name: postgresql 17
   ansible.builtin.apt:

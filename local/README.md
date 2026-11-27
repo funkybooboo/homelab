@@ -12,7 +12,7 @@ documents the variable names + where the credential is minted.
 
 | file | variables | minted where |
 | --- | --- | --- |
-| pve-api.env | PVE_API_TOKEN_SECRET | scripts/setup-pve-access.sh (token `nate@pam!homelab-ops`) |
+| pve-api.env | PVE_API_TOKEN_SECRET | the PVE API (token `nate@pam!homelab-ops`) |
 | tailscale-api.env | TAILSCALE_API_TOKEN | the Tailscale admin console (API key) |
 | tailscale-authkey.env | TS_AUTH_KEY, TS_AUTH_KEY_ID | scripts/mint-tailscale-key.sh (guest-enrollment preauth key) |
 | truenas-api.env | TRUENAS_API_KEY | TrueNAS UI (API key) |
@@ -43,5 +43,5 @@ the vault item; templates are references, not values.
   repair (manifests of DB-only rows deleted after per-repo
   verification, the push-chain map). Kept for the story record.
 - `staging/` -- the one-shot PGDATA stage for the postgres restore.
-  NOTE: this directory is root-owned (stage-pgdata.sh ran as
-  root); harmless, but a chown one-liner would tidy it.
+  NOTE: this directory is root-owned (staged as root); harmless,
+  but a chown one-liner would tidy it.
