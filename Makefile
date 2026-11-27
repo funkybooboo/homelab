@@ -14,7 +14,11 @@ converge: ## Idempotent fleet converge (guest manifests -> running)
 		ANSIBLE_CONFIG=ansible/ansible.cfg \
 		ansible-playbook -i ansible/inventory/hosts.yml ansible/playbooks/site.yml
 
-update: ## Patch pass: tier-gated dist-upgrade, never reboots (OPS-23)
+pins: ## Roll pinned releases to upstream latest (edit role defaults; then commit + converge)
+	@bash scripts/roll-pins.sh
+
+update: ## Patch pass: pin roll + tier-gated dist-upgrade, never reboots (OPS-23)
+	@bash scripts/roll-pins.sh
 	@set -a; for f in $(ENVFILES); do . $$f; done; set +a; \
 		ANSIBLE_CONFIG=ansible/ansible.cfg \
 		ansible-playbook -i ansible/inventory/hosts.yml ansible/playbooks/maintenance.yml

@@ -1,7 +1,7 @@
 # gitea_mirror defaults -- version pins + fixed addresses.
 # Bun is the app's only runtime (no Node.js build); both pins move
 # together at `make update` time.
-gitea_mirror_version: "v3.54.0"
+gitea_mirror_version: "v3.58.1"
 gitea_mirror_bun_version: "1.4.5"
 gitea_mirror_repo: "https://github.com/RayLabsHQ/gitea-mirror.git"
 # BETTER_AUTH_URL must equal the serve front exactly (session

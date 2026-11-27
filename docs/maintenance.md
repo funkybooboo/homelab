@@ -20,13 +20,23 @@ pass where the operator sees the list.
 
 ```
 make converge   # guests/*.yaml -> running state, idempotent
-make update     # tier-gated dist-upgrade pass; never reboots
+make update     # pin roll + tier-gated dist-upgrade pass; never reboots
 make verify     # read-only drift check
 ```
 
 Weekly habit, about ten minutes: `make update`, `make verify`,
 read the reboot flags. When node kernels stack up, run the reboot
 runbook.
+
+`make update` first rolls the repo's pinned releases to upstream
+latest (`scripts/roll-pins.sh`): forgejo, gitea-mirror + bun,
+navidrome, vaultwarden. The script rewrites the role defaults when
+upstream moved; review the git diff, commit, and the next
+`make converge` swaps the artifact via the role's version gate
+(installed != pinned -> reinstall, marker-gated). An unreachable
+release API keeps the current pin -- nothing edits blind. The
+NVIDIA driver pin is the one deliberate exception (Pascal's
+terminal 580 branch; never auto-bumped).
 
 ## Node reboot runbook
 

@@ -32,7 +32,8 @@ where the fix lives. Code comments link here instead of retelling.
   580.142: pinned in `group_vars/all.yml`, installed by node_glue
   with `--dkms`; the jellyfin CT installs userspace-only
   (`--no-kernel-module`) from the same pin, so module and libraries
-  never diverge.
+  never diverge. The pin is deliberate (Pascal's terminal branch) --
+  `scripts/roll-pins.sh` never touches it.
 - **Leftover `.run` residue breaks apt nvidia packages.** The
   `nvidia-installer-cleanup` postinst refuses (debconf exit 30) while
   `/usr/bin/nvidia-uninstall` exists, and debconf preseeding cannot
