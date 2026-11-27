@@ -116,7 +116,15 @@ installer is rejected).
 
 Ends with: the curated list running and documented; the uncurated
 stay as dumps + extraction notes, cheap to resurrect when a real
-need appears.
+need appears. The closing item is the ROUTER UPGRADE TO 26.1
+(operator directive 2026-11-28): OPNsense 26.1 ("Witty
+Woodpecker") upgrades the router in a deliberate window AFTER
+the above lands -- config backup first, the oxlorg collection
+release paired to 26.1 verified, migration notes read (26.1
+moves the DNAT/rules APIs tonight's work rides), then the
+upgrade + full re-verification of the Proton blanket, tailscale
+exit node, and subnet routing. Never a button-click on a one-day-old
+tier-0 release mid-project.
 
 ## v4: Automation polish (queued)
 
@@ -124,6 +132,20 @@ Order: make the loop pleasant, make the fleet visible, then
 durable, then self-minding. Every operator-held gating fact is
 named; nothing starts blind. The opening protocol's Phase 0
 reorders this list with evidence and settles the open picks.
+
+0. [TAILNET NAMES AS THE FLEET'S UNIVERSAL ADDRESSING]
+   (operator directive 2026-11-28): every guest, node, machine,
+   service, and config speaks tailnet DNS names (MagicDNS), not
+   LAN IPs -- resolvers, DSNs, access tables, manifests, and
+   scripts all converge on `<name>.tail54538d.ts.net`. Reverses
+   the current state (guests resolve via the router and address
+   each other by LAN IP; the freshrss DSN had to be repointed to
+   192.168.1.14 because MagicDNS did not resolve in-guest).
+   Opens with its Phase 0: pick the per-guest resolver strategy
+   (each tailscaled guest answering MagicDNS at
+   100.100.100.100 vs the router's resolver forwarding the
+tailnet zone), then sweep every IP reference in the repo +
+   live DSNs. Sized when opened.
 
 1. [OPS-27 mise as the fleet loop front door]
    (./stories/OPS-27-mise-fleet-loop.md) -- mechanical, and every
@@ -183,6 +205,15 @@ Only after v3-v4 keep the running fleet boring.
 Nothing here is queued; each entry names the trigger that files
 its story.
 
+- **truenas REST API retirement** -- trigger: TrueNAS 26.04
+  approaches. The extract-legacy scripts and node-side midclt
+  calls ride the deprecated REST API (50 uses/day flagged from
+  .120 and .3); migrate them to the JSON-RPC 2.0 WebSocket API
+  before that release or the tier-0 backup tooling breaks.
+- **truenas boot-pool on USB (sdc)** -- trigger: hands on the
+  machine. TrueNAS warns the boot pool consumes a USB device;
+  move it to a small mirror on real disks at the next hardware
+  session (boot-pool failure risk on the tier-0 storage host).
 - **frigate** (NVR) -- trigger: the operator buys cameras. Wants
   GPU passthrough first.
 - **ollama + openwebui** -- trigger: the operator buys AI-capable
