@@ -408,7 +408,11 @@ Two scanner findings on the public repo, both closed same-day:
   `tskey-paste-token-here` placeholder in the old example
   template's history -- never a real key, resolved as
   false-positive via the API.
-- Standing observation, operator's call: docs/access.md carries
-  the forgejo web password in cleartext, and it matches the
-  operator's broader identity naming. The repo is public; the
-  access doc may want to reference the pass vault instead.
+- Standing observation, RESOLVED 2026-11-28: docs/access.md carried
+  the forgejo web password in cleartext (and it matched the
+  operator's broader identity naming). The password was ROTATED
+  via the forgejo admin CLI (console channel; the old string was
+  public in the repo's history and is now dead, verified: web
+  login 303 with the new, 200-rejection with the old) and the doc
+  now points at the Proton Pass vault. The grafana row also no
+  longer states the stale default credential.
