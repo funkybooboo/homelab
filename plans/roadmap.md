@@ -245,6 +245,24 @@ its story.
   Day-one behavior note for the household: their devices ride
   the Proton blanket + Quad9 today; broken-site reports are
   NetShield/blanket suspects, not their device.
+  END-STATE (operator directive 2026-11-28: "level 2 now,
+  eventually level 3"): the household VLAN is rung 2 of a
+  reserved ladder, so every later rung is additive with zero
+  re-addressing -- VLAN 10 stays 192.168.1.0/24 (homelab +
+  operator devices); VLAN 20 = 192.168.2.0/24 (household);
+  reserved: 30/IoT 192.168.3.0/24 (internet only, trigger:
+  the first smart-home device), 40/cameras 192.168.4.0/24
+  (no internet at all, NVR access only; pairs with the frigate
+  backlog trigger), 50/guest 192.168.5.0/24
+  (internet only + client isolation, trigger: visitors want
+  Wi-Fi), and an infra-management VLAN when the
+  fleet grows devices with admin pages of their own (the
+  Zyxel is the first). Level-3 costs already on record: an
+  mDNS reflector becomes necessary the first time a casting
+  device lands on a different VLAN than the phone casting to
+  it; the Atom router carries all inter-VLAN routing, so the
+  media path never crosses a rung (same-subnet stays switch
+  fabric).
 - **truenas REST API retirement** -- trigger: TrueNAS 26.04
   approaches. The extract-legacy scripts and node-side midclt
   calls ride the deprecated REST API (50 uses/day flagged from

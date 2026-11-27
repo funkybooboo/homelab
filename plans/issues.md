@@ -248,7 +248,12 @@ cross-service dashboards.
    new VLAN 20 behind a firewall allow-list. Gated on hardware:
    the current unmanaged switch cannot do VLANs; the trigger and
    full design live in the roadmap Backlog entry (not queued,
-   fires when a managed switch arrives).
+   fires when a managed switch arrives). Scope confirmed
+   2026-11-28: level 2 first (trusted vs. household), level 3
+   eventually (IoT / cameras / guest / infra-mgmt rungs, each
+   firing on its own device trigger; ladder + per-rung
+   triggers reserved in the Backlog entry so nothing ever
+   re-addresses).
 
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
