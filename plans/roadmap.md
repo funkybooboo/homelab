@@ -224,6 +224,27 @@ Only after v3-v4 keep the running fleet boring.
 Nothing here is queued; each entry names the trigger that files
 its story.
 
+- **homelab/household VLAN split** (operator directive
+  2026-11-28: "I want my homelab to be separate from the rest
+  of my house") -- trigger: a managed switch joins the LAN (the
+  current unmanaged switch cannot do VLANs; a Zyxel GS1900-24E
+  was the candidate under discussion). Design on record:
+  additive -- homelab keeps 192.168.1.0/24 (VLAN 10) untouched,
+  household devices (wife's computer, TV, other non-homelab
+  gear, all currently DHCP .100-.249 on the flat LAN) move to a
+  new VLAN 20 (192.168.2.0/24); router firewall blocks
+  VLAN 20 -> VLAN 10 except a narrow allow-list for the services
+  the household actually uses (day-one question: does the TV
+  stream from jellyfin/navidrome/audiobookshelf?). Household
+  devices stay together on VLAN 20 so their casting/mDNS keeps
+  working; casting into the homelab stops. Operator devices
+  (debbie, phones, laptops) stay on VLAN 10. Costs already
+  known: switch config is manual web-UI (commit its config
+  export to the repo for reproducibility); the OPNsense VLAN
+  interface assignment is a UI-only surface = operator click.
+  Day-one behavior note for the household: their devices ride
+  the Proton blanket + Quad9 today; broken-site reports are
+  NetShield/blanket suspects, not their device.
 - **truenas REST API retirement** -- trigger: TrueNAS 26.04
   approaches. The extract-legacy scripts and node-side midclt
   calls ride the deprecated REST API (50 uses/day flagged from

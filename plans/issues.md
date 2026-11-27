@@ -238,6 +238,18 @@ cross-service dashboards.
    decommissioned. Answers item 4's 2026-11-22 follow-up ("plugin
    viable, decision pending") -- decided, built, verified.
 
+19. **Homelab separated from household devices** -- DECIDED
+   2026-11-28 (operator directive, on the VLAN discussion):
+   the flat LAN mixes operator-managed infra with
+   non-operator-controlled household devices (family computer,
+   TV, others) that today reach every management interface
+   (flat LAN = zero intra-LAN filtering). The split is additive:
+   homelab stays on 192.168.1.0/24, household devices move to a
+   new VLAN 20 behind a firewall allow-list. Gated on hardware:
+   the current unmanaged switch cannot do VLANs; the trigger and
+   full design live in the roadmap Backlog entry (not queued,
+   fires when a managed switch arrives).
+
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md) -- they
