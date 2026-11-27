@@ -29,8 +29,22 @@ container:
         server:
           limiter: false
           secret_key: "ae9d078a2d5d2bb2be277eecb390613b"
+          public_instance: false
         search:
           formats: [html, json]
+          method: POST
+          autocomplete: ""
+        engines:
+          - name: google
+            disabled: false
+          - name: bing
+            disabled: false
+          - name: brave
+            disabled: false
+          - name: duckduckgo web
+            disabled: false
+          - name: qwant
+            disabled: false
 tailnet: true
 tailnet_serve: 8080      # https://searxng.tail54538d.ts.net
 mounts: []

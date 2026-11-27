@@ -4,8 +4,9 @@ As a household member, I want the daily-driver tools back -- freshrss,
 searxng, it-tools, and whatever else survives curation -- so that
 everyday workflows return.
 
-**Status**: in progress (five container guests live 2026-11-27; the
-freshrss data restore waits on one operator extraction)
+**Status**: done (shipped 2026-11-27, closed 2026-11-28 with the
+operator verifying freshrss -- 208 feeds, 32k entries, reading fine
+-- and excalidraw live in the browser)
 **Arc**: v3 (scope: [../issues.md](../issues.md) item 6)
 
 ## Acceptance criteria
