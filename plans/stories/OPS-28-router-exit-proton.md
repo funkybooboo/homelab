@@ -23,7 +23,39 @@ Two layers, one router:
    generates a WG config (endpoint + keys); OPNsense gets a WG
    interface as a policy-routing gateway.
 
-## The decision the operator must make: blanket vs split
+## Idiomatic refinement (2026-11-28; resolves the split question)
+
+Policy-split by traffic class, fail-closed, one policy point:
+
+- **Proton WG = a gateway object, never the default route.**
+- **Policy routing by source alias** (`vpn_services` = the
+  service-CT addresses, 192.168.1.51-.65): one rule routes that
+  class's outbound via Proton. Anonymizes the WHOLE service class
+  (searxng engines, freshrss feed pulls, gitea-mirror github
+  fetches, future paperless/immich) -- no per-service proxies.
+- **Deliberately raw-WAN**: gaming, streaming, the tailnet itself,
+  B2 backups, forgejo mirrors -- latency paths and authenticated
+  infrastructure; a Proton flap is never a household outage.
+- **Kill switch = the same ruleset**: deny `vpn_services` to WAN
+  after the policy route; tunnel down means the class loses
+  internet (crons retry), never a silent home-IP leak.
+- **Exit node rides the tunnel**: away devices get home LAN +
+  Proton egress in one path. tailscaled's own coordination
+  (UDP/DERP) is carved OUT of the policy route or a flap cuts
+  the remote-access lifeline.
+- **DNS fails closed**: the class's :53 redirects to Proton's
+  tunnel DNS; the rest of the house keeps unbound.
+- **One WG key per purpose** (router key revocable independent
+  of phone/laptop Proton apps; Secure Core vs standard config
+  for the service class is the one plan-tier decision).
+
+## The blanket-vs-split decision (superseded 2026-11-28)
+
+Resolved by the idiomatic refinement above: neither blanket nor
+exit-node-only -- policy-split by source alias, with the service
+CT class riding Proton and everything latency-sensitive or
+authenticated staying raw-WAN. The original analysis that led
+there:
 
 - **Blanket** (their words: "all traffic"): every LAN egress rides
   Proton. Privacy-max; but: kill-switch complexity, streaming
