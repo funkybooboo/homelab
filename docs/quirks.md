@@ -149,3 +149,31 @@ where the fix lives. Code comments link here instead of retelling.
   2. **A codec-capable Firefox-family browser still needs the
      system GStreamer set**: gst-libav on the browsing machine
      (dotfiles migration 000601) + a full browser restart.
+
+## Docker inside unprivileged CTs
+
+- **Container guests need two things the PVE API create call cannot
+  give.** The generated apparmor profile denies the mounts
+  docker/containerd/runc rely on; unlocking them is two guarded
+  config lines plus nesting, all applied by play 2 on any
+  manifest with a `container:` block (or `features:` entries):
+  1. `features: nesting=1` -- PVE 9's `pct set` rejects the bare
+     `nesting` form (key=value only), and the creation module has
+     no features parameter at all.
+  2. Two raw apparmor lines: `mount fstype=overlay,` AND
+     `mount options=(rw, move),`. The parser rejects fstype and
+     options in ONE rule (`mount fstype=overlay options=...` is
+     invalid), so both lines are required; `options=(rw, move)`
+     is the only valid form for the move-mount stage.
+- **The manifests' `features:` field was consumed by nothing
+  until USER-3** -- every CT ran without nesting since creation,
+  which the ntfy manifest comment claimed was set. Play 2 now
+  converges it, which restarted every CT once (the one-time cost
+  of a config line the manifests always claimed).
+- **Five CTs doing parallel dpkg over pve-shared (NFS) stall the
+  host's I/O** (jbd2 on the loop rootfs in D-state, iO pressure
+  ~95%, load ~28 with idle CPUs). Small-file writes over NFS are
+  the fleet's known enemy; the first container-guest converge did
+  this five at once. Not worth serializing -- the run finishes in
+  tens of minutes -- but expect a slow node during any
+  multi-CT package wave.

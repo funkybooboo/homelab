@@ -1,0 +1,32 @@
+# freshrss.yaml -- the RSS reader (USER-3 daily tools; the one
+# data-bearing keep, dump 104). The old /opt/freshrss/data tree
+# restores marker-gated once the operator runs
+# scripts/extract-legacy.sh --copy-from-dump 104.
+name: freshrss
+vmid: 215
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 8
+ip: 192.168.1.65
+role: container_guest
+container:
+  image: freshrss/freshrss
+  digest: "sha256:0e96aa405358d6c85c4e99879693abdf21177f2898922fd4630b9a236715a241"
+  port: 8080
+  target: 80
+  volumes:
+    - "/opt/app/data:/var/www/FreshRSS/data"
+  env:
+    CRON_MIN: "13,43"   # the built-in feed updater
+restore:
+  src: "from-dump-104/opt/freshrss/data"
+  dest_parent: "/opt/app/"
+tailnet: true
+tailnet_serve: 8080      # https://freshrss.tail54538d.ts.net
+mounts: []
+features: [nesting]

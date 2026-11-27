@@ -1,0 +1,23 @@
+# searxng.yaml -- the self-hosted metasearch (USER-3 daily
+# tools). Stateless; official image, digest-pinned.
+name: searxng
+vmid: 212
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 8
+ip: 192.168.1.62
+role: container_guest
+container:
+  image: searxng/searxng
+  digest: "sha256:d1595bd9cf464bd84e30a07f4199e2cf2cddfbb633aed966b9c8458f6df62018"
+  port: 8080
+  target: 8080
+tailnet: true
+tailnet_serve: 8080      # https://searxng.tail54538d.ts.net
+mounts: []
+features: [nesting]

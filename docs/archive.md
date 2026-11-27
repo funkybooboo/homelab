@@ -43,6 +43,9 @@ Two facts about the output:
 - **linkwarden, omnivore, opengist, jupyter, bichon,
   protonmail-bridge, speedtest**: dumps exist; each restores in
   its own story.
+- **freshrss (CT 104)**: dump exists; restores in USER-3 via the
+  container-guest mechanism (`restore:` block in the manifest;
+  the extraction is the operator's one command below).
 - **grafana**: dump 123 holds the old dashboards if a restore is
   ever wanted.
 - **CTs 110 and 116** (Sept-26 dumps only): stopped templates;

@@ -1,0 +1,5 @@
+# container_guest defaults
+# The legacy extraction base on the controller (repo root +
+# legacy-extraction) -- the same source convention as the media
+# roles' restore blocks.
+container_restore_base: "{{ playbook_dir | dirname | dirname }}/legacy-extraction"

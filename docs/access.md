@@ -10,7 +10,7 @@ tailscale.
 
 | Guest | URL | Sign-in | First-use notes |
 | --- | --- | --- | --- |
-| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here; the archive holds the old fleet's `freshrss` until its story runs |
+| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here |
 | adminer | https://adminer.tail54538d.ts.net | server `192.168.1.14:5432`, user `nate`, same password | the DB admin UI; pick a database from the dropdown |
 | ntfy | https://ntfy.tail54538d.ts.net | open (topics are the access control) | subscribe from the phone app: add server, topic `homelab`; alert wiring lands with the service stories |
 | prometheus | https://prometheus.tail54538d.ts.net | open (read-only) | Status > Targets should show the whole fleet UP (incl. the forgejo-app job) |
@@ -22,6 +22,11 @@ tailscale.
 | jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | GPU transcode via the host's NVIDIA 580.142; libraries at the legacy in-CT paths ([quirks](./quirks.md)); playback needs a codec-capable browser (Brave/Firefox; see [quirks](./quirks.md)) |
 | navidrome | https://navidrome.tail54538d.ts.net | first-run wizard (operator account) | music at /media/music; playlists + users live in the restored database |
 | audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | audiobooks/books/podcasts pre-seeded; metadata + progress restored; playback needs a codec-capable browser (see [quirks](./quirks.md)) |
+| it-tools | https://it-tools.tail54538d.ts.net | open | the developer Swiss-army knife; stateless, no data to lose |
+| searxng | https://searxng.tail54538d.ts.net | open | the self-hosted metasearch; default settings |
+| excalidraw | https://excalidraw.tail54538d.ts.net | open | the whiteboard; scenes live in browser storage |
+| drawio | https://drawio.tail54538d.ts.net | open | the diagrams tool; diagrams live in browser storage (use File > Export for keepers) |
+| freshrss | https://freshrss.tail54538d.ts.net | the old account returns with the dump 104 restore | until the extraction runs the front shows a fresh-install wizard -- do NOT set it up by hand; run `sudo ./scripts/extract-legacy.sh --copy-from-dump 104` + the chown, then `make converge` (the old account + 214 feeds come back) |
 
 ## The underlying rules
 

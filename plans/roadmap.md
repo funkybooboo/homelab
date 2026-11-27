@@ -79,7 +79,9 @@ their own story; the ONCE trio are the first container guests
 installer is rejected).
 
 - [USER-3 daily tools](./stories/USER-3-daily-tools.md) -- the
-  tier-3 browser tools + the curation decision
+  tier-3 browser tools + the curation decision (five container
+  guests live 2026-11-27; the container mechanism the ONCE trio
+  inherits -- the trio's stories stay as written) 
 - The keeps (each a restore from the dump archive, see
   [docs/archive.md](../docs/archive.md)):
   [USER-6 n8n](./stories/USER-6-n8n-restore.md),

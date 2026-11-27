@@ -1,0 +1,23 @@
+# it-tools.yaml -- the developer Swiss-army knife (USER-3 daily
+# tools). Stateless browser tool; official image, digest-pinned.
+name: it-tools
+vmid: 211
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 8
+ip: 192.168.1.61
+role: container_guest
+container:
+  image: corentinth/it-tools
+  digest: "sha256:6f177c156b9466610e0f2093e24668b78da501c66f0054f98bccb582b74ab26b"
+  port: 8080          # CT-local listen (fronted by tailnet serve)
+  target: 80          # inside the container
+tailnet: true
+tailnet_serve: 8080      # https://it-tools.tail54538d.ts.net
+mounts: []
+features: [nesting]   # docker-in-LXC (the container_guest mechanism)

@@ -1,0 +1,24 @@
+# Managed by make converge (container_guest role). The image is
+# digest-pinned; updates roll via roll-pins.sh rewriting the
+# manifest digest, never a floating tag.
+services:
+  app:
+    image: {{ app_container.image }}@{{ app_container.digest }}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:{{ app_container.port }}:{{ app_container.target }}"
+{% if app_container.volumes is defined %}
+    volumes:
+{% for v in app_container.volumes %}
+      - "{{ v }}"
+{% endfor %}
+{% endif %}
+{% if app_container.env is defined %}
+    environment:
+{% for k, v in app_container.env.items() %}
+      {{ k }}: "{{ v }}"
+{% endfor %}
+{% endif %}
+    # stdout -> the guest journal -> promtail -> loki
+    logging:
+      driver: journald

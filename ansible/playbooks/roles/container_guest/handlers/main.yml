@@ -1,0 +1,12 @@
+# ---- reload systemd unit files (compose unit changes)
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+# ---- restart the compose unit (config or digest change; the
+# ---- pull + up ride the unit's own ExecStart)
+- name: restart app compose
+  ansible.builtin.systemd:
+    name: app-compose
+    state: restarted
+    daemon_reload: true

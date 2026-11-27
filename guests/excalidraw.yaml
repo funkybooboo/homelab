@@ -1,0 +1,23 @@
+# excalidraw.yaml -- the whiteboard (USER-3 daily tools).
+# Stateless; official image, digest-pinned.
+name: excalidraw
+vmid: 213
+state: present
+node: pve-aspiree15
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 1
+memory: 512
+swap: 512
+disk: 8
+ip: 192.168.1.63
+role: container_guest
+container:
+  image: excalidraw/excalidraw
+  digest: "sha256:4542f30bea392b833822d0e7db4fa2220e6706ca962c082add2665159fa91758"
+  port: 8080
+  target: 80
+tailnet: true
+tailnet_serve: 8080      # https://excalidraw.tail54538d.ts.net
+mounts: []
+features: [nesting]

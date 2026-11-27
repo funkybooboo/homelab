@@ -17,6 +17,9 @@
 #   gitea_mirror_bun_version   github    oven-sh/bun            bun-v1.x
 #   navidrome_version          github    navidrome/navidrome    v0.6x
 #   vaultwarden_version        github    dani-garcia/vaultwarden 1.x
+#   container digests          docker hub guests/*.yaml container:
+#                              blocks (image@digest; roll-forward
+#                              of the ONCE/USER-3 container fleet)
 #
 # The one deliberate exception: nvidia_run_version (group_vars/all.yml)
 # is pinned on purpose -- Pascal's terminal 580 branch, locked to the
@@ -93,11 +96,48 @@ _roll ansible/playbooks/roles/navidrome/defaults/main.yml navidrome_version \
 _roll ansible/playbooks/roles/vaultwarden/defaults/main.yml vaultwarden_version \
   "https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest" keep
 
+# ---- container image digests (guests/*.yaml container: blocks; the
+# ---- latest tag's manifest digest, per Docker Hub's tags API)
+_resolve_digest() {
+  local img="$1" json
+  json="$(mktemp)"
+  curl -fsSL --max-time 20 \
+    "https://hub.docker.com/v2/repositories/$img/tags/?page_size=1&name=latest" \
+    -o "$json" 2>/dev/null || true
+  # comma-split: the top-level manifest digest precedes the
+  # per-architecture entries in the payload
+  tr ',' '\n' <"$json" | sed -n 's/.*"digest":"\(sha256:[a-f0-9]*\)".*/\1/p' | head -1
+  rm -f "$json"
+}
+
+echo "rolling container image digests:"
+for _mf in guests/*.yaml; do
+  _img="$(sed -n 's/^  image:[[:space:]]*"\?\([^"]*\)"\?$/\1/p' "$_mf")"
+  _cur="$(sed -n 's/^  digest:[[:space:]]*"\?\(sha256:[a-f0-9]*\)"\?$/\1/p' "$_mf")"
+  if [[ -z "${_img:-}" || -z "${_cur:-}" ]]; then continue; fi
+  _latest="$(_resolve_digest "$_img")"
+  if [[ -z "$_latest" ]]; then
+    echo "  [!] $_img: latest digest unresolvable -- keeping current"
+    continue
+  fi
+  if [[ "$_latest" == "$_cur" ]]; then
+    echo "  [-] $_img (digest current)"
+    continue
+  fi
+  sed -i "s|^  digest: \"${_cur}\"|  digest: \"${_latest}\"|" "$_mf"
+  echo "  [+] $_img digest $_cur -> $_latest"
+  ROLLED=$((ROLLED + 1))
+done
+
 # The house yaml trap: colon-carrying rewrites are checked before anything
 # else touches these files.
 for f in forgejo gitea_mirror navidrome vaultwarden; do
   /usr/bin/python3 -c "import yaml,sys; yaml.safe_load(open('ansible/playbooks/roles/$f/defaults/main.yml'))" \
     || { echo "  [!] $f defaults failed yaml parse -- REVERT THE EDIT"; exit 1; }
+done
+for _mf in guests/*.yaml; do
+  /usr/bin/python3 -c "import yaml,sys; yaml.safe_load(open('$_mf'))" \
+    || { echo "  [!] $_mf failed yaml parse -- REVERT THE EDIT"; exit 1; }
 done
 
 if (( ROLLED > 0 )); then

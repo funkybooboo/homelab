@@ -13,4 +13,4 @@
 | mint-tailscale-key.sh | live | re-mint the guest-enrollment preauth key (make update warns at <14d) |
 | secrets-restore.sh | live | materialize every local/*.env from the Proton Pass vault (OPS-26; run after `pass-cli login` on a new machine) |
 | reboot-node.sh | live | the node reboot runbook, executable: gated, one-at-a-time, aborts on any failed check; operator-invoked only, never scheduled |
-| roll-pins.sh | live | rolls the pinned release versions (forgejo, gitea-mirror + bun, navidrome, vaultwarden) to upstream latest by rewriting role defaults; runs inside `make update` and standalone; the roles' version gates apply the bump on the next converge. The NVIDIA driver pin is deliberately excluded (Pascal's terminal 580 branch) |
+| roll-pins.sh | live | rolls the pinned release versions (forgejo, gitea-mirror + bun, navidrome, vaultwarden) AND the container guests' image digests (guests/*.yaml `container:` blocks) to upstream latest by rewriting role defaults + manifests; runs inside `make update` and standalone; the roles' version gates apply the bump on the next converge. The NVIDIA driver pin is deliberately excluded (Pascal's terminal 580 branch) |

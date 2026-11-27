@@ -1,0 +1,130 @@
+# container_guest -- the fleet's container mechanism. A manifest
+# with a `container:` block (image, digest, port, target) gets
+# docker + compose, a digest-pinned compose file, and a
+# systemd-managed `compose up --wait`. One role serves every
+# container-native service: USER-3's browser tools + freshrss
+# first; the ONCE trio inherits the proven pattern.
+#
+# Conventions (the ONCE note, USER-14): official images pinned by
+# DIGEST, never a floating tag; updates roll via make update
+# (roll-pins.sh rewrites the manifest digest, the version-gated
+# compose re-pulls and restarts); never a vendor installer.
+#
+# Model B front: the container listens on 127.0.0.1:<port>;
+# guest_common's tailnet serve fronts it as
+# https://<name>.tail54538d.ts.net.
+#
+# Optional manifest `restore:` block (freshrss): content-gated
+# once-only copy from the legacy extraction, marker written only
+# inside the block -- an absent source leaves the window open,
+# the same contract as the media roles (docs/quirks.md).
+- name: manifest carries a container block (role guard)
+  ansible.builtin.fail:
+    msg: "container_guest requires a container block in the manifest"
+  when: (app_container | default({})).image is not defined
+
+# ---- optional legacy data restore (before the container first
+# ---- boots with a digest change, so a restore never needs a
+# ---- second restart): marker-gated once, content-gated source
+- name: restore marker present? (once-only gate)
+  when: app_restore.src is defined
+  ansible.builtin.stat:
+    path: /usr/local/share/container-restore.done
+  register: _cg_restored
+
+- name: controller holds a real extraction? (files, not a bare dir)
+  when:
+    - app_restore.src is defined
+    - not _cg_restored.stat.exists
+  become: false
+  ansible.builtin.command:
+    argv: [find, "{{ container_restore_base }}/{{ app_restore.src }}", -type, f, -print, -quit]
+  register: _cg_src
+  delegate_to: localhost
+  changed_when: false
+  failed_when: false
+
+- name: legacy data restored (only while unmarked AND the source
+        holds files; an absent source leaves the window OPEN)
+  when:
+    - app_restore.src is defined
+    - not _cg_restored.stat.exists
+    - (_cg_src.stdout | default('') | length) > 0
+  block:
+    - name: the copy (numeric owner 33 -- the container's www-data)
+      ansible.builtin.copy:
+        src: "{{ container_restore_base }}/{{ app_restore.src }}"
+        dest: "{{ app_restore.dest_parent }}"
+        owner: "33"
+        group: "33"
+      notify: restart app compose
+
+    - name: restore marker written (INSIDE the block -- only when
+            the restore ran)
+      ansible.builtin.copy:
+        dest: /usr/local/share/container-restore.done
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          Managed by make converge (container_guest role).
+          Restore source: {{ container_restore_base }}/{{ app_restore.src }}.
+          This marker present = the restore RAN.
+
+# ---- docker (official repo, trixie; the ONCE pattern: docker +
+# ---- compose inside a nesting-enabled CT)
+- name: Docker apt repo (official, per-release)
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: https://download.docker.com/linux/debian
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
+    components: [stable]
+    signed_by: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: docker installed (forced refresh -- the repo was just added)
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: true   # no cache_valid_time: the repo above is
+                          # minutes old and the cache predates it
+
+- name: app dir present
+  ansible.builtin.file:
+    path: /opt/app
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: compose file deployed
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/app/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart app compose
+
+- name: compose unit deployed
+  ansible.builtin.template:
+    src: app-compose.service.j2
+    dest: /etc/systemd/system/app-compose.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart app compose
+
+- name: compose unit enabled + started
+  ansible.builtin.systemd:
+    name: app-compose
+    state: started
+    enabled: true
+    daemon_reload: true

@@ -174,6 +174,73 @@
         index_var: idx
         label: "{{ item.name }}"
 
+    - name: Apparmor overlay mounts for container guests
+            (docker-in-LXC -- the generated profile denies overlay mounts
+            by default; two guarded raw lines + a restart unlock them.
+            Validated on the 7.0.14-pve kernel + apparmor 4.x parser.
+            fstype and options cannot share one rule -- BOTH lines are
+            required, and options=(rw, move) is the only valid move form)
+      when:
+        - item.state | default('present') == 'present'
+        - item.container is defined
+      ansible.builtin.shell: |
+        set -eu
+        CONF=/etc/pve/lxc/{{ item.vmid }}.conf
+        CHANGED=0
+        ensure() { grep -qxF "$1" "$CONF" || { printf '%s\n' "$1" >> "$CONF"; CHANGED=1; } }
+        ensure "lxc.apparmor.raw: mount fstype=overlay,"
+        ensure "lxc.apparmor.raw: mount options=(rw, move),"
+        test $CHANGED -eq 0 || echo APPLIED
+      register: _aa_apply
+      delegate_to: "{{ item.node }}"
+      changed_when: "'APPLIED' in _aa_apply.stdout"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: aa_idx
+        label: "{{ item.name }}"
+
+    - name: Apply manifest features (nesting -- PVE 9 wants the
+            key=value form, and the creation module cannot pass
+            features at all; guarded pct config grep, re-runs silent)
+      when:
+        - item.state | default('present') == 'present'
+        - item.features is defined
+        - item.features | length > 0
+      ansible.builtin.shell: |
+        set -eu
+        C={{ item.vmid }}
+        WANT="features: {{ item.features | join('=1,') }}=1"
+        if pct config $C | grep -q "^$WANT"; then
+          exit 0
+        fi
+        pct set $C --features "{{ item.features | join('=1,') }}=1"
+        echo APPLIED
+      register: _feat_apply
+      delegate_to: "{{ item.node }}"
+      changed_when: "'APPLIED' in _feat_apply.stdout"
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Restart container guests whose apparmor changed this run
+            (profile rules apply at CT start, never live)
+      when:
+        - item.state | default('present') == 'present'
+        - "'APPLIED' in ((_aa_apply.results[aa_idx].stdout | default('')) ~ (_feat_apply.results[aa_idx].stdout | default('')))"
+      community.proxmox.proxmox:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ lookup('ansible.builtin.env', 'PVE_API_TOKEN_SECRET') }}"
+        validate_certs: false
+        vmid: "{{ item.vmid }}"
+        node: "{{ item.node }}"
+        state: restarted
+      loop: "{{ hostvars['localhost']['guests'] }}"
+      loop_control:
+        index_var: aa_idx
+        label: "{{ item.name }}"
+
     - name: Restart guests whose mounts/devnodes changed this run
             (binds + devices apply at CT start, never live)
       when:
@@ -290,6 +357,9 @@
     # fleet addresses for data-driven roles (prometheus targets):
     fleet_nodes: "{{ groups['pve'] | map('extract', hostvars, 'ansible_host') | list }}"
     fleet_guests: "{{ hostvars['localhost']['guests'] }}"
+    # this guest's own manifest item (native dict -- task vars keep
+    # types, add_host would stringify them)
+    manifest_item: "{{ hostvars['localhost']['guests'] | selectattr('name', 'equalto', inventory_hostname) | first }}"
   tasks:
     - name: guest_common (packages, good-ssh, operator account)
       ansible.builtin.include_role:
@@ -299,3 +369,6 @@
       when: guest_role is defined
       ansible.builtin.include_role:
         name: "{{ guest_role }}"
+      vars:
+        app_container: "{{ manifest_item.container | default({}) }}"
+        app_restore: "{{ manifest_item.restore | default({}) }}"
