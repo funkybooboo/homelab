@@ -2,16 +2,16 @@
 
 The old fleet is gone; its vzdump archives remain on truenas and
 are the only restorable source of old-fleet data. This is the
-reference for what exists and how to pull it.
+reference for what remains in the archive and how to pull it.
 
 ## Where the data is
 
 - `pve-backups/dump/vzdump-lxc-<ctid>-<date>.tar.zst` on truenas:
   weekly snapshots of every old CT, keep-last rotation. The newest
   per CT is the relevant one.
-- The raw disk images (`pve-shared/images/`) were removed in the
-  OPS-20 cleanout. Nothing reads them now, and vmids 101-106 are
-  reused by the new fleet's infra guests.
+- The raw disk images no longer exist; vmids 101-106 are reused
+  by the new fleet's infra guests, and the extractor skips those
+  vmids.
 
 ## How to pull
 
@@ -32,26 +32,20 @@ Two facts about the output:
   each restore is gated on files being present, runs once, and
   never overwrites live data.
 
-## What has been consumed
+## What remains in the archive
 
-| CT | Service | Newest dump | Status |
-| --- | --- | --- | --- |
-| 106 | n8n | 2026-11-21 | extracted (tier 0) |
-| 107 | forgejo hub | 2026-11-21 | restored (OPS-9) |
-| 108 | postgres | 2026-11-21 | restored (OPS-10) |
-| 109 | vaultwarden | 2026-11-21 | restored (USER-1) |
-| 102 | jellyfin | 2026-09-26 | restored (USER-2) |
-| 132 | navidrome | 2026-09-26 | restored (USER-2) |
-| 133 | audiobookshelf | 2026-11-21 | restored (USER-2) |
-
-## What remains, by story
-
-- USER-5 (firefox sync, CT 131): no dump exists. The story opens
-  with a B2 check; expect a fresh start.
-- USER-7/8/9/10/11/12/13 (linkwarden, omnivore, opengist, jupyter,
-  bichon, protonmail-bridge, speedtest): dumps exist; each story
-  restores from them.
-- CTs 110 and 116 (Sept-26 dumps only): presumed stopped templates;
+- **Already consumed** (jellyfin, navidrome, audiobookshelf,
+  forgejo, postgres, vaultwarden, n8n): the dated ledger is in
+  [plans/history.md](../plans/history.md) (the extraction ledger).
+  Re-extraction stays possible for all of them.
+- **firefox sync (CT 131)**: no dump exists; USER-5 opens with a
+  B2 check and expects a fresh start.
+- **linkwarden, omnivore, opengist, jupyter, bichon,
+  protonmail-bridge, speedtest**: dumps exist; each restores in
+  its own story.
+- **grafana**: dump 123 holds the old dashboards if a restore is
+  ever wanted.
+- **CTs 110 and 116** (Sept-26 dumps only): stopped templates;
   resurrect on demand.
 
 Anything not listed here is not coming back unless a story asks

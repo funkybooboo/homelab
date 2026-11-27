@@ -38,7 +38,7 @@ where the fix lives. Code comments link here instead of retelling.
   `/usr/bin/nvidia-uninstall` exists, and debconf preseeding cannot
   answer it (the postinst resets the seen flag). Run the uninstaller
   first, then purge the debian nvidia packages, before any `.run`
-  install. See OPS-25/USER-2 history entries.
+  install. See the NVIDIA entries in [plans/history.md](../plans/history.md).
 
 ## Services on the guests
 
@@ -84,10 +84,10 @@ where the fix lives. Code comments link here instead of retelling.
 ## Extraction and restores
 
 - **The legacy dump archive is the only old-fleet source.** The raw
-  disk images were removed in the OPS-20 cleanout, and vmids 101-106
-  are reused by the new fleet; the extractor skips those vmids and
-  points at `--copy-from-dump`. See
-  [data-to-extract.md](./data-to-extract.md).
+  disk images no longer exist; vmids 101-106 are reused by the
+  new fleet, and the extractor skips those vmids and points at
+  `--copy-from-dump`. See
+  [archive.md](./archive.md).
 - **Extractions run under sudo land root-owned with mode 750.** The
   agent and ansible run as nate and cannot read them; `du` reports 0
   and `ls` fails on directories you do not own. Fix: chown the tree

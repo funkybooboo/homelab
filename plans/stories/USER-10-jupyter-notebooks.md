@@ -21,6 +21,6 @@ analysis work continues where it stopped.
 ## Notes
 
 This is the one old-fleet service whose DATA PATH was never
-proven ("to locate" in docs/data-to-extract.md) -- the extraction
+proven ("to locate" in the archive notes) -- the extraction
 step is exploratory: walk the dump's home dirs for *.ipynb before
 writing the role. Notebooks are small; the CT is tiny.

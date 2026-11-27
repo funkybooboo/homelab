@@ -25,7 +25,7 @@ demand"; that list is what makes lazy resurrection cheap later.
 
 Curation is the build list: decide which services get manifests at
 all (~12-15 keepers, issues item 6); the dump archive
-([../docs/data-to-extract.md](../docs/data-to-extract.md)) keeps
+([../docs/archive.md](../docs/archive.md)) keeps
 lazy resurrection cheap for anything left off. The old-fleet keeps
 (n8n, linkwarden, omnivore, opengist, jupyter, bichon,
 protonmail-bridge, speedtest, cronmaster) each have their own story

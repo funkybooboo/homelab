@@ -62,4 +62,4 @@ alert service (verified live).
 
 The 187 vzdumps of the old fleet stay on pve-backups untouched.
 What is in them and how to pull data back:
-[data-to-extract.md](./data-to-extract.md).
+[archive.md](./archive.md).

@@ -95,9 +95,7 @@ a time) clears the flags; guests recover via onboot, quorum holds.
 12 CTs (101 postgres, 102 adminer, 103 ntfy, 104 prometheus,
 105 grafana, 106 loki, 201 vaultwarden, 202 forgejo,
 203 gitea-mirror, 205 jellyfin, 206 navidrome, 207 audiobookshelf),
-5/5 quorate. (204 gitea-mirror-codeberg was removed after
-codeberg declined the pull-mirror request; the forgejo push
-chain is the codeberg leg.)
+5/5 quorate.
 
 CLI: `source local/pve-api.env` + the storage/guest API calls the
 scripts use; or just `curl -sk -H "Authorization: Bearer ..."`.

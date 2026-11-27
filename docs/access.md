@@ -10,18 +10,18 @@ tailscale.
 
 | Guest | URL | Sign-in | First-use notes |
 | --- | --- | --- | --- |
-| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here; the old fleet's `freshrss` waits for its story |
+| postgres | (no UI; `psql -h postgres.tail54538d.ts.net` or .14) | user `nate` + password in `local/pg-operator.env` | the hub's `forgejo` database is LIVE here; the archive holds the old fleet's `freshrss` until its story runs |
 | adminer | https://adminer.tail54538d.ts.net | server `192.168.1.14:5432`, user `nate`, same password | the DB admin UI; pick a database from the dropdown |
 | ntfy | https://ntfy.tail54538d.ts.net | open (topics are the access control) | subscribe from the phone app: add server, topic `homelab`; alert wiring lands with the service stories |
 | prometheus | https://prometheus.tail54538d.ts.net | open (read-only) | Status > Targets should show the whole fleet UP (incl. the forgejo-app job) |
-| grafana | https://grafana.tail54538d.ts.net | `admin` / `admin` -- CHANGE ON FIRST LOGIN | datasources (prometheus + loki) are pre-provisioned; build dashboards in the UI (old grafana data sits in dump 123 if a restore is wanted) |
+| grafana | https://grafana.tail54538d.ts.net | `admin` / `admin` -- CHANGE ON FIRST LOGIN | datasources (prometheus + loki) are pre-provisioned; build dashboards in the UI (old dashboards sit in the dump archive, see archive.md) |
 | loki | (no UI; grafana is its face) | via grafana Explore | promtail on every node ships journald here |
-| vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | restored (USER-1); operator-verified on phone + laptop |
+| vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | the restored vault; verify on phone + laptop |
 | forgejo | https://forgejo.tail54538d.ts.net | `nate` / `funkybooboo`; API tokens in `local/forgejo-*.env` | the git hub (349 repos); sync legs: gitea-mirror nightly -> hub, push mirrors -> codeberg |
 | gitea-mirror | https://gitea-mirror.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-api.env` | github -> hub sync app; nightly 22:00 |
-| jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | USER-2; GPU transcode via the host's NVIDIA 580.142; libraries land with the metadata restore |
-| navidrome | https://navidrome.tail54538d.ts.net | first-run wizard (operator account) | USER-2; music at /media/music; pointer state restores from dump 132 when extracted |
-| audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | USER-2; audiobooks/books/podcasts pre-seeded; progress restores from dump 133 when extracted |
+| jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | GPU transcode via the host's NVIDIA 580.142; libraries at the legacy in-CT paths ([quirks](./quirks.md)) |
+| navidrome | https://navidrome.tail54538d.ts.net | first-run wizard (operator account) | music at /media/music; playlists + users live in the restored database |
+| audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | audiobooks/books/podcasts pre-seeded; metadata + progress restored |
 
 ## The underlying rules
 

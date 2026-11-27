@@ -337,6 +337,25 @@ and trips systemd's start limit (guest_common drop-in fixes it).
 v4 automation polish, v5 platform refresh -- each appended above
 as its stories flip done.
 
+## The extraction ledger
+
+The dump-archive consumption record (the dated table that used to
+live in docs/data-to-extract.md; dates = the dump used, not the
+restore day):
+
+| CT | Service | Newest dump | Outcome |
+| --- | --- | --- | --- |
+| 106 | n8n | 2026-11-21 | extracted (tier 0) |
+| 107 | forgejo hub | 2026-11-21 | restored (OPS-9) |
+| 108 | postgres | 2026-11-21 | restored (OPS-10) |
+| 109 | vaultwarden | 2026-11-21 | restored (USER-1) |
+| 102 | jellyfin | 2026-09-26 | restored (USER-2) |
+| 132 | navidrome | 2026-09-26 | restored (USER-2) |
+| 133 | audiobookshelf | 2026-11-21 | restored (USER-2) |
+
+Re-extraction stays possible for every row; the live archive
+inventory is [docs/archive.md](../docs/archive.md).
+
 ## Incidents (pre-v3, carried from the debugging runbook)
 
 - framework vanish x3 (Jul/Sep/Nov 2026): USB NIC same-second

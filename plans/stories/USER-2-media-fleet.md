@@ -31,7 +31,7 @@ story (USER-5) despite living on the same old node.
 Built fresh on thermaltake (the only GPU): the media data never
 moved (truenas NFS exports, untouched); per-service metadata
 restores from the dump archive
-([../docs/data-to-extract.md](../docs/data-to-extract.md)).
+([../docs/archive.md](../docs/archive.md)).
 
 The build design, the as-built deviations (the GPU driver
 situation, the installer-source finds, the restore saga), and the

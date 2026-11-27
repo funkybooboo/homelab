@@ -21,7 +21,7 @@ directive 2026-11-23: every old-fleet service gets its own story)
 
 ## Notes
 
-Tier-0 by the old data-to-extract ranking: the workflows ARE the
+Tier-0: the workflows ARE the
 value (hand-rebuilding dozens of them is the expensive path). The
 Nov-21 vzdump is NEWER than the on-debbie extraction -- diff the
 two at build time and restore from the fresher. n8n is

@@ -81,7 +81,7 @@ installer is rejected).
 - [USER-3 daily tools](./stories/USER-3-daily-tools.md) -- the
   tier-3 browser tools + the curation decision
 - The keeps (each a restore from the dump archive, see
-  [docs/data-to-extract.md](../docs/data-to-extract.md)):
+  [docs/archive.md](../docs/archive.md)):
   [USER-6 n8n](./stories/USER-6-n8n-restore.md),
   [USER-7 linkwarden](./stories/USER-7-linkwarden-restore.md),
   [USER-8 omnivore](./stories/USER-8-omnivore-restore.md)

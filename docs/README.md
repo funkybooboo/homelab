@@ -26,5 +26,5 @@ grouped by what the reader is trying to do.
 - [`data.md`](./data.md) -- where each service's data lives and why
 - [`backups.md`](./backups.md) -- what is backed up, to where, and
   the known gaps
-- [`data-to-extract.md`](./data-to-extract.md) -- the legacy dump
-  archive: what old-fleet data still exists and how to pull it
+- [`archive.md`](./archive.md) -- the legacy dump archive: what
+  old-fleet data remains and how to pull it

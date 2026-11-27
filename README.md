@@ -13,7 +13,7 @@ every service tailnet-only, and this repo as the source of truth --
 
 | Path | What it is |
 |------|------------|
-| [`plans/`](plans/) | The erledigen-style planning system: identity (constitution), roadmap (arcs v0-v5 + someday), stories (one file per work item), design records, history, issues. Start at [`plans/roadmap.md`](plans/roadmap.md). |
+| [`plans/`](plans/) | The erledigen-style planning system: identity (constitution), roadmap (arcs v0-v5 + Backlog), stories (one file per work item), design records, history, issues. Start at [`plans/roadmap.md`](plans/roadmap.md). |
 | [`ansible/`](ansible/) | The IaC home: inventory + facts (`inventory/host_vars/*.yml` is THE per-machine registry, `group_vars/all.yml` the LAN plan), pinned collections in `requirements.yml`, playbooks + roles (`playbooks/roles/<name>/` -- one role per service guest), playbook static files (`playbooks/files/keys/` = the admin pubkey the bootstrap flow installs). |
 | [`guests/`](guests/) | The fleet declaration: one YAML per guest, read by the converge/update/verify loop. This, not the PVE UI, is the list of what should exist. |
 | [`scripts/`](scripts/) | The operator's toolbelt -- bring-up + fleet tools, run from debbie over ssh (by you, or by a directed assistant acting as you). See each header for usage. |

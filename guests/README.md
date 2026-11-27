@@ -1,6 +1,6 @@
 # guests/ -- one guest = one YAML manifest
 
-The v2 skeleton (OPS-7) converges the guest fleet from these
+The skeleton converges the guest fleet from these
 manifests: `make converge` reads every `guests/*.yaml`, creates any
 missing CT via the PVE API (the homelab-ops token), bootstraps the
 operator account inside it, and applies the guest's role.
@@ -21,7 +21,7 @@ disk: 4               # GB rootfs
 ip: 192.168.1.50      # static at pct level (never DHCP, issues 7)
 role: test_service    # ansible role applied inside the guest
 mounts: []            # pct mpX entries: {mp, src} -- node-level
-                       # paths bind-mounted into the CT (USER-2)
+                       # paths bind-mounted into the CT
 gpu: false             # true = NVIDIA devnode passthrough into the
                        # CT (guests.yml writes the lxc lines; the
                        # node's driver is node_glue's job)
@@ -31,8 +31,8 @@ features: []           # e.g. [nesting] for docker-style services
 ## Conventions
 
 - VMIDs: infra guests `1xx` (reserved: pbs=100), service CTs `2xx`
-  sequential, test/disposable `299`. The old fleet's 100-134 VMIDs
-  are retired with the old fleet (their dumps still carry them).
+  sequential, test/disposable `299`. VMIDs 100-134 are retired
+  with the old fleet (the archive dumps still carry them).
 - IPs: infra guests in `.11-.19`, service guests in `.50-.99`
   (the `guest_range` in group_vars/all.yml; bash parsers there
   depend on that key format). First come: test=.50,

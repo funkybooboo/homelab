@@ -40,5 +40,5 @@ move); its tier-0 report gate feeds USER-1's vaultwarden restore.
 The pure-history archive files (guest catalog, old LAN, quirks
 and incidents, the old observability plan, the index) live in git
 history, per the operator's git-is-the-archive call;
-`docs/data-to-extract.md` survives as the live dump-archive
+`docs/archive.md` is the live dump-archive
 reference, and the v0 record is in [../history.md](../history.md).
