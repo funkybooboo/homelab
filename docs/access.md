@@ -19,9 +19,9 @@ tailscale.
 | vaultwarden | https://vaultwarden.tail54538d.ts.net | the operator's vaultwarden account (client app + browser extension) | the restored vault; verify on phone + laptop |
 | forgejo | https://forgejo.tail54538d.ts.net | `nate` / `funkybooboo`; API tokens in `local/forgejo-*.env` | the git hub (349 repos); sync legs: gitea-mirror nightly -> hub, push mirrors -> codeberg |
 | gitea-mirror | https://gitea-mirror.tail54538d.ts.net | UI open; API key in `local/gitea-mirror-api.env` | github -> hub sync app; nightly 22:00 |
-| jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | GPU transcode via the host's NVIDIA 580.142; libraries at the legacy in-CT paths ([quirks](./quirks.md)) |
+| jellyfin | https://jellyfin.tail54538d.ts.net | first-run wizard (operator account) | GPU transcode via the host's NVIDIA 580.142; libraries at the legacy in-CT paths ([quirks](./quirks.md)); playback needs a codec-capable browser (Brave/Firefox; see [quirks](./quirks.md)) |
 | navidrome | https://navidrome.tail54538d.ts.net | first-run wizard (operator account) | music at /media/music; playlists + users live in the restored database |
-| audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | audiobooks/books/podcasts pre-seeded; metadata + progress restored |
+| audiobookshelf | https://audiobookshelf.tail54538d.ts.net | first-run wizard (operator account) | audiobooks/books/podcasts pre-seeded; metadata + progress restored; playback needs a codec-capable browser (see [quirks](./quirks.md)) |
 
 ## The underlying rules
 
