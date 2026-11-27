@@ -37,6 +37,20 @@ then run `scripts/secrets-restore.sh` -- it materializes every
 `local/*.env` (mode 600). Rotation updates the live env file AND
 the vault item; templates are references, not values.
 
+## WireGuard (OPS-28)
+
+- `proton-wg.conf` -- the ACTIVE Proton tunnel config for the
+  router's `proton-services` WG instance (block-malware-ads-and-
+  trackers / NetShield 2). The two sibling confs are the same
+  server + keypair at other filtering levels: `proton-wg-
+  malware-only.conf` (NetShield 1) and `proton-wg-no-filter.conf`
+  (NetShield 0). Swap = copy a variant over `proton-wg.conf`;
+  the router only cares if the key or endpoint changed.
+- These are hand-maintained (not pass-cli templates): the private
+  key exists in the vault as item `proton-wg-opnsense`, and the
+  `proton-wg.conf.example` sibling documents the shape + the
+  Proton re-download redaction trap.
+
 ## Subdirectories
 
 - `ops-9-audit/` -- evidence from the forgejo/codeberg sync-layer

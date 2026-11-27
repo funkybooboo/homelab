@@ -1,0 +1,27 @@
+# ProtonVPN WireGuard config for the OPNsense proton-services
+# instance (OPS-28). The real confs live as siblings in local/
+# (gitignored, 600): proton-wg.conf is the ACTIVE variant
+# (block-malware-ads-and-trackers); proton-wg-malware-only.conf
+# and proton-wg-no-filter.conf are the swap-in alternatives --
+# same server, same keypair, only Proton's DNS filtering level
+# differs (NetShield 2 / 1 / 0). Swapping = copy a variant over
+# proton-wg.conf, then re-enter the PrivateKey + PublicKey +
+# Endpoint in the router's WG instance+peer if they changed.
+#
+# Proton shows the PrivateKey ONCE at creation time. A conf
+# whose PrivateKey line reads "*****" is a re-download -- the
+# key was redacted and the config is unusable; create a fresh
+# one in the Proton UI (name it opnsense-services, platform
+# Router) and copy the key from the creation popup immediately.
+# Durable home for the key: the operator's Proton Pass vault
+# (item proton-wg-opnsense).
+[Interface]
+PrivateKey = <paste-from-the-proton-creation-popup-shown-once>
+Address = 10.2.0.2/32, 2a07:b944::2:2/128
+DNS = 10.2.0.1, 2a07:b944::2:1
+
+[Peer]
+PublicKey = <proton-server-public-key-from-the-downloaded-conf>
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = <proton-server-ip>:51820
+PersistentKeepalive = 25
