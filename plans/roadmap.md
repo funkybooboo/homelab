@@ -225,6 +225,11 @@ Only after v3-v4 keep the running fleet boring.
 
 Nothing here is queued; each entry names the trigger that files
 its story.
+- **k3s on PVE** (decision #22): kubernetes for complex tenants
+  (fxa helm packaging, self-made software) -- 3 VMs on the existing
+  nodes, etcd quorum, no new hardware. Trigger: the fxa gate
+  (trusted mail + research pass) or the first self-made story.
+  Compose-in-CT stays the default for everything that fits it.
 
 - **homelab/household VLAN split** (operator directive
   2026-11-28: "I want my homelab to be separate from the rest

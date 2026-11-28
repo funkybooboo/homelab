@@ -33,6 +33,15 @@ container:
     SYNC_HOST: "0.0.0.0"     # compiled default binds container-loopback,
                              # which docker-proxy cannot reach (kernel RST)
     SYNC_TOKENSERVER__ENABLED: "true"
+    # tokenserver -> FxA OAuth validation creds (the public self-host
+    # pair Mozilla documents for the oldsync client; the secret rides
+    # the env: token channel for hygiene even though it is public)
+    SYNC_TOKENSERVER__FXA_OAUTH_SERVER_URL: "https://api.accounts.firefox.com/v1"
+    SYNC_TOKENSERVER__FXA_OAUTH_CLIENT_ID: "5882386c48d302ca"
+    SYNC_TOKENSERVER__FXA_OAUTH_CLIENT_SECRET: "env:SYNC_TOKENSERVER__FXA_OAUTH_CLIENT_SECRET"
+    # debug for the pairing attempts: the tokenserver logs its FxA
+    # verification call + failure reason
+    SYNC_LOG_LEVEL: "debug"
     SYNC_MASTER_SECRET: "env:SYNC_MASTER_SECRET"
     SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET: "env:SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET"
     SYNC_STORAGE__DATABASE_URL: "env:SYNC_STORAGE__DATABASE_URL"

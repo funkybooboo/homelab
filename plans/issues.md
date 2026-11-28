@@ -294,6 +294,24 @@ cross-service dashboards.
    stays the accepted residual, revisit trigger changed from
    "Mozilla posture changes" to "the gate opens".
 
+22. **k8s on Proxmox is a wanted capability** -- DECIDED
+   2026-11-28 (operator directive, on the fxa deployment-shape
+   question): the operator wants a kubernetes path carved for
+   hosting complex things AND self-made software -- fxa (helm,
+   fxa-packaging) is the likely first tenant, not the reason.
+   This supersedes my "no k8s for one app" recommendation: the
+   control plane is an accepted standing cost as an investment.
+   Recorded shape: k3s on VMs (NOT LXC -- the nesting/cgroup
+   gotchas; the fleet already pays a docker-in-CT tax and would
+   not extend it), 3 nodes for etcd quorum on existing PVE
+   hardware (framework, thermaltake, aspiree15), zero new
+   hardware. Trigger: the fxa gate (decision #21) OR the first
+   self-made-software story, whichever comes first. Doctrine
+   applies unchanged: etcd snapshots join the backup tier list,
+   the cluster converges from this repo, and the deployment
+   choice per-app stays honest (compose-in-CT for simple things
+   remains the default; k8s is for what outgrows it).
+
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md) -- they
