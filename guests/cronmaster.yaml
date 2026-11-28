@@ -1,0 +1,61 @@
+# cronmaster.yaml -- OPS-24, the fleet's scheduled-jobs service
+# (from scratch; the old CT 127 vzdump was reference for the JOB
+# LIST only -- which lives in the dump's root crontab: two jobs,
+# the codeberg migration + the protonpass->bitwarden sync).
+#
+# The app is crontab-based, NOT database-backed: it manages the
+# CT's root crontab (nsenter controller model, HOST_CRONTAB_USER
+# pinned so the docker socket is unnecessary) and the CT's cron
+# daemon fires the jobs. The old story wording "jobs db on the
+# shared postgres" was written before the app was verified -- no
+# such db exists; job definitions are seeded by the role
+# (marker-gated, then the app's UI owns edits).
+#
+# State on this guest: /opt/cronmaster/{scripts,data,snippets} (the
+# container's volumes) + the two job repos with their live .env
+# creds + the proton pass-cli session. All staged from the CT 127
+# extraction at converge (never in git); the rootfs rides
+# pve-shared so the guest migrates like the rest of the tools tier.
+name: cronmaster
+vmid: 217
+state: present
+node: pve-framework
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 512
+disk: 8
+ip: 192.168.1.59
+role: cronmaster
+# BARE-RUN PIVOT (verified live): the app's nsenter controller model
+# is EPERM from docker inside an unprivileged LXC (reassociate to
+# ancestor namespaces is denied; only privileged LXC would allow
+# it, weakening the CT boundary). The old fleet's shape wins: the
+# app runs bare in the CT as root, where its nsenter calls are
+# same-namespace no-ops -- exactly how CT 127 ran it for months.
+# The digest pin SURVIVES the pivot: the role stages the BUILT
+# app out of this image (docker create + cp of the standalone
+# tree), so the deployed bits still trace to the digest.
+app_image: ghcr.io/fccview/cronmaster
+app_digest: "sha256:4d09a9ae76f57edc15bc427fda367cb4967e6cfa58d61ce30f04ddab1d99f715"
+app_env:
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOSTNAME: "127.0.0.1"   # model B: tailnet serve fronts this
+  NEXT_TELEMETRY_DISABLED: "1"
+  LOCALE: "en"
+  MAX_LOG_AGE_DAYS: "30"
+  MAX_LOGS_PER_JOB: "50"
+  HOST_CRONTAB_USER: "root"
+  # the proxy middleware's session check fetches this URL; unset,
+  # it falls back to the request origin (the tailnet name) which
+  # the CT cannot resolve from inside -- every session check then
+  # dies with fetch failed and the UI sign-in never completes
+  INTERNAL_API_URL: "http://127.0.0.1:3000"
+  AUTH_PASSWORD: "env:CRONMASTER_AUTH_PASSWORD"
+  API_KEY: "env:CRONMASTER_API_KEY"
+tailnet: true
+tailnet_serve: 3000      # https://cronmaster.tail54538d.ts.net
+mounts: []
+features: [nesting]

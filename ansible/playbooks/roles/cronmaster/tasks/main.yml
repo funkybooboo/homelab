@@ -1,0 +1,257 @@
+# cronmaster -- the fleet's scheduled-jobs service (OPS-24).
+# CT-side provisioning for the fccview/cronmaster image: the app
+# is an nsenter CONTROLLER (it manages this CT's root crontab and
+# the CT's cron daemon fires the jobs), so the CT needs far more
+# than the usual one-container guest: cron daemon, git, the bw
+# CLI, the two job repos with their live credentials, and the
+# proton pass-cli session. Everything secret is staged from the
+# CT 127 extraction on the controller -- never in git -- with
+# fail-loud gates if the extraction is absent.
+#
+# Job definitions are seeded ONCE (marker-gated): after the seed
+# the app's UI owns the crontab (its whole value proposition is
+# in-browser job management + logs), and this role never clobbers
+# operator edits at re-converge.
+
+- name: cron daemon + job runtime packages
+  ansible.builtin.apt:
+    name:
+      - cron          # the CT's own daemon fires the jobs
+      - git
+      - jq
+      - curl
+      - nodejs        # trixie ships 20.x: enough for the bw CLI
+      - npm
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: cron service enabled + started (jobs never fire without it)
+  ansible.builtin.systemd:
+    name: cron
+    state: started
+    enabled: true
+
+- name: bitwarden CLI installed (npm global, version-pinned)
+  community.general.npm:
+    name: "@bitwarden/cli"
+    global: true
+    version: "{{ cronmaster_bw_version }}"
+
+- name: bitwarden CLI version verified
+  ansible.builtin.command: bw --version
+  register: _bw_ver
+  changed_when: false
+
+- name: app directories present
+  ansible.builtin.file:
+    path: "{{ cronmaster_root }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: [scripts, data, snippets, projects]
+
+- name: CT 127 extraction present on the controller
+  become: false          # delegated to the controller: NEVER sudo here
+  ansible.builtin.stat:
+    path: "{{ cronmaster_extract }}/root/Projects"
+  register: _extract
+  delegate_to: localhost
+  run_once: true
+
+- name: fail loud if the extraction is missing (run the archive.md
+        pull first -- the job creds live only there)
+  ansible.builtin.assert:
+    that: _extract.stat.exists
+    fail_msg: >-
+      Missing {{ cronmaster_extract }} -- the CT 127 vzdump
+      extraction (job repos with .env creds, pass-cli session)
+      must exist on the controller. See docs/archive.md.
+
+- name: job repos staged (incl. their live .env credentials)
+  ansible.builtin.copy:
+    src: "{{ cronmaster_extract }}/root/Projects/{{ item }}"
+    dest: "{{ cronmaster_root }}/projects/"
+    mode: preserve
+  loop:
+    - migrate-github-to-codeberg
+    - sync-protonpass-to-bitwarden
+
+- name: pass-cli binary installed
+  ansible.builtin.copy:
+    src: "{{ cronmaster_extract }}/root/.local/bin/pass-cli"
+    dest: /usr/local/bin/pass-cli
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: proton pass-cli session staged (jobs run as root)
+  ansible.builtin.copy:
+    src: "{{ cronmaster_extract }}/root/.local/share/proton-pass-cli"
+    dest: /root/.local/share/
+    mode: preserve
+
+- name: job log wrapper staged (known-good from the old CT; the
+        app regenerates it on demand, this seeds it before any
+        job can fire)
+  ansible.builtin.copy:
+    src: "{{ cronmaster_extract }}/opt/cronmaster/data/cron-log-wrapper.sh"
+    dest: "{{ cronmaster_root }}/data/cron-log-wrapper.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: job wrapper scripts deployed (paths re-homed from the old
+        CT's /root/Projects to /opt/cronmaster/projects)
+  ansible.builtin.copy:
+    dest: "{{ cronmaster_root }}/scripts/{{ item.script }}"
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      cd {{ cronmaster_root }}/projects/{{ item.project }} || exit 1
+      ./{{ item.entry }}
+  loop:
+    - script: migrategithubtocodebergsh.sh
+      project: migrate-github-to-codeberg
+      entry: migrate_github_to_codeberg.sh
+    - script: protonpass-to-bitwarden-syncsh.sh
+      project: sync-protonpass-to-bitwarden
+      entry: protonpass-to-bitwarden-sync.sh
+
+- name: jobs already seeded?
+  ansible.builtin.stat:
+    path: "{{ cronmaster_root }}/.jobs-seeded"
+  register: _seeded
+
+- name: root crontab seeded with the ported jobs (ONCE -- then the
+        app's UI owns it; comment format is the app's own so it
+        binds the ids on first read)
+  ansible.builtin.shell: |
+    set -eu
+    CRON=$(mktemp)
+    {% for j in cronmaster_jobs %}
+    printf '%s\n' '{{ j.comment }}' >> "$CRON"
+    printf '%s\n' '{{ j.schedule }} {{ cronmaster_root }}/data/cron-log-wrapper.sh "{{ j.id }}" sh -c '\''{{ j.command }}'\''' >> "$CRON"
+    {% endfor %}
+    crontab -u root "$CRON"
+    rm -f "$CRON"
+    touch {{ cronmaster_root }}/.jobs-seeded
+  when: not _seeded.stat.exists
+
+# ---- bare-run pivot: the app runs BARE in the CT (systemd + node),
+# ---- exactly like the old CT 127 did for months. docker inside an
+# ---- unprivileged LXC cannot nsenter ancestor namespaces (EPERM,
+# ---- verified live) -- the app's controller model only works when
+# ---- the app shares the CT's namespaces. The digest pin survives:
+# ---- the BUILT standalone tree is staged OUT of the pinned image.
+
+- name: docker-ce present (staging-only -- the image is the build
+        artifact source; repo + key match the container_guest pattern)
+  ansible.builtin.deb822_repository:
+    name: docker
+    uris: https://download.docker.com/linux/debian
+    suites: "{{ ansible_distribution_release }}"
+    components: [stable]
+    signed_by: https://download.docker.com/linux/debian/gpg
+    state: present
+  register: _docker_repo
+
+- name: docker-ce installed
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-compose-plugin
+    state: present
+    update_cache: "{{ _docker_repo.changed }}"
+
+- name: docker-ce enabled + started
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: docker-compose of the abandoned container shape removed
+        (the failed first attempt left app-app-1 holding :3000)
+  ansible.builtin.shell: |
+    set -eu
+    cd /opt/app 2>/dev/null || exit 0
+    test -f docker-compose.yml || exit 0
+    docker compose down --remove-orphans || true
+    rm -rf /opt/app
+    echo REMOVED
+  register: _old_compose
+  changed_when: "'REMOVED' in _old_compose.stdout"
+
+- name: built app staged from the digest-pinned image
+        (docker create + cp of the standalone tree; marker-gated,
+        rolls only when the digest in the manifest changes)
+  ansible.builtin.shell: |
+    set -eu
+    MARK="{{ cronmaster_root }}/.app-staged-{{ cronmaster_digest | replace(':', '-') }}"
+    test -f "$MARK" && exit 0
+    docker rm -f cm-stage >/dev/null 2>&1 || true
+    docker create --name cm-stage "{{ cronmaster_image }}@{{ cronmaster_digest }}" >/dev/null
+    for f in server.js package.json next.config.mjs public .next node_modules; do
+      docker cp "cm-stage:/app/$f" "{{ cronmaster_root }}/" || true
+    done
+    docker rm -f cm-stage >/dev/null
+    # sweep any stale staging markers (older digests)
+    find "{{ cronmaster_root }}" -maxdepth 1 -name '.app-staged-*' ! -name "$(basename "$MARK")" -delete
+    touch "$MARK"
+    echo STAGED
+  register: _app_staged
+  changed_when: "'STAGED' in _app_staged.stdout"
+
+- name: app environment file rendered (env tokens resolve from the
+        controller at converge; mode 600 -- it carries the auth
+        secrets)
+  ansible.builtin.copy:
+    dest: "{{ cronmaster_root }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      {% for k, v in cronmaster_env.items() %}
+      {% if v.startswith('env:') %}
+      {{ k }}={{ lookup('ansible.builtin.env', v[4:]) }}
+      {% else %}
+      {{ k }}={{ v }}
+      {% endif %}
+      {% endfor %}
+  register: _env_file
+
+- name: app systemd unit deployed (bare run -- nsenter is a no-op in
+        the CT's own namespaces -- the controller model works)
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/cronmaster.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=CronMaster (bare run, OPS-24)
+      After=network.target docker.service
+
+      [Service]
+      Type=simple
+      User=root
+      WorkingDirectory={{ cronmaster_root }}
+      EnvironmentFile={{ cronmaster_root }}/.env
+      ExecStart=/usr/bin/node {{ cronmaster_root }}/server.js
+      Restart=always
+      RestartSec=10
+
+      [Install]
+      WantedBy=multi-user.target
+  register: _unit_file
+
+- name: cronmaster enabled + (re)started (on env/unit change)
+  ansible.builtin.systemd:
+    name: cronmaster
+    state: "{{ 'restarted' if (_env_file.changed or _unit_file.changed or _app_staged.changed) else 'started' }}"
+    enabled: true
+    daemon_reload: true

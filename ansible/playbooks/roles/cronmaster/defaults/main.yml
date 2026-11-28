@@ -1,0 +1,29 @@
+# cronmaster defaults -- version pins + fixed paths.
+# The app itself is digest-pinned in the manifest; the only other
+# moving part the CT needs is the bitwarden CLI for the
+# protonpass-to-bitwarden job (stock nodejs 20 runs it).
+cronmaster_bw_version: "2026.11.1"
+
+# The app bits are staged from the digest-pinned image (the bare-run
+# pivot): docker create + docker cp of the standalone tree, then the
+# container is removed. docker-ce stays installed for staging only.
+cronmaster_extract: "{{ playbook_dir | dirname | dirname }}/legacy-extraction/from-dump-127"
+cronmaster_root: /opt/cronmaster
+cronmaster_manifest: "{{ playbook_dir | dirname | dirname }}/guests/cronmaster.yaml"
+cronmaster_image: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | from_yaml).app_image }}"
+cronmaster_digest: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | from_yaml).app_digest }}"
+cronmaster_env: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | from_yaml).app_env }}"
+
+# The ported jobs. The codeberg migration is deliberately NOT
+# scheduled (operator decision 2026-11-28): forgejo's push mirrors
+# own the codeberg leg. Residual recorded: NEW github repos need a
+# one-time manual push-mirror setup on the hub (the migrate script's
+# repoMigrate auto-creation is retired with the schedule). Its
+# wrapper script + repo stay staged for MANUAL runs from the UI
+# (issues/PR-refs extras live in the same repo).
+cronmaster_jobs:
+  - id: gm21-x7le
+    schedule: "0 0 * * *"
+    comment: "# logsEnabled: true | id: gm21-x7le"
+    script: protonpass-to-bitwarden-syncsh.sh
+    command: bash /opt/cronmaster/scripts/protonpass-to-bitwarden-syncsh.sh

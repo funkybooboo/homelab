@@ -225,6 +225,18 @@ Only after v3-v4 keep the running fleet boring.
 
 Nothing here is queued; each entry names the trigger that files
 its story.
+- **FxA research-pass reading list** (operator-sourced
+  2026-11-27, feeds the decision-#21 gate): mozilla/fxa,
+  mozilla.github.io/ecosystem-platform (the umbrella),
+  mozilla.github.io/application-services (the CLIENT protocol
+  truth -- fxa-client/sync15/hawk; where the unsupported-pref
+  wall lives), mozilla-push-service (autopush -- classified
+  OPTIONAL/theater unless the household misses web push),
+  mozilla-services.github.io/syncstorage-rs (already shipped,
+  CT 216). The full off-Mozilla surface after USER-5 is just:
+  FxA (identity, row 5), AMO (add-on downloads, soft residual),
+  push (optional).
+
 - **k3s on PVE** (decision #22): kubernetes for complex tenants
   (fxa helm packaging, self-made software) -- 3 VMs on the existing
   nodes, etcd quorum, no new hardware. Trigger: the fxa gate

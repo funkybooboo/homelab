@@ -4,9 +4,19 @@ As the operator, I want cronmaster running as the fleet's
 scheduled-jobs service with every scheduled job owned by it, so
 that one place owns what happens on a schedule.
 
-**Status**: planned (operator directive 2026-11-28: build it
+**Status**: in progress (operator directive 2026-11-28: build it
 from scratch on the current cluster, port the job list, no
-legacy-system carry-over)
+legacy-system carry-over). FACT CORRECTION discovered during the
+build: cronmaster is the public fccview/cronmaster app, and it is
+CRONTAB-based, not database-backed -- the old story wording "jobs
+db on the shared postgres" predates verifying the app and is
+unmeetable as written. Re-scoped criterion below. The old CT 127
+vzdump proved richer than planned: it holds the app source (the
+deployment was a bare systemd node run, not docker), the root
+crontab with BOTH ported jobs (the real job list -- two jobs,
+not a db), the job repos with their live .env creds, and the
+proton pass-cli session -- all extracted to
+legacy-extraction/from-dump-127 and staged by the role.
 **Arc**: v3 (paired with USER-5 as the two from-scratch
 next-builds; runs after it)
 **Design context**:
@@ -15,17 +25,25 @@ next-builds; runs after it)
 
 ## Acceptance criteria
 
-- [ ] cronmaster deployed as a container_guest manifest
-      (digest-pinned image) with its database on the shared
-      postgres (.14, the data.md policy) -- a fresh, empty
-      jobs db; nothing restored from the old CT 127 vzdump
-- [ ] The operator's repos land as its first jobs:
-      [migrate-github-to-codeberg]
-      (https://github.com/funkybooboo/migrate-github-to-codeberg)
-      (the codeberg leg of the mirror chain) and
+- [ ] cronmaster deployed as a manifest + role on a dedicated CT
+      (digest-pinned public image, nsenter-controller shape:
+      privileged + pid: host inside the CT, no docker socket --
+      HOST_CRONTAB_USER pinned). The app is crontab-based: job
+      definitions are SEEDED declaratively (marker-gated, the
+      app's own comment format + the old job ids) and the app's
+      UI owns edits after the seed. App state (scripts, data,
+      snippets) + the job repos live on the CT's pve-shared
+      rootfs. No database exists to put on postgres -- the
+      criterion's original wording predates this fact.
+- [ ] The operator's repos land as its jobs:
       [sync-protonpass-to-bitwarden]
       (https://github.com/funkybooboo/sync-protonpass-to-bitwarden)
-      (the Proton Pass -> vaultwarden sync)
+      (the Proton Pass -> vaultwarden sync). The migrate-github-
+      to-codeberg job was RETIRED at port time (operator decision
+      2026-11-28): forgejo's push mirrors own the codeberg leg;
+      the script + repo stay staged for manual UI runs, with the
+      residual recorded (new github repos need a one-time manual
+      push-mirror setup)
 - [ ] Every scheduled job in the fleet is dispositioned into
       PORTED or RETIRED with reasons -- the old CT 127 job list,
       the debbie watcher, every temporary systemd timer created

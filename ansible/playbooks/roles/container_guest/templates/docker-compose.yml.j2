@@ -22,6 +22,16 @@ services:
       - "{{ v }}"
 {% endfor %}
 {% endif %}
+{% if app_container.pid_host is defined %}
+    # nsenter-controller apps only (cronmaster): the container's
+    # PID namespace IS the guest's, so nsenter -t 1 reaches the CT
+    pid: "host"
+{% endif %}
+{% if app_container.privileged is defined %}
+    # required by the nsenter controller model; the blast radius is
+    # the guest itself (unprivileged LXC boundary)
+    privileged: true
+{% endif %}
 {% if app_container.env is defined %}
     environment:
 {% for k, v in app_container.env.items() %}
