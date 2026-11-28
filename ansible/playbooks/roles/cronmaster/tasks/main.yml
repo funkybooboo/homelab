@@ -69,11 +69,15 @@
       extraction (job repos with .env creds, pass-cli session)
       must exist on the controller. See docs/archive.md.
 
-- name: job repos staged (incl. their live .env credentials)
+- name: job repos staged (incl. their live .env credentials; CREATE-ONLY --
+        the CT copy becomes canonical once deployed, so operator edits
+        like fresh tokens / BW_SESSION / repo pulls survive re-converge;
+        re-running never clobbers live credentials with the dump copies)
   ansible.builtin.copy:
     src: "{{ cronmaster_extract }}/root/Projects/{{ item }}"
     dest: "{{ cronmaster_root }}/projects/"
     mode: preserve
+    force: false
   loop:
     - migrate-github-to-codeberg
     - sync-protonpass-to-bitwarden
@@ -86,11 +90,14 @@
     group: root
     mode: "0755"
 
-- name: proton pass-cli session staged (jobs run as root)
+- name: proton pass-cli session staged (jobs run as root; CREATE-ONLY --
+        a later operator `pass-cli login` rewrites these files and a
+        re-converge must never revert the fresh session to the dump's)
   ansible.builtin.copy:
     src: "{{ cronmaster_extract }}/root/.local/share/proton-pass-cli"
     dest: /root/.local/share/
     mode: preserve
+    force: false
 
 - name: job log wrapper staged (known-good from the old CT; the
         app regenerates it on demand, this seeds it before any
