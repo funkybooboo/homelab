@@ -25,10 +25,10 @@ and [../design/browser-off-cloud.md](../design/browser-off-cloud.md)
 
 ## Acceptance criteria
 
-- [ ] syncstorage-rs deployed as a container_guest manifest on the
+- [x] syncstorage-rs deployed as a container_guest manifest on the
       current cluster (Mozilla image, digest-pinned; tokenserver
       enabled via env, per the design record)
-- [ ] MySQL 8.0 as the shared mysql guest CT 107 (decision #20:
+- [x] MySQL 8.0 as the shared mysql guest CT 107 (decision #20:
       postgres impossible upstream -- no postgres backend; in-guest
       also rejected by the operator, other services reuse this
       guest; mysql:8.0.46 digest-pinned, LAN-listen like postgres,
@@ -40,10 +40,10 @@ and [../design/browser-off-cloud.md](../design/browser-off-cloud.md)
       scope = the operator's laptop (per operator); household /
       mobile browsers join by the same user.js line when they
       exist
-- [ ] Nightly mysqldump to /var/backups (in-guest) -- sync data is
+- [x] Nightly mysqldump to /var/backups (in-guest) -- sync data is
       tier-1 (recreatable in principle, but passwords/bookmarks
       make loss expensive)
-- [ ] The story closes with the browser-off-cloud map's
+- [x] The story closes with the browser-off-cloud map's
       "sync storage" cell checked and its follow-on cells named
 
 ## Notes
