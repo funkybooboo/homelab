@@ -145,6 +145,29 @@
   ansible.builtin.fail:
     msg: "searxng needs SEARXNG_SECRET_KEY -- create local/searxng-secret.env (SEARXNG_SECRET_KEY=<hex>)"
 
+# ---- env:NAME secret tokens (USER-5): manifest env values of the
+# form "env:NAME" resolve from the controller environment at render
+# time (make converge sources local/*-secrets.env). Fail LOUD here,
+# BEFORE the compose file lands -- otherwise the template renders an
+# empty secret silently and the service dies at runtime with a
+# mystery auth failure. (The assert prints the variable NAME, never
+# the value; names are already public in the manifest.)
+- name: env tokens present in the controller env? (fail loud)
+  when:
+    - app_container.env is defined
+    - item.value is string
+    - item.value.startswith('env:')
+  ansible.builtin.assert:
+    that:
+      - (lookup('ansible.builtin.env', item.value[4:]) | default('')) | length > 0
+    fail_msg: >-
+      container env key {{ item.key }} uses {{ item.value }} but the
+      controller env does not define it -- add it to the service's
+      local/*-secrets.env (see local/README.md)
+  loop: "{{ app_container.env | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
 - name: compose file deployed
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -168,6 +191,77 @@
 - name: compose unit enabled + started
   ansible.builtin.systemd:
     name: app-compose
+    state: started
+    enabled: true
+    daemon_reload: true
+
+# ---- optional nightly mysqldump (manifest container.mysql_backup:
+# true -- the shared mysql guest CT 107). Sync data is tier-1
+# (passwords/bookmarks); dumps live in-guest on the node-local
+# rootfs, vzdump carries them off-box Saturdays. 14-day rotation.
+- name: backup env file (root password from the controller env;
+        0600, never in the repo)
+  when: app_container.mysql_backup | default(false)
+  ansible.builtin.copy:
+    dest: /opt/app/backup.env
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      # managed by make converge (container_guest mysql_backup)
+      MYSQL_ROOT_PASSWORD={{ lookup('ansible.builtin.env', 'MYSQL_ROOT_PASSWORD') }}
+  no_log: true
+
+- name: backup script deployed
+  when: app_container.mysql_backup | default(false)
+  ansible.builtin.copy:
+    dest: /usr/local/bin/mysql-backup.sh
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      # managed by make converge (container_guest mysql_backup)
+      set -eu
+      . /opt/app/backup.env
+      mkdir -p /var/backups/mysql
+      OUT="/var/backups/mysql/all-$(date +%F).sql.gz"
+      docker compose -f /opt/app/docker-compose.yml exec -T app \
+        mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" \
+        --all-databases --single-transaction | gzip > "$OUT"
+      find /var/backups/mysql -name 'all-*.sql.gz' -mtime +14 -delete
+      echo "dumped $OUT"
+
+- name: backup service + timer deployed
+  when: app_container.mysql_backup | default(false)
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - dest: mysql-backup.service
+      content: |
+        [Unit]
+        Description=nightly mysql dump (container_guest)
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/local/bin/mysql-backup.sh
+    - dest: mysql-backup.timer
+      content: |
+        [Unit]
+        Description=nightly mysql dump timer (container_guest)
+        [Timer]
+        OnCalendar=*-*-* 03:17:00
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+
+- name: backup timer enabled + started
+  when: app_container.mysql_backup | default(false)
+  ansible.builtin.systemd:
+    name: mysql-backup.timer
     state: started
     enabled: true
     daemon_reload: true

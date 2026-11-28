@@ -1,0 +1,44 @@
+# sync.yaml -- self-hosted Firefox Sync (USER-5, from scratch).
+# Mozilla's syncstorage-rs with the bundled tokenserver (verified
+# from the image config: entrypoint /app/bin/syncserver, build args
+# SYNCSTORAGE_DATABASE_BACKEND=mysql TOKENSERVER_DATABASE_BACKEND=mysql).
+# Stateless app: all state lives in the shared mysql CT 107, so the
+# rootfs rides pve-shared (instant migration, the tools-tier posture).
+#
+# Secrets: whole-value env: tokens resolved from local/sync-secrets.env
+# at converge time -- the DB URLs carry credentials, so they are env
+# tokens too, never tracked.
+#
+# The honest residual (browser-off-cloud map row 5): FxA still issues
+# the OAuth tokens our tokenserver validates. Data + metadata stay
+# ours; auth round-trips Mozilla by upstream design.
+name: sync
+vmid: 216
+state: present
+node: pve-framework
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: pve-shared
+cores: 2
+memory: 1024
+swap: 512
+disk: 8
+ip: 192.168.1.58
+role: container_guest
+container:
+  image: ghcr.io/mozilla-services/syncstorage-rs/syncstorage-rs-mysql
+  digest: "sha256:d96c6cd5a7179f04bed7ef0901c65e39105e0d950dc0efe876ed52b87355c3f0"
+  port: 8000
+  target: 8000
+  env:
+    SYNC_HOST: "0.0.0.0"     # compiled default binds container-loopback,
+                             # which docker-proxy cannot reach (kernel RST)
+    SYNC_TOKENSERVER__ENABLED: "true"
+    SYNC_MASTER_SECRET: "env:SYNC_MASTER_SECRET"
+    SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET: "env:SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET"
+    SYNC_STORAGE__DATABASE_URL: "env:SYNC_STORAGE__DATABASE_URL"
+    SYNC_SYNCSTORAGE__DATABASE_URL: "env:SYNC_SYNCSTORAGE__DATABASE_URL"
+    SYNC_TOKENSERVER__DATABASE_URL: "env:SYNC_TOKENSERVER__DATABASE_URL"
+tailnet: true
+tailnet_serve: 8000      # https://sync.tail54538d.ts.net
+mounts: []
+features: [nesting]

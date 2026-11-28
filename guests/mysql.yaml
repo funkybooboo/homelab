@@ -1,0 +1,49 @@
+# mysql.yaml -- the shared MySQL layer (USER-5 decision #20:
+# postgres is impossible for firefox sync upstream -- syncstorage-rs
+# speaks mysql/spanner/sqlite -- so the operator's mysql-own-guest
+# proposal became the fleet's second shared DB, sibling to postgres
+# CT 101. Other mysql-native services land here as they arrive.
+#
+# LAN-reachable like postgres (the flat-LAN posture until the VLAN
+# rungs close it); rootfs NODE-LOCAL (databases abhor NFS blips --
+# the loki/vaultwarden reasoning); mysql:8.0.46 digest-pinned per
+# the container doctrine, never a vendor apt repo.
+name: mysql
+vmid: 107
+state: present
+node: pve-thermaltake
+template: debian-13-standard_13.6-1_amd64.tar.zst
+storage: local-lvm         # DB rootfs: node-local, survives truenas outages
+ostemplate: pve-shared:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
+cores: 2
+memory: 2048
+swap: 1024
+disk: 12
+ip: 192.168.1.20          # extends the infra row (.11-.19) by one
+role: container_guest
+container:
+  image: mysql
+  digest: "sha256:62fb722c78b24245ddff1796a0fcee4a49cc5b87e0aaaf20c92d1da9e0a2497b"
+  port: 3306
+  target: 3306
+  listen_ip: 0.0.0.0      # shared service: LAN-reachable (postgres posture)
+  env:
+    MYSQL_ROOT_PASSWORD: "env:MYSQL_ROOT_PASSWORD"
+    MYSQL_DATABASE: syncstorage
+    MYSQL_USER: sync
+    MYSQL_PASSWORD: "env:SYNC_DB_PASSWORD"
+  volumes:
+    - "/opt/app/config/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
+  config_files:
+    - dest: init.sql
+      content: |
+        -- the second database (tokenserver state). The entrypoint
+        -- env pair above creates the syncstorage db + the sync user;
+        -- this runs as root AFTER that, so only the extra db + the
+        -- second grant are needed here.
+        CREATE DATABASE IF NOT EXISTS tokenserver
+          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        GRANT ALL PRIVILEGES ON tokenserver.* TO 'sync'@'%';
+  mysql_backup: true       # nightly dump -> /var/backups/mysql (14-day rotation)
+mounts: []
+features: [nesting]

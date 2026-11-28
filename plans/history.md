@@ -465,3 +465,19 @@ Two scanner findings on the public repo, both closed same-day:
   Before this the router recursed from the root servers (also
   ISP-blind; the directive trades query-spread for one
   accountable no-log party).
+
+- USER-5 server side shipped: firefox sync from scratch.
+  syncstorage-rs (bundled tokenserver, image verified from the
+  registry, not recall) as CT 216 on framework .58 behind the
+  tailnet serve front; mysql 8.0.46 as the shared DB guest CT 107
+  on thermaltake .20 (decision #20: postgres impossible upstream,
+  in-guest rejected by the operator; sibling to postgres 101).
+  Verified: https front heartbeat 200 / tokenserver 401-unauthed,
+  schemas migrated, dump drill 44 tables, reboot drill 20 s.
+  Build traps, now in quirks.md: the env-token guard caught my own
+  off-by-one ("env:" is 4 chars, slice [4:] not [5:]); the merged
+  syncserver's config sections are syncstorage/tokenserver so the
+  storage URL is SYNC_SYNCSTORAGE__DATABASE_URL (compiled default
+  is mysql://root@127.0.0.1/syncstorage -- wrong names fail as
+  connection-refused to localhost); the binary binds
+  container-loopback unless SYNC_HOST=0.0.0.0 (docker-proxy RST).

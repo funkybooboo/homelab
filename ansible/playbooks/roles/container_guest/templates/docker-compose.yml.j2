@@ -1,12 +1,21 @@
 # Managed by make converge (container_guest role). The image is
 # digest-pinned; updates roll via roll-pins.sh rewriting the
 # manifest digest, never a floating tag.
+#
+# listen_ip: services fronted by tailnet serve stay on 127.0.0.1
+# (model B); shared LAN-reachable services (mysql, the postgres
+# posture) set listen_ip 0.0.0.0 in the manifest.
+#
+# env values of the form "env:NAME" are resolved from the
+# controller environment at render time (make converge sources
+# local/*-secrets.env); the task layer fails loud if one is
+# missing, so this template never renders an empty secret.
 services:
   app:
     image: {{ app_container.image }}@{{ app_container.digest }}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:{{ app_container.port }}:{{ app_container.target }}"
+      - "{{ app_container.listen_ip | default('127.0.0.1') }}:{{ app_container.port }}:{{ app_container.target }}"
 {% if app_container.volumes is defined %}
     volumes:
 {% for v in app_container.volumes %}
@@ -16,7 +25,11 @@ services:
 {% if app_container.env is defined %}
     environment:
 {% for k, v in app_container.env.items() %}
+{% if v.startswith('env:') %}
+      {{ k }}: "{{ lookup('ansible.builtin.env', v[4:]) }}"
+{% else %}
       {{ k }}: "{{ v }}"
+{% endif %}
 {% endfor %}
 {% endif %}
     # stdout -> the guest journal -> promtail -> loki

@@ -276,3 +276,35 @@ where the fix lives. Code comments link here instead of retelling.
 - The template-cache converge check can time out (5 s) on a
   node busy after a CT migration wave -- transient; a re-run
   passes. Do not chase it.
+
+## Firefox sync (USER-5 build, 2026-11-28)
+
+- **The merged syncserver binary's config sections are
+  `syncstorage` and `tokenserver`** (verified by grepping the
+  image for its own strings + compiled defaults). Env names
+  follow the config-crate `PREFIX_SECTION__KEY` convention, so
+  the storage URL is `SYNC_SYNCSTORAGE__DATABASE_URL` -- NOT
+  `SYNC_STORAGE__...`, which is silently ignored and the binary
+  dials its compiled default `mysql://root@127.0.0.1/syncstorage`
+  (fails as connection-refused-to-localhost, a misleading error).
+  `SYNC_TOKENSERVER__DATABASE_URL` is correct as named.
+- **The binary binds container-loopback by default**: without
+  `SYNC_HOST=0.0.0.0` it listens on 127.0.0.1 INSIDE the
+  container netns, which docker-proxy cannot reach -- every
+  request resets at the kernel. ss in the CT still shows the
+  LISTEN (that is docker-proxy), so "listening but resetting"
+  is this trap's signature.
+- **"env:" is 4 characters.** The container_guest secret-token
+  slice is `[4:]`. `[5:]` looks up `YSQL_ROOT_PASSWORD` and the
+  fail-loud guard fires on a secret that exists -- the guard
+  worked as designed, on a bug inside itself. Off-by-one slices
+  always present as "the controller env does not define it."
+- **`--limit` cannot reach dynamically-added guest hosts** (the
+  guests play add_hosts them at runtime; the pattern matches
+  nothing and the run aborts with no hosts). Target one guest
+  with a scratch playbook + a two-line inventory instead (then
+  delete the scratch file; role resolution needs it under
+  ansible/playbooks/).
+- **There is no `:latest` tag on the syncstorage images** -- tags
+  are `<commit>--<timestamp>`; pin the newest stamped tag's amd64
+  digest from the registry API, never a floating name.

@@ -255,6 +255,22 @@ cross-service dashboards.
    triggers reserved in the Backlog entry so nothing ever
    re-addresses).
 
+20. **MySQL as a shared guest, not per-app sqlite/in-guest** --
+   DECIDED 2026-11-28 (operator directive, mid USER-5 build):
+   firefox sync gets mysql as its own guest (CT 107, .20,
+   pve-thermaltake local-lvm) rather than in the sync CT, so other
+   mysql-native services land on it as they arrive. The postgres
+   alternative was evaluated and is IMPOSSIBLE upstream:
+   syncstorage-rs has no postgres backend (mysql/spanner/sqlite
+   only; the official image is built mysql-flavored, mariadb
+   client libs). Standing corollary directive: NO SQLITE long
+   term -- sqlite services get dispositioned onto postgres
+   (shared CT 101) or mysql (CT 107) over time; navidrome, ntfy,
+   freshrss are the migratable candidates, vaultwarden's sqlite is
+   a deliberate tier-0 isolation choice that gets its own
+   conversation, and embedded-only cases (jellyfin) are exempt by
+   upstream constraint, named rather than silent.
+
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md) -- they

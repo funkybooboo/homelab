@@ -36,7 +36,7 @@ house rides Proton; the ISP sees one encrypted stream.
 
 ```mermaid
 flowchart LR
-    LAN["the house<br/>(5 nodes, 17 guests,<br/>every client)"]
+    LAN["the house<br/>(5 nodes, 19 guests,<br/>every client)"]
     RT["OPNsense router .1"]
     WG["Proton WireGuard<br/>US-UT#42, NetShield"]
     WWW((the internet))
@@ -71,7 +71,8 @@ flowchart TB
         TT1["jellyfin .55"]
         TT2["navidrome .56"]
         TT3["audiobookshelf .57"]
-        TT4["postgres .14<br/>(the fleet database)"]
+        TT4["postgres .14<br/>(the shared database)"]
+        TT45["mysql .20<br/>(the other shared database)"]
         TT5["vaultwarden .51"]
         TT6["loki .19"]
     end
@@ -81,6 +82,7 @@ flowchart TB
         FW3["excalidraw .63"]
         FW4["drawio .64"]
         FW5["freshrss .65"]
+        FW6["firefox sync .58<br/>(sync.tail54538d.ts.net)"]
     end
     subgraph A15["pve-aspiree15 .5 -- forge + metrics"]
         A1["forgejo .52"]
@@ -114,7 +116,7 @@ flowchart LR
         SR["OPNsense router<br/>exit node + subnet route<br/>+ serve relay"]
     end
     subgraph HOME["the house (via the approved route)"]
-        GUESTS["https fronts<br/>name.tail54538d.ts.net<br/>17 guests + node UIs"]
+        GUESTS["https fronts<br/>name.tail54538d.ts.net<br/>19 guests + node UIs"]
         LAN["raw LAN access<br/>ssh, appliances, everything"]
     end
     PHONE --> SR

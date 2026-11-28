@@ -13,7 +13,7 @@ now; each row names its mechanism or its accepted residual.
 | 1 | Search queries | Google/Bing/Bravo see the house IP | OWNED | searxng (.62, tailnet front; engines see the Proton exit, not the house) |
 | 2 | DNS resolution | ISP + Mozilla DoH | OWNED | the OPNsense resolver serves the LAN + guests; blanket egress hides queries from the ISP |
 | 3 | Password vault | Firefox store / Mozilla sync | OWNED (separate path) | vaultwarden (.17) is the household vault, fed by the Proton Pass sync (cronmaster job, OPS-24) |
-| 4 | Sync storage (bookmarks, history, tabs, passwords-in-browser) | Mozilla's sync servers | PLANNED | USER-5: syncstorage-rs container, tokenserver enabled, household browsers pointed at it |
+| 4 | Sync storage (bookmarks, history, tabs, passwords-in-browser) | Mozilla's sync servers | SERVER LIVE (2026-11-28, client pairing pending) | USER-5: syncstorage-rs CT 216 (.58, framework), bundled tokenserver, mysql CT 107 (.20, thermaltake); https://sync.tail54538d.ts.net heartbeat 200, tokenserver 401-unauthed |
 | 5 | FxA authentication | Mozilla issues the OAuth tokens our tokenserver validates | RESIDUAL, accepted | Firefox has no self-hostable FxA path; without it sync auth fails. The map's one hard residual |
 | 6 | Extension downloads + updates (AMO) | addons.mozilla.org | RESIDUAL, accepted | self-hosting AMO is impractical (signed-xpi pipeline is Mozilla's); fetches are update-only, extensions run locally |
 | 7 | Browser binaries + updates | Mozilla CDN / LibreWolf releases | RESIDUAL, accepted, but channeled | dotfiles migrations roll LibreWolf from the latest release tag; the download is cloud, the choice of when is ours |

@@ -18,6 +18,8 @@ documents the variable names + where the credential is minted.
 | truenas-api.env | TRUENAS_API_KEY | TrueNAS UI (API key) |
 | opnsense-api.env | OPNSENSE_KEY, OPNSENSE_SECRET | OPNsense UI (API user) |
 | pg-operator.env | PG_OPERATOR_PASSWORD | the postgres role password (docs/access.md) |
+| mysql-secrets.env | MYSQL_ROOT_PASSWORD, SYNC_DB_PASSWORD | the mysql CT 107 shared layer (USER-5 build; openssl rand -hex) |
+| sync-secrets.env | SYNC_MASTER_SECRET, SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET, SYNC_STORAGE__DATABASE_URL, SYNC_TOKENSERVER__DATABASE_URL | the firefox sync CT 216 (USER-5 build; URLs embed the mysql sync-user password) |
 | forgejo-db.env | FORGEJO_DB_PASSWORD | set at the forgejo restore (USER/OPS-9) |
 | forgejo-token.env | FORGEJO_API_TOKEN | hub user `funkybooboo` token |
 | forgejo-admin-token.env | FORGEJO_ADMIN_TOKEN | hub admin `nate` token |

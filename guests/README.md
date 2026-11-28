@@ -33,7 +33,7 @@ features: []           # e.g. [nesting] for docker-style services
 - VMIDs: infra guests `1xx` (reserved: pbs=100), service CTs `2xx`
   sequential, test/disposable `299`. VMIDs 100-134 are retired
   with the old fleet (the archive dumps still carry them).
-- IPs: infra guests in `.11-.19`, service guests in `.50-.99`
+- IPs: infra guests in `.11-.20`, service guests in `.50-.99`
   (the `guest_range` in group_vars/all.yml; bash parsers there
   depend on that key format). First come: test=.50,
   vaultwarden=.51.
