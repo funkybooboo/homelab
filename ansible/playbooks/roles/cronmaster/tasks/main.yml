@@ -231,6 +231,31 @@
       {% endfor %}
   register: _env_file
 
+# ---- outbound tailnet: the manifest `tun: true` gives this CT its
+# ---- TUN devnode so tailscaled leaves userspace mode. Two pieces
+# ---- follow from that: the tailnet must be REACHABLE (tailscale0
+# ---- routes, handled by tailscaled once /dev/net/tun exists) and
+# ---- RESOLVABLE (the CT's resolvers never serve ts.net names --
+# ---- pin the vaultwarden front in /etc/hosts, data-driven from
+# ---- the controller's own resolution, never a hardcoded IP).
+
+- name: vaultwarden tailnet IP resolved (from the controller, which
+        CAN resolve ts.net names)
+  become: false          # delegated to the controller: never sudo here
+  ansible.builtin.command: getent hosts vaultwarden.tail54538d.ts.net
+  register: _vw_ip
+  delegate_to: localhost
+  changed_when: false
+
+- name: vaultwarden tailnet name pinned in /etc/hosts (the
+        protonpass job's bw client needs the https NAME to match
+        the serve front's LE certificate; with the pin + the TUN
+        device the front is fully reachable from this guest)
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ _vw_ip.stdout.split()[0] }} vaultwarden.tail54538d.ts.net"
+    state: present
+
 - name: app systemd unit deployed (bare run -- nsenter is a no-op in
         the CT's own namespaces -- the controller model works)
   ansible.builtin.copy:

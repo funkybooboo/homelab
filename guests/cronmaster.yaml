@@ -59,3 +59,7 @@ tailnet: true
 tailnet_serve: 3000      # https://cronmaster.tail54538d.ts.net
 mounts: []
 features: [nesting]
+# outbound tailnet: gives tailscaled its TUN device (else userspace
+# mode: serve-only, no CT-to-peer connections; the protonpass job
+# needs https://vaultwarden.tail54538d.ts.net)
+tun: true

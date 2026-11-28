@@ -189,8 +189,10 @@
     state: present
     update_cache: true
 
-- name: userspace networking (no /dev/net/tun in unprivileged CTs;
-        inbound + serve fronts work; outbound rides the LAN)
+- name: tailscaled networking mode (manifest tun-true guests get
+        the real TUN device -- they need OUTBOUND tailnet
+        connections; all others stay in userspace mode, where
+        inbound + serve fronts work and no /dev/net/tun is needed)
   ansible.builtin.copy:
     dest: /etc/default/tailscaled
     content: |
@@ -198,7 +200,11 @@
       # PORT must stay: the unit runs --port=${PORT} and an empty
       # expansion is a flag error that crashes the service.
       PORT=41641
+      {% if manifest_item.tun | default(false) %}
+      FLAGS=""
+      {% else %}
       FLAGS="--tun=userspace-networking"
+      {% endif %}
     mode: "0644"
   notify: restart tailscaled
 
