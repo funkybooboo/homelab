@@ -265,3 +265,41 @@
     state: started
     enabled: true
     daemon_reload: true
+
+# ---- optional tokenserver seed (USER-5): idempotent SQL applied
+# ---- at every converge against the tokenserver database. The
+# ---- bundled Rust tokenserver creates its tables via
+# ---- run_migrations but NOT the service row + node its own test
+# ---- harness TODO documents -- without these rows every token
+# ---- exchange 500s with "no node" / "unknown service".
+- name: tokenserver seed SQL deployed
+  when: app_container.tokenserver_seed is defined
+  ansible.builtin.copy:
+    dest: /opt/app/tokenserver-seed.sql
+    owner: root
+    group: root
+    mode: "0600"
+    content: "{{ app_container.tokenserver_seed.statements | join(';\n') }};\n"
+
+- name: tokenserver seed applied (idempotent SQL; no-op once seeded)
+  when: app_container.tokenserver_seed is defined
+  ansible.builtin.shell: |
+    set -eu
+    . /opt/app/backup.env
+    docker exec -i "$(docker ps -q)" mysql -uroot -p"$MYSQL_ROOT_PASSWORD" \
+      tokenserver < /opt/app/tokenserver-seed.sql
+  register: _ts_seed
+  changed_when: false
+  no_log: true   # reads the root password from backup.env; output is empty
+
+- name: tokenserver seed verified (the node row exists)
+  when: app_container.tokenserver_seed is defined
+  ansible.builtin.shell: |
+    set -eu
+    . /opt/app/backup.env
+    docker exec -i "$(docker ps -q)" mysql -uroot -p"$MYSQL_ROOT_PASSWORD" \
+      tokenserver -N -e "{{ app_container.tokenserver_seed.verify }}"
+  register: _ts_verify
+  changed_when: false
+  failed_when: _ts_verify.stdout | trim != "1"
+  no_log: true

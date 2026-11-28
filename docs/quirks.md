@@ -308,3 +308,34 @@ where the fix lives. Code comments link here instead of retelling.
 - **There is no `:latest` tag on the syncstorage images** -- tags
   are `<commit>--<timestamp>`; pin the newest stamped tag's amd64
   digest from the registry API, never a floating name.
+
+## Firefox sync pairing (the USER-5 close-out traps)
+
+- **The bundled tokenserver ships with PLACEHOLDER FxA oauth
+  credentials.** Every token exchange returns 401
+  invalid-credentials, and Firefox surfaces it as a sign-in that
+  never sticks -- the FxA web login succeeds, the settings pane
+  still says "sign in." Fix: SYNC_TOKENSERVER__FXA_OAUTH_SERVER_URL
+  / _CLIENT_ID / _CLIENT_SECRET set to the public oldsync pair
+  Mozilla documents for self-hosters (client id 5882386c48d302ca;
+  the secret rides the env: token channel even though public).
+- **run_migrations defaults OFF** for the tokenserver database:
+  the schema is embedded in the binary but never applied; the
+  token exchange 500s with "Table 'tokenserver.services' doesn't
+  exist." Fix: SYNC_TOKENSERVER__RUN_MIGRATIONS=true.
+- **The migration does NOT seed the services row + node** (the
+  image's own integration-test harness carries the TODO). Without
+  them the exchange 500s after auth succeeds. Fixed as a
+  converge-owned idempotent tokenserver_seed block in the mysql
+  manifest (sync-1.5 + {node}/1.5/{uid} + our node URL).
+- **The syncserver logs NOTHING at default level** -- empty
+  docker logs never meant "no traffic"; twice in this build it
+  misled the diagnosis. The authoritative client-side evidence
+  is the profile's weave/logs/error-sync-* files: they name the
+  exact failing stage, the HTTP status, and the server's error
+  body. Read them before trusting server silence.
+- **LibreWolf ships identity.fxaccounts.enabled=false**
+  (librewolf.cfg:596, defaultPref) -- the sign-in UI requires
+  flipping it (about:config or user.js). Verify against the LIVE
+  cfg before assuming a pref is settable: lockPref entries are
+  the only class user.js cannot override.

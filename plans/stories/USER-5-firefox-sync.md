@@ -5,15 +5,18 @@ syncstorage-rs), so that every Firefox instance in the household
 syncs bookmarks, passwords, history, and tabs through our own
 hardware instead of Mozilla's cloud.
 
-**Status**: SERVER SHIPPED 2026-11-28 (built from scratch per
+**Status**: SHIPPED + PAIRED 2026-11-28 (built from scratch per
 operator directive -- no legacy-data recovery; the old CT 131
 payloads declared lost, browsers re-seed from a live client
-profile on first pairing). Verified live: heartbeat 200 +
-tokenserver 401-unauthed on https://sync.tail54538d.ts.net, both
-diesel schemas migrated into mysql CT 107, dump drill green
-(44 tables), CT-reboot drill 20 s unattended. REMAINING: the
-client pref sweep (operator pairs the household browsers), then
-this story closes with the map's row 4 flipped to OWNED.
+profile on first pairing). END-TO-END VERIFIED: the operator's
+LibreWolf paired via the dotfiles user.js channel (000326) and
+the first sync landed 4501 client-encrypted records / 2.1 MB in
+mysql CT 107's syncstorage.bso -- bookmarks, history, forms,
+logins, tabs. Pairing scope recorded: the operator's laptop
+(per operator -- the household reality); any future browser
+joins by the same tracked user.js line. The pairing arc's
+three server bugs are in quirks.md (placeholder FxA validation
+creds, run_migrations off, the unseeded services/nodes rows).
 **Arc**: v3 (next-build after the framework re-homing move)
 **Design context**: [../design/firefox-sync-server.md](../design/firefox-sync-server.md)
 (architecture research -- tokenserver, MySQL choice, client prefs)
@@ -30,9 +33,13 @@ and [../design/browser-off-cloud.md](../design/browser-off-cloud.md)
       also rejected by the operator, other services reuse this
       guest; mysql:8.0.46 digest-pinned, LAN-listen like postgres,
       nightly --all-databases dump to /var/backups/mysql)
-- [ ] Client prefs deployed: every household browser's
-      `identity.sync.tokenserver.uri` points at the serve front;
-      desktop + mobile paired and syncing against our hardware
+- [x] Client prefs deployed: the operator's LibreWolf
+      `identity.sync.tokenserver.uri` points at the serve front
+      via the tracked dotfiles user.js (declarative, every
+      launch); paired + first sync verified 2026-11-28. Pairing
+      scope = the operator's laptop (per operator); household /
+      mobile browsers join by the same user.js line when they
+      exist
 - [ ] Nightly mysqldump to /var/backups (in-guest) -- sync data is
       tier-1 (recreatable in principle, but passwords/bookmarks
       make loss expensive)

@@ -45,5 +45,24 @@ container:
           CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
         GRANT ALL PRIVILEGES ON tokenserver.* TO 'sync'@'%';
   mysql_backup: true       # nightly dump -> /var/backups/mysql (14-day rotation)
+  # tokenserver seed (USER-5): the bundled tokenserver's migration
+  # creates tables but famously NOT the service row + node (its own
+  # integration-test harness carries the TODO). Idempotent SQL,
+  # applied by container_guest at every converge.
+  tokenserver_seed:
+    statements:
+      - >-
+        INSERT INTO services (service, pattern)
+        VALUES ('sync-1.5', '{node}/1.5/{uid}')
+        ON DUPLICATE KEY UPDATE pattern = VALUES(pattern)
+      - >-
+        INSERT INTO nodes (service, node, available,
+        current_load, capacity, downed, backoff)
+        SELECT s.id, 'https://sync.tail54538d.ts.net',
+        100, 0, 100, 0, 0 FROM services s
+        WHERE s.service = 'sync-1.5'
+        AND NOT EXISTS (SELECT 1 FROM nodes n
+        WHERE n.node = 'https://sync.tail54538d.ts.net')
+    verify: "SELECT COUNT(*) FROM nodes WHERE node = 'https://sync.tail54538d.ts.net'"
 mounts: []
 features: [nesting]

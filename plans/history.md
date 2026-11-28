@@ -481,3 +481,23 @@ Two scanner findings on the public repo, both closed same-day:
   is mysql://root@127.0.0.1/syncstorage -- wrong names fail as
   connection-refused to localhost); the binary binds
   container-loopback unless SYNC_HOST=0.0.0.0 (docker-proxy RST).
+
+- USER-5 CLOSED end to end: firefox sync paired and verified.
+  The operator's LibreWolf (user.js pref via the 000326 channel)
+  signed in, and the first sync landed 4501 client-encrypted
+  records / 2.1 MB in syncstorage.bso -- Mozilla no longer holds
+  a copy of the household's bookmarks, history, forms, logins,
+  or tabs. The pairing arc surfaced three server bugs, all
+  fixed live and now in quirks.md: the bundled tokenserver ships
+  with PLACEHOLDER FxA oauth creds (every exchange 401
+  invalid-credentials, which Firefox surfaces as a sign-in that
+  doesn't stick -- configure the public oldsync pair);
+  run_migrations defaults OFF (schema never created; the 500
+  said Table 'tokenserver.services' doesn't exist); and the
+  migration famously does NOT seed the sync-1.5 service row +
+  node (its own integration-test TODO says so) -- now a
+  converge-owned idempotent tokenserver_seed block in the mysql
+  manifest. Diagnostics lesson: the syncserver logs nothing at
+  default level, so empty docker logs never meant no traffic --
+  the client's weave/logs error files were the real evidence
+  every time.
