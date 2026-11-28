@@ -15,6 +15,14 @@ operator's mail on a domain that can afford a mistake. NOT a
 replacement for ProtonMail (the bridge + bichon keep the daily
 mail) until the experiment earns it.
 
+SECOND CONSUMER (decision #21, 2026-11-28): a self-hosted FxA
+is the operator's wanted end-state for retiring the
+browser-off-cloud map's row-5 residual, and FxA verification
+codes make mail a tier-0 LOGIN dependency. That raises the bar:
+the experiment must graduate to dependable delivery before FxA
+leans on it -- stalwart earning daily-mail duty is the same gate.
+See issues.md #21 for the full prerequisite chain.
+
 ## Acceptance criteria
 
 - [ ] Manifest + role; a test domain sending + receiving real

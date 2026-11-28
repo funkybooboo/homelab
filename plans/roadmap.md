@@ -216,7 +216,9 @@ placement, the PVE rolling-upgrade criteria that survived
 OPS-17's evaporation, [OPS-19 the NAS re-platform]
 (./stories/OPS-19-nas-replatform.md) (TrueNAS becomes a Proxmox
 guest -- the operator's confirmed want), and [USER-24 stalwart]
-(./stories/USER-24-stalwart-mail.md) (the own-mail experiment).
+(./stories/USER-24-stalwart-mail.md) (the own-mail experiment --
+now also the prerequisite for decision #21's self-hosted FxA,
+which needs mail GRADUATED to trusted, not merely running).
 Only after v3-v4 keep the running fleet boring.
 
 ## Backlog (named triggers, not queued)

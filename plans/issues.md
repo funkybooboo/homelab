@@ -271,6 +271,29 @@ cross-service dashboards.
    conversation, and embedded-only cases (jellyfin) are exempt by
    upstream constraint, named rather than silent.
 
+21. **Self-hosted FxA is a wanted end-state, gated on local
+   mail** -- DECIDED 2026-11-28 (operator directive, on the
+   browser-off-cloud residual discussion): retire the map's one
+   hard residual (row 5, Mozilla login events + password
+   verification) by running our own FxA, AFTER a local mail
+   server exists. Honest prerequisites on the record: (a) mail
+   must be TRUSTED, not merely running -- FxA verification codes
+   make mail a tier-0 login dependency, so USER-24 stalwart must
+   graduate from experiment to dependable before FxA can lean on
+   it; (b) a current-state research pass is REQUIRED before
+   building (client compatibility of today's Firefox/LibreWolf
+   against self-hosted FxA, maintained compose, which of the
+   fxa monorepo services are actually needed); (c) the client
+   side is the real wall -- unsupported prefs (identity
+   .fxaccounts.auth.uri + friends) that re-break on updates;
+   (d) scope: multi-service platform (auth, content, oauth,
+   profile, mail sender, stores) -- the largest single build in
+   the fleet's history if it happens. The mock-FxA shortcut
+   (auth = tailnet reachability only) was named and declined for
+   now: unsupported test tooling in production. Until then row 5
+   stays the accepted residual, revisit trigger changed from
+   "Mozilla posture changes" to "the gate opens".
+
 - Research traps (oxlorg version pinning, OPNsense ACPI hang, HA-only
   balancing, Telmate dead) live in
   [design/greenfield-rebuild.md](./design/greenfield-rebuild.md) -- they
