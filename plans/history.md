@@ -523,3 +523,12 @@ Two scanner findings on the public repo, both closed same-day:
   request). Disposition table for every fleet schedule: the
   design record. The ntfy-failure-topic / dashboard panel lands
   with OPS-29.
+
+- The OPS-24/USER-5 secrets debt closed: all seven fleet secrets
+  (cronmaster login + API key, mysql root + sync user, firefox
+  sync master secret + FxA pair + metrics hash) created as Proton
+  Pass items in the personal vault via the CT 217 pass-cli session
+  -- values piped from the local env files through staged 600
+  files, never on a command line. The nightly protonpass->
+  bitwarden cronmaster job mirrors them into vaultwarden
+  automatically, closing the loop the scheduler was built for.
