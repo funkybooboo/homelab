@@ -35,15 +35,16 @@ next-builds; runs after it)
       snippets) + the job repos live on the CT's pve-shared
       rootfs. No database exists to put on postgres -- the
       criterion's original wording predates this fact.
-- [ ] The operator's repos land as its jobs:
+- [ ] The operator's repos land as its jobs (BOTH -- the
+      operator briefly retired the first, then restored it
+      2026-11-28: its repoMigrate API auto-creates NEW github
+      repos on codeberg, which push mirrors cannot do):
+      [migrate-github-to-codeberg]
+      (https://github.com/funkybooboo/migrate-github-to-codeberg)
+      (the codeberg leg's discovery/creation layer) and
       [sync-protonpass-to-bitwarden]
       (https://github.com/funkybooboo/sync-protonpass-to-bitwarden)
-      (the Proton Pass -> vaultwarden sync). The migrate-github-
-      to-codeberg job was RETIRED at port time (operator decision
-      2026-11-28): forgejo's push mirrors own the codeberg leg;
-      the script + repo stay staged for manual UI runs, with the
-      residual recorded (new github repos need a one-time manual
-      push-mirror setup)
+      (the Proton Pass -> vaultwarden sync)
 - [ ] Every scheduled job in the fleet is dispositioned into
       PORTED or RETIRED with reasons -- the old CT 127 job list,
       the debbie watcher, every temporary systemd timer created

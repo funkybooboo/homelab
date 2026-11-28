@@ -51,7 +51,7 @@ below carries a recorded reason to stay where it runs.
 
 | Schedule | Where it runs | Disposition | Reason |
 | --- | --- | --- | --- |
-| migrate-github-to-codeberg, 23:00 | old CT 127 crontab | RETIRED at port (operator 2026-11-28) | forgejo push mirrors own the codeberg leg; script + repo stay staged for MANUAL UI runs. Residual: NEW github repos need a one-time manual push-mirror setup (repoMigrate auto-creation retired with the schedule) |
+| migrate-github-to-codeberg, 23:00 | old CT 127 crontab | PORTED (final; operator 2026-11-28 after a brief retire) | its repoMigrate API auto-CREATES new github repos on codeberg, which push mirrors cannot do; the push mirrors stay for content freshness at 8h |
 | sync-protonpass-to-bitwarden, 00:00 | old CT 127 crontab | PORTED | the story's job 2 (pass-cli session + bw CLI staged) |
 | forgejo push mirrors -> codeberg, 8h | forgejo-native | STAYS | zero moving parts; job 1 covers the extras (issues, PR refs) |
 | gitea-mirror nightly 22:00 | app-internal scheduler | STAYS | same class as freshrss CRON_MIN; an API hop adds failure modes, no gain |

@@ -14,14 +14,19 @@ cronmaster_image: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | fro
 cronmaster_digest: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | from_yaml).app_digest }}"
 cronmaster_env: "{{ (lookup('ansible.builtin.file', cronmaster_manifest) | from_yaml).app_env }}"
 
-# The ported jobs. The codeberg migration is deliberately NOT
-# scheduled (operator decision 2026-11-28): forgejo's push mirrors
-# own the codeberg leg. Residual recorded: NEW github repos need a
-# one-time manual push-mirror setup on the hub (the migrate script's
-# repoMigrate auto-creation is retired with the schedule). Its
-# wrapper script + repo stay staged for MANUAL runs from the UI
-# (issues/PR-refs extras live in the same repo).
+# The ported jobs, exactly as the old CT's root crontab had them
+# (same ids so the app UI binds to them on first read; same
+# schedules: 23:00 codeberg migration, 00:00 protonpass sync).
+# Job 1's value = Codeberg's server-side repoMigrate API -- the
+# auto-CREATION of new github repos on codeberg, which forgejo's
+# push mirrors cannot do (they only push to existing repos).
+# Operator decision 2026-11-28, after briefly retiring it.
 cronmaster_jobs:
+  - id: 9ouq-ur5t
+    schedule: "0 23 * * *"
+    comment: "# logsEnabled: true | id: 9ouq-ur5t"
+    script: migrategithubtocodebergsh.sh
+    command: bash /opt/cronmaster/scripts/migrategithubtocodebergsh.sh
   - id: gm21-x7le
     schedule: "0 0 * * *"
     comment: "# logsEnabled: true | id: gm21-x7le"
