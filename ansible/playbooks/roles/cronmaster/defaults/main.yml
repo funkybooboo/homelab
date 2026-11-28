@@ -32,3 +32,15 @@ cronmaster_jobs:
     comment: "# logsEnabled: true | id: gm21-x7le"
     script: protonpass-to-bitwarden-syncsh.sh
     command: bash /opt/cronmaster/scripts/protonpass-to-bitwarden-syncsh.sh
+  # the OPS-24 visibility criterion: job failures notify via ntfy.
+  # Self-contained by design: reads the app's own wrapper logs,
+  # one marker per job so each failure notifies exactly once, and
+  # publishes over the LAN (ntfy CT 103, the homelab topic).
+  - id: ntfy-wtch
+    schedule: "*/15 * * * *"
+    comment: "# logsEnabled: true | id: ntfy-wtch"
+    script: ntfy-failure-watch.sh
+    command: bash /opt/cronmaster/scripts/ntfy-failure-watch.sh
+
+cronmaster_ntfy_url: "http://192.168.1.16:8080"
+cronmaster_ntfy_topic: "homelab"

@@ -379,3 +379,9 @@ where the fix lives. Code comments link here instead of retelling.
 - **The protonpass job's first run is CPU-bound**: bw per-item
   crypto pinned 2 cores at load 10; 4 cores halved it. Memory
   was never the constraint (321/1024 MB).
+
+- **cronmaster job ids follow the app's XXXX-YYYY format** (4
+  chars, dash, 4 chars -- both old fleet ids match it). Other
+  shapes get silently truncated in the app's parser: a
+  "ntfy-watch" id displays as "ntfy-watc" and the API 404s on
+  the full string. The watchdog is id ntfy-wtch.

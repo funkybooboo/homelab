@@ -129,25 +129,62 @@
       project: sync-protonpass-to-bitwarden
       entry: protonpass-to-bitwarden-sync.sh
 
-- name: jobs already seeded?
-  ansible.builtin.stat:
-    path: "{{ cronmaster_root }}/.jobs-seeded"
-  register: _seeded
+- name: ntfy failure watch deployed (the OPS-24 visibility criterion;
+        reads the app's own wrapper logs, one marker per job so each
+        failure notifies exactly once, retries the publish if ntfy was
+        unreachable -- the marker only advances on success)
+  ansible.builtin.copy:
+    dest: "{{ cronmaster_root }}/scripts/ntfy-failure-watch.sh"
+    owner: root
+    group: root
+    mode: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # ntfy-failure-watch.sh -- cronmaster job failures -> ntfy.
+      # Self-contained by design: the app has no failure webhook,
+      # so this job watches the app's own wrapper logs (stable
+      # summary format) and publishes once per failure.
+      set -uo pipefail
+      LOGS="{{ cronmaster_root }}/data/logs"
+      MARK="{{ cronmaster_root }}/data/.ntfy-watch"
+      NTFY="{{ cronmaster_ntfy_url }}"
+      TOPIC="{{ cronmaster_ntfy_topic }}"
+      mkdir -p "$MARK"
+      for d in "$LOGS"/*/; do
+        id=$(basename "$d")
+        latest=$(ls -t "$d" 2>/dev/null | head -1)
+        [ -n "$latest" ] || continue
+        [ -f "$MARK/$id" ] && [ "$MARK/$id" -nt "$d/$latest" ] && continue
+        if grep -q "Status    : FAILED" "$d/$latest" 2>/dev/null; then
+          cmd=$(sed -n 's/^Command   : //p' "$d/$latest" | head -1)
+          when=$(sed -n 's/^Timestamp : //p' "$d/$latest" | head -1)
+          if curl -s -f -o /dev/null --max-time 10 \
+              -d "cronmaster job $id FAILED ($cmd) at $when" \
+              "$NTFY/$TOPIC"; then
+            touch "$MARK/$id"
+          fi
+        else
+          touch "$MARK/$id"
+        fi
+      done
 
-- name: root crontab seeded with the ported jobs (ONCE -- then the
-        app's UI owns it; comment format is the app's own so it
-        binds the ids on first read)
+- name: declared jobs ensured in root's crontab (per-entry guard --
+        converge ADDS any declared job that is missing, never removes
+        anything -- the app's UI owns the crontab after seeding, so
+        operator edits and UI-managed jobs survive every re-converge)
   ansible.builtin.shell: |
     set -eu
     CRON=$(mktemp)
+    crontab -l > "$CRON" 2>/dev/null || : > "$CRON"
+    CHANGED=0
     {% for j in cronmaster_jobs %}
-    printf '%s\n' '{{ j.comment }}' >> "$CRON"
-    printf '%s\n' '{{ j.schedule }} {{ cronmaster_root }}/data/cron-log-wrapper.sh "{{ j.id }}" sh -c '\''{{ j.command }}'\''' >> "$CRON"
+    grep -qF '"{{ j.id }}"' "$CRON" || { printf '%s\n' '{{ j.comment }}' >> "$CRON"; printf '%s\n' '{{ j.schedule }} {{ cronmaster_root }}/data/cron-log-wrapper.sh "{{ j.id }}" sh -c '\''{{ j.command }}'\''' >> "$CRON"; CHANGED=1; }
     {% endfor %}
-    crontab -u root "$CRON"
+    test $CHANGED -eq 1 && crontab "$CRON" && echo ENSURED
     rm -f "$CRON"
-    touch {{ cronmaster_root }}/.jobs-seeded
-  when: not _seeded.stat.exists
+  register: _cron_ensure
+  changed_when: "'ENSURED' in _cron_ensure.stdout"
+
 
 # ---- bare-run pivot: the app runs BARE in the CT (systemd + node),
 # ---- exactly like the old CT 127 did for months. docker inside an
