@@ -501,3 +501,25 @@ Two scanner findings on the public repo, both closed same-day:
   default level, so empty docker logs never meant no traffic --
   the client's weave/logs error files were the real evidence
   every time.
+
+- OPS-24 SHIPPED: cronmaster is the fleet's scheduler, live on
+  CT 217 (framework, pve-shared, tailnet front). The build took
+  three pivots, all recorded in quirks.md: (1) the app is an
+  nsenter CONTROLLER and docker inside an unprivileged LXC cannot
+  reassociate to ancestor namespaces (EPERM) -- it runs BARE like
+  the old CT 127 did, with the digest pin surviving via
+  docker-cp of the built app out of the pinned image; (2) the
+  fleet's CTs were tailscale serve-only by EMERGENT workaround
+  (--tun=userspace-networking + no /dev/net/tun) -- the new
+  manifest `tun` flag gives CT 217 the real TUN and outbound
+  tailnet (verified: vaultwarden https front 200 from inside the
+  guest); (3) every credential in the dump was dead (Proton
+  session server-side invalidated, github + codeberg tokens 401,
+  bw session stale) -- the port's real work was re-issuing them
+  live, and the first protonpass run synced the whole vault
+  (709 ciphers, 27.5 min, CT bumped to 4 cores after live
+  measurement showed bw crypto at load 10 on 2 cores). The
+  migrate job is blocked by Codeberg's repo cap only (operator's
+  request). Disposition table for every fleet schedule: the
+  design record. The ntfy-failure-topic / dashboard panel lands
+  with OPS-29.

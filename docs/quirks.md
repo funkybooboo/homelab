@@ -339,3 +339,43 @@ where the fix lives. Code comments link here instead of retelling.
   flipping it (about:config or user.js). Verify against the LIVE
   cfg before assuming a pref is settable: lockPref entries are
   the only class user.js cannot override.
+
+## cronmaster (the OPS-24 build traps)
+
+- **fccview/cronmaster is an nsenter CONTROLLER**: docker mode
+  manages its HOST's crontab via `nsenter -t 1`. From docker
+  inside an UNPRIVILEGED LXC that is EPERM (cannot reassociate
+  to ancestor namespaces); only a privileged LXC would allow it.
+  It runs BARE in the CT instead (systemd + node), where its
+  nsenter calls are same-namespace no-ops -- the old fleet's
+  proven shape. The digest pin survives: `docker create` + `docker
+  cp` stages the BUILT standalone app out of the pinned image.
+- **INTERNAL_API_URL must point at loopback** for the app's proxy
+  middleware (session check). Unset, it falls back to the request
+  origin -- the tailnet name, unresolvable from inside the CT --
+  and the UI sign-in silently never completes (the password is
+  accepted; the session check fetch fails; nothing happens).
+- **CTs were tailscale serve-only by workaround**: guest_common ran
+  tailscaled with --tun=userspace-networking (documented as
+  "outbound rides the LAN"), and no CT had the /dev/net/tun
+  devnode. Manifest `tun: true` now gives a guest the real TUN
+  (lxc devnode lines + tailscaled FLAGS conditional); with it,
+  CT-to-peer tailnet works. ts.net names still need pinning
+  (/etc/hosts, data-driven) -- the CT's resolvers never serve
+  them.
+- **The bw CLI hard-refuses plain http** (InsecureUrlNotAllowed) --
+  the LAN path is out; it needs the https serve front + the TUN.
+- **The vaultwarden account email is a passmail alias**
+  (192.168.8.122.frosty957@passmail.com), not a nate.stott
+  address -- bw login with the wrong email says "Username or
+  password is incorrect", which reads like a password problem.
+- **Exit-0 is not success**: with dead tokens the migrate job
+  reported "Migration completed -- 0/0/0 SUCCESS" (empty list =
+  nothing failed). Verify jobs against their EFFECTS (repo
+  counts, vault rows), never the exit code.
+- **.env pastes with surrounding quotes break token auth**: grep-
+  parsing loaders see the literal quote chars; APIs then 401.
+  Values unquoted, always.
+- **The protonpass job's first run is CPU-bound**: bw per-item
+  crypto pinned 2 cores at load 10; 4 cores halved it. Memory
+  was never the constraint (321/1024 MB).

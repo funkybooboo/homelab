@@ -27,7 +27,7 @@ tailscale.
 | searxng | https://searxng.tail54538d.ts.net | open | the self-hosted metasearch; default settings |
 | excalidraw | https://excalidraw.tail54538d.ts.net | open | the whiteboard; scenes live in browser storage |
 | drawio | https://drawio.tail54538d.ts.net | open | the diagrams tool; diagrams live in browser storage (use File > Export for keepers) |
-| freshrss | https://freshrss.tail54538d.ts.net | the old account + password (restored with the data) | the RSS reader, postgres-backed (database `freshrss` on the hub cluster; 208 feeds / 32k entries); the data dir restored verbatim incl. favicons; feeds refresh on the container's built-in cron (CRON_MIN 13,43) |
+| cronmaster | https://cronmaster.tail54538d.ts.net | the password in `local/cronmaster.env` (operator may move it to Proton Pass) | the scheduler: both ported jobs listed with logs; run/clone/pause from the UI |\n| freshrss | https://freshrss.tail54538d.ts.net | the old account + password (restored with the data) | the RSS reader, postgres-backed (database `freshrss` on the hub cluster; 208 feeds / 32k entries); the data dir restored verbatim incl. favicons; feeds refresh on the container's built-in cron (CRON_MIN 13,43) |
 
 ## The underlying rules
 
